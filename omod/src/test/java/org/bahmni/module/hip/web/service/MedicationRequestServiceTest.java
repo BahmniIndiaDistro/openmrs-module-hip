@@ -3,6 +3,7 @@ package org.bahmni.module.hip.web.service;
 
 
 import org.junit.Test;
+import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
 
 import static org.mockito.Mockito.*;
 
@@ -10,12 +11,12 @@ import static org.mockito.Mockito.*;
 public class MedicationRequestServiceTest {
 
     private OpenMRSDrugOrderClient openMRSDrugOrderClient = mock(OpenMRSDrugOrderClient.class);
-    private DrugOrderToMedicationRequestTranslationService drugOrderToMedicationRequestTranslationService =
-            mock(DrugOrderToMedicationRequestTranslationService.class);
+    private MedicationRequestTranslator medicationTranslator =
+            mock(MedicationRequestTranslator.class);
 
     private MedicationRequestService medicationRequestService = new MedicationRequestService(
             openMRSDrugOrderClient,
-            drugOrderToMedicationRequestTranslationService
+            medicationTranslator
     );
 
     @Test
