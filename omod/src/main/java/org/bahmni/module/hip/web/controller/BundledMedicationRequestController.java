@@ -56,6 +56,20 @@ public class BundledMedicationRequestController {
         return  new ObjectMapper().writeValueAsString(errorResponse);
     }
 
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public String illegalArgumentException(HttpServletRequest req, Exception ex) {
+        return ex.getMessage();
+    }
+
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(Exception.class)
+    public String genericException(HttpServletRequest req, Exception ex) {
+        return "Something went wrong!!";
+    }
+
     private String serializeBundle(Bundle bundle) {
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
