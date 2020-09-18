@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class BundleMedicationRequestService {
+public class BundledMedicationRequestService {
 
     private MedicationRequestService medicationRequestService;
     private BundleService bundleService;
 
     @Autowired
-    public BundleMedicationRequestService(MedicationRequestService medicationRequestService, BundleService bundleService) {
+    public BundledMedicationRequestService(MedicationRequestService medicationRequestService, BundleService bundleService) {
         this.medicationRequestService = medicationRequestService;
         this.bundleService = bundleService;
     }

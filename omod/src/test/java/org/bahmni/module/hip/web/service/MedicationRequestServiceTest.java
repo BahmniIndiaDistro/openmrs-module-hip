@@ -25,6 +25,6 @@ public class MedicationRequestServiceTest {
         medicationRequestService.medicationRequestFor("0f90531a-285c-438b-b265-bb3abb4745bd", "OPD");
 
         verify(openMRSDrugOrderClient, times(1))
-                .getDrugOrdersFor("0f90531a-285c-438b-b265-bb3abb4745bd", "OPD");
+                .drugOrdersFor("0f90531a-285c-438b-b265-bb3abb4745bd", "OPD");
     }
 }

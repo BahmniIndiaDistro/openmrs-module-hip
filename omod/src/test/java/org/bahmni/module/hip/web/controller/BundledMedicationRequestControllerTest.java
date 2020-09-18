@@ -1,6 +1,6 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.web.service.BundledMedicationRequestService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class BundledMedicationRequestControllerTest {
     private WebApplicationContext wac;
 
     @Autowired
-    private BundleMedicationRequestService bundleMedicationRequestService;
+    private BundledMedicationRequestService bundledMedicationRequestService;
 
     @Before
     public void setup() {
@@ -48,7 +48,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturn200OkOnSuccess() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId='0f90531a-285c-438b-b265-bb3abb4745bd'" +
@@ -60,7 +60,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnHttpBadRequestWhenPatientIdIsMissing() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication")
@@ -71,7 +71,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnHttpBadRequestWhenPatientIdIsEmpty() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''")
@@ -82,7 +82,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnHttpBadRequestWhenVisitTypeIsMissing() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''")
@@ -93,7 +93,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnHttpBadRequestWhenVisitTypeIsEmpty() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
@@ -105,7 +105,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnPatientIdRequestParameterIsMandatoryErrorMessage() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
@@ -121,7 +121,7 @@ public class BundledMedicationRequestControllerTest {
     @Test
     public void shouldReturnVisitTypeRequestParameterIsMandatoryErrorMessage() throws Exception {
 
-        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
@@ -138,7 +138,7 @@ public class BundledMedicationRequestControllerTest {
 @Configuration
 class TestConfiguration {
     @Bean
-    public BundleMedicationRequestService bundleMedicationRequestService() {
-        return mock(BundleMedicationRequestService.class);
+    public BundledMedicationRequestService bundleMedicationRequestService() {
+        return mock(BundledMedicationRequestService.class);
     }
 }

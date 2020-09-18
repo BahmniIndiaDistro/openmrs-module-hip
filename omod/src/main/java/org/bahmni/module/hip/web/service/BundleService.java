@@ -13,9 +13,7 @@ public class BundleService {
         Bundle bundle = new Bundle();
 
         medicationRequests
-                .forEach(medicationRequest -> {
-                    bundle.addEntry().setResource(medicationRequest);
-                });
+                .forEach(medicationRequest -> bundle.addEntry().setResource(medicationRequest));
 
         return bundle;
     }

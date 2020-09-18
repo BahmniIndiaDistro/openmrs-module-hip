@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bahmni.module.hip.web.exception.RequestParameterMissingException;
 import org.bahmni.module.hip.web.models.ErrorResponse;
-import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.web.service.BundledMedicationRequestService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip")
 public class BundledMedicationRequestController {
 
-    private BundleMedicationRequestService bundleMedicationRequestService;
+    private BundledMedicationRequestService bundledMedicationRequestService;
 
     @Autowired
-    public BundledMedicationRequestController(BundleMedicationRequestService bundleMedicationRequestService) {
-        this.bundleMedicationRequestService = bundleMedicationRequestService;
+    public BundledMedicationRequestController(BundledMedicationRequestService bundledMedicationRequestService) {
+        this.bundledMedicationRequestService = bundledMedicationRequestService;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/medication", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -42,7 +42,7 @@ public class BundledMedicationRequestController {
         if (visitType == null || visitType.equals("''"))
             throw new RequestParameterMissingException("visitType");
 
-        Bundle bundle = bundleMedicationRequestService.bundleMedicationRequestsFor(patientId, visitType);
+        Bundle bundle = bundledMedicationRequestService.bundleMedicationRequestsFor(patientId, visitType);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(serializeBundle(bundle));

@@ -18,14 +18,19 @@ public class MedicationRequestService {
     @Autowired
     public MedicationRequestService(OpenMRSDrugOrderClient openMRSDrugOrderClient,
                                     MedicationRequestTranslator medicationRequestTranslator) {
+
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.medicationRequestTranslator = medicationRequestTranslator;
     }
 
     List<MedicationRequest> medicationRequestFor(String patientId, String byVisitType) {
 
-        List<DrugOrder> drugOrders = openMRSDrugOrderClient.getDrugOrdersFor(patientId, byVisitType);
+        List<DrugOrder> drugOrders = openMRSDrugOrderClient.drugOrdersFor(patientId, byVisitType);
 
+        return translateToMedicationRequest(drugOrders);
+    }
+
+    private List<MedicationRequest> translateToMedicationRequest(List<DrugOrder> drugOrders) {
         return drugOrders
                 .stream()
                 .map(medicationRequestTranslator::toFhirResource)
