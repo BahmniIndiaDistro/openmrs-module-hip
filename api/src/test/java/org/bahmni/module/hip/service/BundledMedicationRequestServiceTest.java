@@ -1,8 +1,5 @@
 package org.bahmni.module.hip.service;
 
-import org.bahmni.module.hip.service.BundleService;
-import org.bahmni.module.hip.service.BundledMedicationRequestService;
-import org.bahmni.module.hip.service.MedicationRequestService;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.junit.Test;
 
