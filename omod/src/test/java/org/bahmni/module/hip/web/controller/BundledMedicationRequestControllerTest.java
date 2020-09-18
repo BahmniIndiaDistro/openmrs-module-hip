@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -102,7 +103,7 @@ public class BundledMedicationRequestControllerTest {
     }
 
     @Test
-    public void shouldReturnPatientIdIsMissingErrorMessage() throws Exception {
+    public void shouldReturnPatientIdRequestParameterIsMandatoryErrorMessage() throws Exception {
 
         when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
@@ -114,7 +115,23 @@ public class BundledMedicationRequestControllerTest {
 
         String content = mvcResult.getResponse().getContentAsString();
 
-        System.out.println(content);
+        assertEquals("{\"errMessage\":\"patientId is mandatory request parameter\"}", content);
+    }
+
+    @Test
+    public void shouldReturnVisitTypeRequestParameterIsMandatoryErrorMessage() throws Exception {
+
+        when(bundleMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+                .thenReturn(new Bundle());
+
+        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
+                "/hip/medication?patientId='0f90531a-285c-438b-b265-bb3abb4745bd'")
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        String content = mvcResult.getResponse().getContentAsString();
+
+        assertEquals("{\"errMessage\":\"visitType is mandatory request parameter\"}", content);
     }
 }
 
