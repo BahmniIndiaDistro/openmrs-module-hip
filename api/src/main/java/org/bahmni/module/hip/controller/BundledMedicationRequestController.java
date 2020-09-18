@@ -3,7 +3,6 @@ package org.bahmni.module.hip.controller;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bahmni.module.hip.exception.RequestParameterMissingException;
 import org.bahmni.module.hip.models.ErrorResponse;
 import org.bahmni.module.hip.service.BundledMedicationRequestService;
@@ -48,12 +47,10 @@ public class BundledMedicationRequestController {
                 .body(serializeBundle(bundle));
     }
 
-    @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(RequestParameterMissingException.class)
-    public String missingRequestParameter(HttpServletRequest req, Exception ex) throws JsonProcessingException {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
-        return new ObjectMapper().writeValueAsString(errorResponse);
+    public @ResponseBody ErrorResponse missingRequestParameter(HttpServletRequest req, Exception ex) throws JsonProcessingException {
+        return new ErrorResponse(ex.getMessage());
     }
 
     @ResponseBody

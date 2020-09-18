@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.util.NestedServletException;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
@@ -58,7 +59,7 @@ public class BundledMedicationRequestControllerTest {
                 .andExpect(status().isOk());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenPatientIdIsMissing() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
@@ -69,7 +70,7 @@ public class BundledMedicationRequestControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenPatientIdIsEmpty() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
@@ -80,7 +81,7 @@ public class BundledMedicationRequestControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenVisitTypeIsMissing() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
@@ -91,7 +92,7 @@ public class BundledMedicationRequestControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenVisitTypeIsEmpty() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
@@ -103,7 +104,7 @@ public class BundledMedicationRequestControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnPatientIdRequestParameterIsMandatoryErrorMessage() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
@@ -119,7 +120,7 @@ public class BundledMedicationRequestControllerTest {
         assertEquals("{\"errMessage\":\"patientId is mandatory request parameter\"}", content);
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnVisitTypeRequestParameterIsMandatoryErrorMessage() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
