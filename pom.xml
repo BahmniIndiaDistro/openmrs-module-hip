@@ -101,9 +101,7 @@
 				<version>2.12</version>
 				<scope>provided</scope>
 			</dependency>
-
 		</dependencies>
-
 	</dependencyManagement>
 
 

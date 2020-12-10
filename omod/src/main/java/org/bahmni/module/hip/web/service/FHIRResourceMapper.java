@@ -1,11 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
-import org.hl7.fhir.r4.model.Dosage;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.*;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
 import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
@@ -46,24 +41,8 @@ public class FHIRResourceMapper {
         return practitionerTranslatorProvider.toFhirResource(encounterProvider.getProvider());
     }
 
-    private String displayName(Object object) {
-        if (object == null)
-            return "";
-        return object.toString() + " ";
-
-    }
-
     public MedicationRequest mapToMedicationRequest(DrugOrder order) {
-        String dosingInstrutions = displayName(order.getDose()) +
-                displayName(order.getDoseUnits() == null ? "" : order.getDoseUnits().getName()) +
-                displayName(order.getFrequency()) +
-                displayName(order.getRoute() == null ? "" : order.getRoute().getName()) +
-                displayName(order.getDuration()) +
-                displayName(order.getDurationUnits() == null ? "" : order.getDurationUnits().getName());
-        MedicationRequest medicationRequest = medicationRequestTranslator.toFhirResource(order);
-        Dosage dosage = medicationRequest.getDosageInstruction().get(0);
-        dosage.setText(dosingInstrutions);
-        return medicationRequest;
+        return medicationRequestTranslator.toFhirResource(order);
     }
 
     public Medication mapToMedication(DrugOrder order) {
@@ -72,4 +51,5 @@ public class FHIRResourceMapper {
         }
         return medicationTranslator.toFhirResource(order.getDrug());
     }
+
 }

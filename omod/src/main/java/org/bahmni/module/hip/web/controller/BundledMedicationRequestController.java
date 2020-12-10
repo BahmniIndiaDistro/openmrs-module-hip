@@ -4,7 +4,6 @@ import org.bahmni.module.hip.web.exception.RequestParameterMissingException;
 import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.openmrs.module.webservices.rest.web.RestConstants;
-import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,7 +16,7 @@ import static org.bahmni.module.hip.web.model.serializers.BundleSerializer.seria
 @Validated
 @RestController
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip")
-public class BundledMedicationRequestController extends BaseRestController {
+public class BundledMedicationRequestController {
     private BundleMedicationRequestService bundledMedicationRequestService;
 
     @Autowired

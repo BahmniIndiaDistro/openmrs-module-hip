@@ -1,6 +1,5 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.apache.log4j.Logger;
 import org.bahmni.module.hip.web.TestConfiguration;
 import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
 import org.hl7.fhir.r4.model.Bundle;
@@ -9,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -33,8 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class BundledMedicationRequestControllerIntegrationTest {
 
     private MockMvc mockMvc;
-    private static final Logger log = Logger.getLogger(BundledMedicationRequestControllerIntegrationTest.class);
-
 
     @Autowired
     private WebApplicationContext wac;
@@ -60,48 +56,70 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 .andExpect(status().isOk());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenPatientIdIsMissing() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
-        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication")
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        assertEquals(500, mvcResult.getResponse().getStatus());
+                .andExpect(status().isBadRequest());
     }
 
-    @Test
-    public void shouldReturnHttpInternalServerErrorWhenPatientIdIsEmpty() throws Exception {
+    @Test(expected = NestedServletException.class)
+    public void shouldReturnHttpBadRequestWhenPatientIdIsEmpty() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
-        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''&visitType='OPD'")
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''")
                 .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        assertEquals(500, mvcResult.getResponse().getStatus());
+                .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test(expected = NestedServletException.class)
+    public void shouldReturnHttpBadRequestWhenVisitTypeIsMissing() throws Exception {
+
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+                .thenReturn(new Bundle());
+
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test(expected = NestedServletException.class)
     public void shouldReturnHttpBadRequestWhenVisitTypeIsEmpty() throws Exception {
 
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
-        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
                 "/hip/medication?patient='0f90531a-285c-438b-b265-bb3abb4745bd'&visitType=''")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test(expected = NestedServletException.class)
+    public void shouldReturnPatientIdRequestParameterIsMandatoryErrorMessage() throws Exception {
+
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+                .thenReturn(new Bundle());
+
+        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
+                "/hip/medication?patient=''")
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        String content = mvcResult.getResponse().getContentAsString();
+
+        assertEquals("{\"errMessage\":\"patientId is mandatory request parameter\"}", content);
     }
 
-    @Test
-    public void shouldReturnUnauthorizedErrorMessageWhenWrongUser() throws Exception {
+    @Test(expected = NestedServletException.class)
+    public void shouldReturnVisitTypeRequestParameterIsMandatoryErrorMessage() throws Exception {
+
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
@@ -110,6 +128,8 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        String content = mvcResult.getResponse().getContentAsString();
+
+        assertEquals("{\"errMessage\":\"visitType is mandatory request parameter\"}", content);
     }
 }

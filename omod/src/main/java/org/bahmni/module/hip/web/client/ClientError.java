@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.util.HashMap;
-
 @Getter
 @ToString
 public class ClientError {
@@ -28,9 +27,5 @@ public class ClientError {
 
     public static ClientError noPatientIdProvided() {
         return new ClientError(ErrorCode.NO_PATIENT_ID_SUPPLIED.getValue(), "No patient id supplied");
-    }
-
-    public static ClientError unauthorizedUser() {
-        return new ClientError(ErrorCode.UNAUTHORIZED.getValue(), "User is not authorized");
     }
 }
