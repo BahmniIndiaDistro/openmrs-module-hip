@@ -7,6 +7,8 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.openmrs.Visit;
+import org.openmrs.api.VisitService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,9 +52,10 @@ public class BundledMedicationRequestControllerIntegrationTest {
 
     @Test
     public void shouldReturn200OkOnSuccess() throws Exception {
-
-        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor("0f90531a-285c-438b-b265-bb3ab", "OPD"))
                 .thenReturn(new Bundle());
+
+        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
 
         mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId='0f90531a-285c-438b-b265-bb3abb4745bd'" +
                 "&visitType='OPD'")
@@ -70,7 +73,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        assertEquals(400, mvcResult.getResponse().getStatus());
     }
 
     @Test
@@ -79,11 +82,11 @@ public class BundledMedicationRequestControllerIntegrationTest {
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
-        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=''&visitType='OPD'")
+        MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patient=&visitType='OPD'")
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        assertEquals(400, mvcResult.getResponse().getStatus());
     }
 
     @Test
@@ -93,23 +96,23 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 .thenReturn(new Bundle());
 
         MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
-                "/hip/medication?patient='0f90531a-285c-438b-b265-bb3abb4745bd'&visitType=''")
+                "/hip/medication?patient='0f90531a-285c-438b-b265-bb3abb4745bd'&visitType=")
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        assertEquals(400, mvcResult.getResponse().getStatus());
     }
-
     @Test
-    public void shouldReturnUnauthorizedErrorMessageWhenWrongUser() throws Exception {
+    public void shouldReturnHttpBadRequestWhenPatientIdIsInvalid() throws Exception {
+
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
         MvcResult mvcResult = mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 +
-                "/hip/medication?patientId='0f90531a-285c-438b-b265-bb3abb4745bd'")
+                "/hip/medication?patient='0f90531a-285c-4'&visitType=")
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        assertEquals(500, mvcResult.getResponse().getStatus());
+        assertEquals(400, mvcResult.getResponse().getStatus());
     }
 }

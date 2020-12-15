@@ -3,10 +3,15 @@ package org.bahmni.module.hip.web.service;
 
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.junit.Test;
+import org.openmrs.VisitType;
+import org.openmrs.api.VisitService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -16,8 +21,9 @@ public class BundleMedicationRequestServiceTest {
 
     private MedicationRequestService medicationRequestService = mock(MedicationRequestService.class);
     private BundleService bundleService = mock(BundleService.class);
+    private VisitService visitService = mock(VisitService.class);
     private BundleMedicationRequestService bundledMedicationRequestService =
-            new BundleMedicationRequestService(medicationRequestService, bundleService);
+            new BundleMedicationRequestService(medicationRequestService, bundleService,visitService);
 
     @Test
     public void shouldFetchMedicationRequestForPatientBasedOnTheVisitType() {
@@ -42,6 +48,15 @@ public class BundleMedicationRequestServiceTest {
                 .bundleMedicationRequestsFor("", "");
 
         verify(bundleService).bundleMedicationRequests(medicationRequests);
+    }
+
+    @Test
+    public void shouldReturnTrueForValidVisitType() {
+        String visitType = "OPD";
+        when(visitService.getAllVisitTypes()).thenReturn(Collections.singletonList(new VisitType("OPD","OPD")));
+        boolean actual = bundledMedicationRequestService.isValidVisit(visitType);
+
+        assertTrue(actual);
     }
 }
 
