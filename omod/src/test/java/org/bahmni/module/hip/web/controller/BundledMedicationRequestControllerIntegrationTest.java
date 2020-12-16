@@ -39,7 +39,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
     @Autowired
     private BundleMedicationRequestService bundledMedicationRequestService;
 
-    @Mock
+    @Autowired
     private ValidationService validationService;
 
     @Before
@@ -64,6 +64,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
     @Test
     public void shouldReturn400OkOnInvalidVisitType() throws Exception {
         when(validationService.isValidVisit("OP")).thenReturn(false);
+        when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
