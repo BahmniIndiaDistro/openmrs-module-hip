@@ -1,17 +1,13 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.apache.log4j.Logger;
 import org.bahmni.module.hip.web.TestConfiguration;
 import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.openmrs.Visit;
-import org.openmrs.api.VisitService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -21,11 +17,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.util.NestedServletException;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,8 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class BundledMedicationRequestControllerIntegrationTest {
 
     private MockMvc mockMvc;
-    private static final Logger log = Logger.getLogger(BundledMedicationRequestControllerIntegrationTest.class);
-
 
     @Autowired
     private WebApplicationContext wac;
@@ -52,15 +45,15 @@ public class BundledMedicationRequestControllerIntegrationTest {
 
     @Test
     public void shouldReturn200OkOnSuccess() throws Exception {
-        when(bundledMedicationRequestService.bundleMedicationRequestsFor("0f90531a-285c-438b-b265-bb3ab", "OPD"))
+        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
-        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
-
-        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId='0f90531a-285c-438b-b265-bb3abb4745bd'" +
-                "&visitType='OPD'")
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId=0f90531a-285c-438b-b265-bb3abb4745bd" +
+                "&visitType=OPD")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+        verify(bundledMedicationRequestService, times(1)).isValidVisit("OPD");
     }
 
     @Test
@@ -102,6 +95,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
 
         assertEquals(400, mvcResult.getResponse().getStatus());
     }
+
     @Test
     public void shouldReturnHttpBadRequestWhenPatientIdIsInvalid() throws Exception {
 
