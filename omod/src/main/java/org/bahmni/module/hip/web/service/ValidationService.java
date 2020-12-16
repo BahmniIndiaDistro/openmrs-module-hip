@@ -24,7 +24,7 @@ public class ValidationService {
     public boolean isValidVisit(String visitType) {
         List<VisitType> visitTypes = visitService.getAllVisitTypes();
         for (VisitType vType : visitTypes) {
-            if (vType.getName().equals(visitType)) {
+            if (vType.getName().toLowerCase().equals(visitType.toLowerCase())) {
                 return true;
             }
         }
