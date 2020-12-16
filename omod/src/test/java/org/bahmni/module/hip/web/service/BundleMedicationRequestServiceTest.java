@@ -3,27 +3,18 @@ package org.bahmni.module.hip.web.service;
 
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.junit.Test;
-import org.openmrs.Patient;
-import org.openmrs.VisitType;
-import org.openmrs.api.PatientService;
-import org.openmrs.api.VisitService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class BundleMedicationRequestServiceTest {
 
-    private MedicationRequestService medicationRequestService = mock(MedicationRequestService.class);
-    private BundleService bundleService = mock(BundleService.class);
-    private VisitService visitService = mock(VisitService.class);
-    private PatientService patientService = mock(PatientService.class);
-    private BundleMedicationRequestService bundledMedicationRequestService =
-            new BundleMedicationRequestService(medicationRequestService, bundleService, visitService, patientService);
+    private final MedicationRequestService medicationRequestService = mock(MedicationRequestService.class);
+    private final BundleService bundleService = mock(BundleService.class);
+    private final BundleMedicationRequestService bundledMedicationRequestService =
+            new BundleMedicationRequestService(medicationRequestService, bundleService);
 
     @Test
     public void shouldFetchMedicationRequestForPatientBasedOnTheVisitType() {
@@ -48,26 +39,6 @@ public class BundleMedicationRequestServiceTest {
                 .bundleMedicationRequestsFor("", "");
 
         verify(bundleService).bundleMedicationRequests(medicationRequests);
-    }
-
-    @Test
-    public void shouldReturnTrueForValidVisitType() {
-        String visitType = "OPD";
-        when(visitService.getAllVisitTypes()).thenReturn(Collections.singletonList(new VisitType("OPD", "OPD")));
-        boolean actual = bundledMedicationRequestService.isValidVisit(visitType);
-
-        assertTrue(actual);
-    }
-
-    @Test
-    public void shouldReturnTrueForValidPatientId() {
-        Patient patient = mock(Patient.class);
-        String patientId = "0f90531a-285c-438b-b265-bb3abb4745bd";
-        patient.setUuid(patientId);
-        when(patientService.getPatientByUuid(patientId)).thenReturn(patient);
-        boolean actual = bundledMedicationRequestService.isValidPatient(patientId);
-
-        assertTrue(actual);
     }
 }
 

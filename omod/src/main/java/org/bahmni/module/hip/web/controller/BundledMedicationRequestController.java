@@ -1,13 +1,9 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.exception.RequestParameterMissingException;
 import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.web.service.ValidationService;
 import org.hl7.fhir.r4.model.Bundle;
-import org.openmrs.Visit;
-import org.openmrs.VisitType;
-import org.openmrs.api.PatientService;
-import org.openmrs.api.VisitService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,19 +13,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 import static org.bahmni.module.hip.web.model.serializers.BundleSerializer.serializeBundle;
 
 @Validated
 @RestController
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip")
 public class BundledMedicationRequestController extends BaseRestController {
-    private BundleMedicationRequestService bundledMedicationRequestService;
+    private final BundleMedicationRequestService bundledMedicationRequestService;
+    private final ValidationService validationService;
 
     @Autowired
-    public BundledMedicationRequestController(BundleMedicationRequestService bundledMedicationRequestService) {
+    public BundledMedicationRequestController(BundleMedicationRequestService bundledMedicationRequestService, ValidationService validationService) {
         this.bundledMedicationRequestService = bundledMedicationRequestService;
+        this.validationService = validationService;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/medication", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -41,9 +37,9 @@ public class BundledMedicationRequestController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
         if (visitType == null || visitType.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
-        if (!bundledMedicationRequestService.isValidVisit(visitType))
+        if (!validationService.isValidVisit(visitType))
             return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
-        if (!bundledMedicationRequestService.isValidPatient(patientId))
+        if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         Bundle bundle = bundledMedicationRequestService.bundleMedicationRequestsFor(patientId, visitType);
         return ResponseEntity.ok()

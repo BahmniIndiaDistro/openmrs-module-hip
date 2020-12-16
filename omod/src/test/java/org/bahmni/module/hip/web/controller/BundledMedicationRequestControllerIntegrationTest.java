@@ -2,10 +2,12 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.TestConfiguration;
 import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.web.service.ValidationService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -37,6 +39,9 @@ public class BundledMedicationRequestControllerIntegrationTest {
     @Autowired
     private BundleMedicationRequestService bundledMedicationRequestService;
 
+    @Mock
+    private ValidationService validationService;
+
     @Before
     public void setup() {
         DefaultMockMvcBuilder builder = MockMvcBuilders.webAppContextSetup(this.wac);
@@ -45,8 +50,8 @@ public class BundledMedicationRequestControllerIntegrationTest {
 
     @Test
     public void shouldReturn200OkOnSuccess() throws Exception {
-        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
-        when(bundledMedicationRequestService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
+        when(validationService.isValidVisit("OPD")).thenReturn(true);
+        when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
@@ -58,7 +63,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
 
     @Test
     public void shouldReturn400OkOnInvalidVisitType() throws Exception {
-        when(bundledMedicationRequestService.isValidVisit("OP")).thenReturn(false);
+        when(validationService.isValidVisit("OP")).thenReturn(false);
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
@@ -66,13 +71,13 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 "&visitType=OP")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
-        verify(bundledMedicationRequestService, times(1)).isValidVisit("OP");
+        verify(validationService, times(1)).isValidVisit("OP");
     }
 
     @Test
     public void shouldReturn400OkOnInvalidPatientId() throws Exception {
-        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
-        when(bundledMedicationRequestService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
+        when(validationService.isValidVisit("OPD")).thenReturn(true);
+        when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
@@ -80,8 +85,8 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 "&visitType=OPD")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
-        verify(bundledMedicationRequestService, times(1)).isValidVisit("OPD");
-        verify(bundledMedicationRequestService, times(1)).isValidPatient("0f90531a-285c-438b-b265-bb3abb4745");
+        verify(validationService, times(1)).isValidVisit("OPD");
+        verify(validationService, times(1)).isValidPatient("0f90531a-285c-438b-b265-bb3abb4745");
 
     }
 
