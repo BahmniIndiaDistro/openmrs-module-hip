@@ -43,6 +43,8 @@ public class BundledMedicationRequestController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
         if (!bundledMedicationRequestService.isValidVisit(visitType))
             return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+        if (!bundledMedicationRequestService.isValidPatient(patientId))
+            return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         Bundle bundle = bundledMedicationRequestService.bundleMedicationRequestsFor(patientId, visitType);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

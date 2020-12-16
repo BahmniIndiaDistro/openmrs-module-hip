@@ -46,6 +46,7 @@ public class BundledMedicationRequestControllerIntegrationTest {
     @Test
     public void shouldReturn200OkOnSuccess() throws Exception {
         when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
+        when(bundledMedicationRequestService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
                 .thenReturn(new Bundle());
 
@@ -53,7 +54,35 @@ public class BundledMedicationRequestControllerIntegrationTest {
                 "&visitType=OPD")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldReturn400OkOnInvalidVisitType() throws Exception {
+        when(bundledMedicationRequestService.isValidVisit("OP")).thenReturn(false);
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+                .thenReturn(new Bundle());
+
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId=0f90531a-285c-438b-b265-bb3abb4745bd" +
+                "&visitType=OP")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+        verify(bundledMedicationRequestService, times(1)).isValidVisit("OP");
+    }
+
+    @Test
+    public void shouldReturn400OkOnInvalidPatientId() throws Exception {
+        when(bundledMedicationRequestService.isValidVisit("OPD")).thenReturn(true);
+        when(bundledMedicationRequestService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
+        when(bundledMedicationRequestService.bundleMedicationRequestsFor(anyString(), anyString()))
+                .thenReturn(new Bundle());
+
+        mockMvc.perform(get("/rest/" + RestConstants.VERSION_1 + "/hip/medication?patientId=0f90531a-285c-438b-b265-bb3abb4745" +
+                "&visitType=OPD")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
         verify(bundledMedicationRequestService, times(1)).isValidVisit("OPD");
+        verify(bundledMedicationRequestService, times(1)).isValidPatient("0f90531a-285c-438b-b265-bb3abb4745");
+
     }
 
     @Test
