@@ -17,18 +17,14 @@ import java.util.List;
 @Repository
 public class CareContextRepositoryImpl implements CareContextRepository {
     private SessionFactory sessionFactory;
-    PatientService patientService;
 
     @Autowired
-    public CareContextRepositoryImpl(SessionFactory sessionFactory, PatientService patientService) {
+    public CareContextRepositoryImpl(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
-        this.patientService = patientService;
     }
 
     @Override
     public List<PatientCareContext> getPatientCareContext(String patientUuid) {
-        Patient patient = patientService.getPatientByUuid(patientUuid);
-        int patientId = patient.getPatientId();
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT\n" +
                 "    case\n" +
                 "        when care_context = 'PROGRAM' then patient_program_id\n" +
