@@ -29,7 +29,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
     public List<PatientCareContext> getPatientCareContext(String patientUuid) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
         int patientId = patient.getPatientId();
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT" +
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT\n" +
                 "    case\n" +
                 "        when care_context = 'PROGRAM' then patient_program_id\n" +
                 "        else visit_type_id end as careContextReference,\n" +
@@ -40,7 +40,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 "from\n" +
                 "    (\n" +
                 "        select\n" +
-                "            e.patient_id, p2.program_id, vt.visit_type_id , vt.name ,\n" +
+                "            p3.uuid,e.patient_id, p2.program_id, vt.visit_type_id , vt.name ,\n" +
                 "            pp.patient_program_id , p2.name as program_name, vt.name as visit_type_name,\n" +
                 "            case\n" +
                 "                when p2.program_id is null then 'VISIT_TYPE'\n" +
@@ -60,18 +60,20 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 "                        v.visit_id = e.visit_id\n" +
                 "                    and v.patient_id = e.patient_id\n" +
                 "                left join visit_type vt on\n" +
-                "                    v.visit_type_id = vt.visit_type_id ) as a\n" +
+                "                    v.visit_type_id = vt.visit_type_id\n" +
+                "                left join person p3 on\n" +
+                "                \te.patient_id = p3.person_id) as a\n" +
                 "where\n" +
-                "        a.patient_id = :patientId" +
-                " group by " +
-                "care_context, " +
-                "case when care_context = 'PROGRAM' " +
-                "then patient_program_id else visit_type_id " +
+                "        a.uuid = :patientUuid\n" +
+                " group by \n" +
+                "care_context, \n" +
+                "case when care_context = 'PROGRAM' \n" +
+                "then patient_program_id else visit_type_id \n" +
                 "end")
                 .addScalar("careContextReference", IntegerType.INSTANCE)
                 .addScalar("careContextType", StringType.INSTANCE)
                 .addScalar("careContextName", StringType.INSTANCE);
-        query.setParameter("patientId", patientId);
+        query.setParameter("patientUuid", patientUuid);
         return query.setResultTransformer(Transformers.aliasToBean(PatientCareContext.class)).list();
     }
 }
