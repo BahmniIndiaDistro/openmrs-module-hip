@@ -8,6 +8,7 @@ import org.hibernate.transform.Transformers;
 import org.hibernate.type.IntegerType;
 import org.hibernate.type.StringType;
 import org.openmrs.Patient;
+import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -16,14 +17,18 @@ import java.util.List;
 @Repository
 public class CareContextRepositoryImpl implements CareContextRepository {
     private SessionFactory sessionFactory;
+    PatientService patientService;
 
     @Autowired
-    public CareContextRepositoryImpl(SessionFactory sessionFactory) {
+    public CareContextRepositoryImpl(SessionFactory sessionFactory, PatientService patientService) {
         this.sessionFactory = sessionFactory;
+        this.patientService = patientService;
     }
 
     @Override
-    public List<PatientCareContext> getPatientCareContext(Integer patientId) {
+    public List<PatientCareContext> getPatientCareContext(String patientUuid) {
+        Patient patient = patientService.getPatientByUuid(patientUuid);
+        int patientId = patient.getPatientId();
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT" +
                 "    case\n" +
                 "        when care_context = 'PROGRAM' then patient_program_id\n" +
@@ -65,20 +70,8 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 "end")
                 .addScalar("careContextReference", IntegerType.INSTANCE)
                 .addScalar("careContextType", StringType.INSTANCE)
-                .addScalar("careContextName",StringType.INSTANCE);
+                .addScalar("careContextName", StringType.INSTANCE);
         query.setParameter("patientId", patientId);
         return query.setResultTransformer(Transformers.aliasToBean(PatientCareContext.class)).list();
-    }
-
-    @Override
-    public boolean isPatientIdExist(Integer patientId) {
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT patient_id as patientId from patient " +
-                "where patient_id= :patientId")
-                .addScalar("patientId", IntegerType.INSTANCE);
-        query.setParameter("patientId", patientId);
-        if(query.setResultTransformer(Transformers.aliasToBean(Patient.class)).list().size()==0){
-            return false;
-        }
-        return true;
     }
 }
