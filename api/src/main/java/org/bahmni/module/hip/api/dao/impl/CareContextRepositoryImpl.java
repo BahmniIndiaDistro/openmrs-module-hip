@@ -7,8 +7,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.transform.Transformers;
 import org.hibernate.type.IntegerType;
 import org.hibernate.type.StringType;
-import org.openmrs.Patient;
-import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +25,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
     public List<PatientCareContext> getPatientCareContext(String patientUuid) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery("SELECT\n" +
                 "    case\n" +
-                "        when care_context = 'PROGRAM' then patient_program_id\n" +
+                "        when care_context = 'PROGRAM' then value_reference\n" +
                 "        else visit_type_id end as careContextReference,\n" +
                 "    care_context as careContextType,\n" +
                 "    case\n" +
@@ -36,7 +34,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 "from\n" +
                 "    (\n" +
                 "        select\n" +
-                "            p3.uuid,e.patient_id, p2.program_id, vt.visit_type_id , vt.name ,\n" +
+                "            ppa.value_reference,p3.uuid,e.patient_id, p2.program_id, vt.visit_type_id , vt.name ,\n" +
                 "            pp.patient_program_id , p2.name as program_name, vt.name as visit_type_name,\n" +
                 "            case\n" +
                 "                when p2.program_id is null then 'VISIT_TYPE'\n" +
@@ -58,7 +56,9 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 "                left join visit_type vt on\n" +
                 "                    v.visit_type_id = vt.visit_type_id\n" +
                 "                left join person p3 on\n" +
-                "                \te.patient_id = p3.person_id) as a\n" +
+                "                \te.patient_id = p3.person_id\n" +
+                "                left join patient_program_attribute ppa on\n" +
+                "                \tpp.patient_program_id=ppa.patient_program_id) as a\n" +
                 "where\n" +
                 "        a.uuid = :patientUuid\n" +
                 " group by \n" +
