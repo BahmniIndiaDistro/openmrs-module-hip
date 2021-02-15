@@ -23,7 +23,7 @@ public class FhirBundledDiagnosticReportBuilder {
 
         Bundle diagnosticReportBundle = FhirPrescription
                 .fromOpenmrsPrescription(openMrsPrescription, fhirResourceMapper)
-                .bundle(organizationContext.webUrl());
+                .bundleDiagnosticReport(organizationContext.webUrl());
 
         CareContext careContext = careContextService.careContextFor(
                 openMrsPrescription.getEncounter(),

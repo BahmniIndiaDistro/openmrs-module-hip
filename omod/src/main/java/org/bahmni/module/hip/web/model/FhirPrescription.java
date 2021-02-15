@@ -39,8 +39,10 @@ public class FhirPrescription {
         this.medicationRequests = medicationRequests;
     }
 
-    private FhirPrescription(List<Observation> observations) {
+    private FhirPrescription(Date encounterDatetime, List<Observation> observations, Integer encounterID) {
+        this.encounterTimestamp = encounterDatetime;
         this.observations = observations;
+        this.encounterID = encounterID;
     }
 
     public static FhirPrescription from(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
@@ -57,8 +59,10 @@ public class FhirPrescription {
     }
 
     public static FhirPrescription fromOpenmrsPrescription(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
+        Date encounterDatetime = openMrsPrescription.getEncounter().getEncounterDatetime();
+        Integer encounterId = openMrsPrescription.getEncounter().getId();
         List<Observation> observations = openMrsPrescription.getEncounter().getAllObs().stream().map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
-        return new FhirPrescription(observations);
+        return new FhirPrescription(encounterDatetime, observations, encounterId);
     }
 
     public Bundle bundle(String webUrl){
@@ -71,6 +75,14 @@ public class FhirPrescription {
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        return bundle;
+    }
+
+    public Bundle bundleDiagnosticReport(String webUrl) {
+        String bundleID = String.format("PR-%d", encounterID);
+        Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
+
+        FHIRUtils.addToBundleEntry(bundle, observations, false);
         return bundle;
     }
 

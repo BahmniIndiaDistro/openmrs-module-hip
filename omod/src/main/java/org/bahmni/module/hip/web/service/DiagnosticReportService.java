@@ -3,13 +3,19 @@ package org.bahmni.module.hip.web.service;
 import org.apache.log4j.Logger;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
-import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.OpenMrsPrescription;
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.Obs;
+import org.openmrs.Patient;
+import org.openmrs.api.EncounterService;
+import org.openmrs.api.PatientService;
+import org.openmrs.parameter.EncounterSearchCriteria;
+import org.openmrs.parameter.EncounterSearchCriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,23 +24,47 @@ public class DiagnosticReportService {
 
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder;
+    private final PatientService patientService;
+    private final EncounterService encounterService;
+
+
 
     @Autowired
-    public DiagnosticReportService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder) {
+    public DiagnosticReportService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder, PatientService patientService, EncounterService encounterService) {
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
+        this.patientService = patientService;
+        this.encounterService = encounterService;
     }
 
-    public List<DiagnosticReportBundle> getDiagnosticReports(String patientIdUuid, DateRange dateRange, String visitType) {
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientIdUuid, dateRange, visitType));
+    public List<DiagnosticReportBundle> getDiagnosticReports(String patientUuid, DateRange dateRange, String visitType) {
 
-        if (drugOrders.isEmpty())
-            return new ArrayList<>();
+        Date fromDate = dateRange.getFrom();
+        Date toDate = dateRange.getTo();
 
-        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
-                .from(drugOrders.groupByEncounter());
+        Patient patient = patientService.getPatientByUuid(patientUuid);
 
-        return openMrsPrescriptions
+        EncounterType encounter_Type = encounterService.getEncounterType("RADIOLOGY");
+
+        HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
+
+        if (patient != null) {
+            EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder().setPatient(patient).setFromDate(fromDate).
+                    setToDate(toDate).setIncludeVoided(false);
+            if (encounter_Type != null) {
+                encounterSearchCriteriaBuilder.setEncounterTypes(Arrays.asList(encounter_Type));
+            }
+
+            EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
+
+            List<Encounter> encounters = encounterService.getEncounters(encounterSearchCriteria);
+
+            for (Encounter e : encounters) {
+                encounterListMap.put(e, new ArrayList<>(e.getAllObs()));
+            }
+        }
+
+        return encounterListMap
                 .stream()
                 .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
