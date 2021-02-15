@@ -18,7 +18,7 @@ public class OpenMrsPrescription {
     private Set<EncounterProvider> encounterProviders;
     private DrugOrders drugOrders;
     private Patient patient;
-    private Obs obs;
+    private List<Obs> obs;
 
     private OpenMrsPrescription(@NotEmpty Encounter encounter, DrugOrders drugOrders) {
         this.encounter = encounter;
@@ -27,7 +27,7 @@ public class OpenMrsPrescription {
         this.drugOrders = drugOrders;
     }
 
-    private OpenMrsPrescription(@NotEmpty Encounter encounter, Obs obs) {
+    private OpenMrsPrescription(@NotEmpty Encounter encounter, List<Obs> obs) {
         this.encounter = encounter;
         this.encounterProviders = encounter.getEncounterProviders();
         this.patient = encounter.getPatient();
@@ -43,7 +43,7 @@ public class OpenMrsPrescription {
                 .collect(Collectors.toList());
     }
 
-    public static List<OpenMrsPrescription> fromDiagnosticReport(Map<Encounter, Obs> encounterDrugOrdersMap) {
+    public static List<OpenMrsPrescription> fromDiagnosticReport(Map<Encounter, List<Obs>> encounterDrugOrdersMap) {
         return encounterDrugOrdersMap
                 .entrySet()
                 .stream()
