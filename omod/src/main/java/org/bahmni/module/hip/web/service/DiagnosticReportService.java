@@ -30,7 +30,10 @@ public class DiagnosticReportService {
 
 
     @Autowired
-    public DiagnosticReportService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder, PatientService patientService, EncounterService encounterService) {
+    public DiagnosticReportService(OpenMRSDrugOrderClient openMRSDrugOrderClient,
+                                   FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder,
+                                   PatientService patientService,
+                                   EncounterService encounterService) {
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
@@ -49,10 +52,11 @@ public class DiagnosticReportService {
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
 
         if (patient != null) {
-            EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder().setPatient(patient).setFromDate(fromDate).
+            EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder()
+                    .setPatient(patient).setFromDate(fromDate).
                     setToDate(toDate).setIncludeVoided(false);
             if (encounter_Type != null) {
-                encounterSearchCriteriaBuilder.setEncounterTypes(Arrays.asList(encounter_Type));
+                encounterSearchCriteriaBuilder.setEncounterTypes(Collections.singletonList(encounter_Type));
             }
 
             EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
@@ -63,8 +67,9 @@ public class DiagnosticReportService {
                 encounterListMap.put(e, new ArrayList<>(e.getAllObs()));
             }
         }
+        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.fromDiagnosticReport(encounterListMap);
 
-        return encounterListMap
+        return openMrsPrescriptions
                 .stream()
                 .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
