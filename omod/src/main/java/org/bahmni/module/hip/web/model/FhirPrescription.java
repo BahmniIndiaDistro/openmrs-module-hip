@@ -3,15 +3,10 @@ package org.bahmni.module.hip.web.model;
 import lombok.Getter;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Composition;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Practitioner;
-import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
+import org.openmrs.Obs;
+import org.openmrs.module.fhir2.model.FhirDiagnosticReport;
 
 import java.util.Date;
 import java.util.List;
@@ -23,6 +18,7 @@ import java.util.stream.Collectors;
 @Getter
 public class FhirPrescription {
 
+    private List<Observation> observations;
     private Date encounterTimestamp;
     private Integer encounterID;
     private Encounter encounter;
@@ -43,6 +39,10 @@ public class FhirPrescription {
         this.medicationRequests = medicationRequests;
     }
 
+    private FhirPrescription(List<Observation> observations) {
+        this.observations = observations;
+    }
+
     public static FhirPrescription from(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
 
         Date encounterDatetime = openMrsPrescription.getEncounter().getEncounterDatetime();
@@ -53,8 +53,12 @@ public class FhirPrescription {
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsPrescription.getEncounterProviders());
         List<MedicationRequest> medicationRequests = medicationRequestsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
         List<Medication> medications = medicationsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
-
         return new FhirPrescription(encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, medications, medicationRequests);
+    }
+
+    public static FhirPrescription fromOpenmrsPrescription(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
+        List<Observation> observations = openMrsPrescription.getEncounter().getAllObs().stream().map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
+        return new FhirPrescription(observations);
     }
 
     public Bundle bundle(String webUrl){
