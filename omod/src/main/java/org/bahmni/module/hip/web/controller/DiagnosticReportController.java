@@ -3,6 +3,7 @@ package org.bahmni.module.hip.web.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bahmni.module.hip.web.client.ClientError;
+import org.bahmni.module.hip.web.model.BundledDiagnosticReportResponse;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.service.DiagnosticReportService;
@@ -54,6 +55,6 @@ public class DiagnosticReportController extends BaseRestController {
                     diagnosticReportService.getDiagnosticReports(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .body(diagnosticReportBundle);
+                    .body(new BundledDiagnosticReportResponse(diagnosticReportBundle));
     }
 }

@@ -62,6 +62,10 @@ public class FhirPrescription {
         Date encounterDatetime = openMrsPrescription.getEncounter().getEncounterDatetime();
         Integer encounterId = openMrsPrescription.getEncounter().getId();
         List<Observation> observations = openMrsPrescription.getEncounter().getAllObs().stream().map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
+        for (Observation o : observations) {
+            String valueText = o.getValueStringType().getValueAsString();
+            o.getValueStringType().setValueAsString("/document_images/" + valueText);
+        }
         return new FhirPrescription(encounterDatetime, observations, encounterId);
     }
 

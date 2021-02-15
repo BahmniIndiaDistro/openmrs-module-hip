@@ -47,7 +47,9 @@ public class DiagnosticReportService {
 
         Patient patient = patientService.getPatientByUuid(patientUuid);
 
-        EncounterType encounter_Type = encounterService.getEncounterType("RADIOLOGY");
+        List<EncounterType> encounterTypes = new ArrayList<>();
+        encounterTypes.add(encounterService.getEncounterType("RADIOLOGY"));
+        encounterTypes.add(encounterService.getEncounterType("Patient Document"));
 
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
 
@@ -55,9 +57,7 @@ public class DiagnosticReportService {
             EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder()
                     .setPatient(patient).setFromDate(fromDate).
                     setToDate(toDate).setIncludeVoided(false);
-            if (encounter_Type != null) {
-                encounterSearchCriteriaBuilder.setEncounterTypes(Collections.singletonList(encounter_Type));
-            }
+            encounterSearchCriteriaBuilder.setEncounterTypes(encounterTypes);
 
             EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
 
