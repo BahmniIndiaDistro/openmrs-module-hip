@@ -74,6 +74,21 @@ public class EncounterDaoImpl implements EncounterDao {
             "\t\tand value_reference = :programEnrollmentId )\n" +
             "\tand pp.date_enrolled between :fromDate and :toDate ;";
 
+    private String sqlGetEncounterIdsForProgramForDiagnosticReports = "SELECT e.encounter_id from patient_program pp \n" +
+            " \t\t\t\tinner join obs o on \n" +
+            " \t\t\t\to.person_id = pp.patient_id\n" +
+            " \t\t\t\tinner join encounter e on \n" +
+            " \t\t\t\te.patient_id = o.person_id \n" +
+            " \t\t\t\tinner join person p on \n" +
+            " \t\t\t\tp.person_id = o.person_id \n" +
+            " \t\t\t\tinner join program p2 on \n" +
+            " \t\t\t\tp2.program_id = pp.program_id \n" +
+            " \t\t\t\tinner join patient_program_attribute ppt on \n" +
+            " \t\t\t\tppt.patient_program_id = pp.patient_program_id \n" +
+            " \t\t\twhere (e.encounter_type =6 or e.encounter_type =9) and o.void_reason is null and o.concept_id=35 \n" +
+            " \t\t\tand p.uuid = :patientUUID and p2.name= :programName and  ppt.value_reference= :programEnrollmentId and" +
+            "pp.date_enrolled between :fromDate and :toDate ";
+
     @Override
     public List<Integer> GetEncounterIdsForVisit(String patientUUID, String visit, Date fromDate, Date toDate) {
 
@@ -90,6 +105,18 @@ public class EncounterDaoImpl implements EncounterDao {
     @Override
     public List<Integer> GetEncounterIdsForProgram(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgram);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("programName", program);
+        query.setParameter("programEnrollmentId", programEnrollmentID);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+
+        return query.list();
+    }
+
+    @Override
+    public List<Integer> GetEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForDiagnosticReports);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);
         query.setParameter("programEnrollmentId", programEnrollmentID);

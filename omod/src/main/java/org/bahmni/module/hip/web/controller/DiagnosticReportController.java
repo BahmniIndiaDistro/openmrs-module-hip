@@ -50,7 +50,7 @@ public class DiagnosticReportController extends BaseRestController {
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         List<DiagnosticReportBundle> diagnosticReportBundle =
-                diagnosticReportService.getDiagnosticReports(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+                diagnosticReportService.getDiagnosticReportsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundle));
@@ -75,7 +75,8 @@ public class DiagnosticReportController extends BaseRestController {
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         List<DiagnosticReportBundle> diagnosticReportBundles =
-                diagnosticReportService.getDiagnosticReportsForProgram(p patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), programName, programEnrollmentId);
+                diagnosticReportService.getDiagnosticReportsForProgram(patientId, new DateRange(parseDate(fromDate),
+                        parseDate(toDate)), programName, programEnrollmentId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));

@@ -51,7 +51,7 @@ public class DiagnosticReportControllerTest extends TestCase {
     public void shouldReturn200OkWhenfromDateToDateAndPatientIdAreGiven() throws Exception {
         when(validationService.isValidVisit("IPD")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(diagnosticReportService.getDiagnosticReports(anyString(), any(), anyString()))
+        when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
                 .param("visitType", "IPD")
@@ -66,7 +66,7 @@ public class DiagnosticReportControllerTest extends TestCase {
     public void shouldReturn400OkOnInvalidVisitType() throws Exception {
         when(validationService.isValidVisit("OP")).thenReturn(false);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(diagnosticReportService.getDiagnosticReports(anyString(), any(), anyString()))
+        when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
                 .param("visitType", "OP")
@@ -81,7 +81,7 @@ public class DiagnosticReportControllerTest extends TestCase {
     public void shouldReturn400OkOnInvalidPatientId() throws Exception {
         when(validationService.isValidVisit("IPD")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
-        when(diagnosticReportService.getDiagnosticReports(anyString(), any(), anyString()))
+        when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
                 .param("visitType", "IPD")
