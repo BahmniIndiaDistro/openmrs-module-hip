@@ -14,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.util.List;
 
@@ -62,7 +64,8 @@ public class PrescriptionController extends BaseRestController {
             @RequestParam String toDate,
             @RequestParam String programName,
             @RequestParam String programEnrollmentId
-    ) throws ParseException {
+    ) throws ParseException, UnsupportedEncodingException {
+        programName = URLDecoder.decode(programName, "UTF-8");
         if (patientId == null || patientId.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
         if (programName == null || programName.isEmpty())
