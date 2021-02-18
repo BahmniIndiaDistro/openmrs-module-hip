@@ -1,15 +1,10 @@
 package org.bahmni.module.hip.web.service;
 
-import org.bahmni.module.hip.api.dao.DiagnosticReportDao;
 import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.model.OpenMrsPrescription;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterType;
-import org.openmrs.Obs;
-import org.openmrs.Patient;
-import org.openmrs.VisitType;
+import org.openmrs.*;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.VisitService;
@@ -27,22 +22,22 @@ public class DiagnosticReportService {
     private final PatientService patientService;
     private final EncounterService encounterService;
     private final VisitService visitService;
-    private final DiagnosticReportDao diagnosticReportDao;
     private final EncounterDao encounterDao;
 
     @Autowired
     public DiagnosticReportService(FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder,
                                    PatientService patientService,
-                                   EncounterService encounterService, VisitService visitService, DiagnosticReportDao diagnosticReportDao, EncounterDao encounterDao) {
+                                   EncounterService encounterService,
+                                   VisitService visitService,
+                                   EncounterDao encounterDao) {
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
         this.encounterService = encounterService;
         this.visitService = visitService;
-        this.diagnosticReportDao = diagnosticReportDao;
         this.encounterDao = encounterDao;
     }
 
-    public List<DiagnosticReportBundle> getDiagnosticReports(String patientUuid, DateRange dateRange, String visitType) {
+    public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, DateRange dateRange, String visitType) {
 
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
@@ -79,17 +74,14 @@ public class DiagnosticReportService {
                 .setFromDate(fromDate)
                 .setToDate(toDate)
                 .setIncludeVoided(false)
-                .setEncounterTypes(encounterTypes);
+                .setEncounterTypes(encounterTypes)
+                .setVisitTypes(Collections.singletonList(visitTypeFromService));
 
         EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
         List<Encounter> encounters = encounterService.getEncounters(encounterSearchCriteria);
-        Integer[] encounterIds = encounterDao.GetEncounterIdsForProgram(patientUuid, programName, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
+        Integer[] encounterIds = encounterDao.GetEncounterIdsForVisit(patient.getUuid(),visitType, fromDate, toDate).toArray(new Integer[0]);
         List<Integer> eIds = Arrays.asList(encounterIds);
-        for(Encounter e: encounters) {
-            if (!eIds.contains(e.getId())) {
-                encounters.remove(e);
-            }
-        }
+        encounters.removeIf(e -> !eIds.contains(e.getId()));
 
         for (Encounter e : encounters) {
             encounterListMap.put(e, new ArrayList<>(e.getAllObs()));
@@ -107,6 +99,21 @@ public class DiagnosticReportService {
         encounterTypes.add(encounterService.getEncounterType("RADIOLOGY"));
         encounterTypes.add(encounterService.getEncounterType("Patient Document"));
 
+        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForPrograms(fromDate, toDate, patient, encounterTypes, programName,programEnrollmentId);
+        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.fromDiagnosticReport(encounterListMap);
+
+        return openMrsPrescriptions
+                .stream()
+                .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
+                .collect(Collectors.toList());
+
+    }
+    private HashMap<Encounter, List<Obs>> getAllObservationsForPrograms(Date fromDate, Date toDate,
+                                                             Patient patient,
+                                                             List<EncounterType> encounterTypes,
+                                                             String programName,
+                                                             String programEnrollmentId) {
+        HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
         EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder()
                 .setPatient(patient)
                 .setFromDate(fromDate)
@@ -116,13 +123,14 @@ public class DiagnosticReportService {
 
         EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
         List<Encounter> encounters = encounterService.getEncounters(encounterSearchCriteria);
-        Integer[] encounterIds = encounterDao.GetEncounterIdsForProgram(patientUuid, programName, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
-        List<Integer> eIds = Arrays.asList(encounterIds);
-        for(Encounter e: encounters) {
-            if (!eIds.contains(e.getId())) {
-                encounters.remove(e);
-            }
-        }
+        Integer[] encounterIds = encounterDao.GetEncounterIdsForProgramForDiagnosticReport(patient.getUuid(),programName ,
+                programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
+        List<Integer> encounterIdsForPrograms = Arrays.asList(encounterIds);
+        encounters.removeIf(e -> !encounterIdsForPrograms.contains(e.getId()));
 
+        for (Encounter e : encounters) {
+            encounterListMap.put(e, new ArrayList<>(e.getAllObs()));
+        }
+        return encounterListMap;
     }
 }
