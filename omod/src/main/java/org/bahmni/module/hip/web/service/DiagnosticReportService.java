@@ -47,7 +47,6 @@ public class DiagnosticReportService {
     }
 
     public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, DateRange dateRange, String visitType) {
-
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
 
@@ -88,7 +87,7 @@ public class DiagnosticReportService {
 
         EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
         List<Encounter> encounters = encounterService.getEncounters(encounterSearchCriteria);
-        Integer[] encounterIds = encounterDao.GetEncounterIdsForVisit(patient.getUuid(),visitType, fromDate, toDate).toArray(new Integer[0]);
+        Integer[] encounterIds = encounterDao.GetEncounterIdsForVisit(patient.getUuid(), visitType, fromDate, toDate).toArray(new Integer[0]);
         List<Integer> eIds = Arrays.asList(encounterIds);
         encounters.removeIf(e -> !eIds.contains(e.getId()));
 
@@ -98,7 +97,7 @@ public class DiagnosticReportService {
         return encounterListMap;
     }
 
-    public List<DiagnosticReportBundle> getDiagnosticReportsForProgram(String patientUuid,  DateRange dateRange, String programName, String programEnrollmentId) {
+    public List<DiagnosticReportBundle> getDiagnosticReportsForProgram(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId) {
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
 
@@ -108,7 +107,7 @@ public class DiagnosticReportService {
         encounterTypes.add(encounterService.getEncounterType("RADIOLOGY"));
         encounterTypes.add(encounterService.getEncounterType("Patient Document"));
 
-        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForPrograms(fromDate, toDate, patient, encounterTypes, programName,programEnrollmentId);
+        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForPrograms(fromDate, toDate, patient, encounterTypes, programName, programEnrollmentId);
         List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.fromDiagnosticReport(encounterListMap);
 
         return openMrsPrescriptions
@@ -117,11 +116,12 @@ public class DiagnosticReportService {
                 .collect(Collectors.toList());
 
     }
+
     private HashMap<Encounter, List<Obs>> getAllObservationsForPrograms(Date fromDate, Date toDate,
-                                                             Patient patient,
-                                                             List<EncounterType> encounterTypes,
-                                                             String programName,
-                                                             String programEnrollmentId) {
+                                                                        Patient patient,
+                                                                        List<EncounterType> encounterTypes,
+                                                                        String programName,
+                                                                        String programEnrollmentId) {
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
         EncounterSearchCriteriaBuilder encounterSearchCriteriaBuilder = new EncounterSearchCriteriaBuilder()
                 .setPatient(patient)
@@ -132,7 +132,7 @@ public class DiagnosticReportService {
 
         EncounterSearchCriteria encounterSearchCriteria = encounterSearchCriteriaBuilder.createEncounterSearchCriteria();
         List<Encounter> encounters = encounterService.getEncounters(encounterSearchCriteria);
-        Integer[] encounterIds = encounterDao.GetEncounterIdsForProgramForDiagnosticReport(patient.getUuid(),programName ,
+        Integer[] encounterIds = encounterDao.GetEncounterIdsForProgramForDiagnosticReport(patient.getUuid(), programName,
                 programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
         List<Integer> encounterIdsForPrograms = Arrays.asList(encounterIds);
         encounters.removeIf(e -> !encounterIdsForPrograms.contains(e.getId()));

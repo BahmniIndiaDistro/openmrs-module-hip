@@ -73,7 +73,7 @@ public class DiagnosticReportController extends BaseRestController {
         if (programName == null || programName.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
         if (!validationService.isValidProgram(programName))
-            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+            return ResponseEntity.badRequest().body(ClientError.invalidProgramName());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         List<DiagnosticReportBundle> diagnosticReportBundles =
