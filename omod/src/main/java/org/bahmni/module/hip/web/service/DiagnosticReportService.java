@@ -4,7 +4,11 @@ import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.model.OpenMrsPrescription;
-import org.openmrs.*;
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.Obs;
+import org.openmrs.Patient;
+import org.openmrs.VisitType;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.VisitService;
@@ -13,7 +17,12 @@ import org.openmrs.parameter.EncounterSearchCriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service

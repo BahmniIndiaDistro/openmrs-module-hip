@@ -53,7 +53,7 @@ public class DiagnosticReportControllerTest extends TestCase {
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
-        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
+        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports/visit", RestConstants.VERSION_1))
                 .param("visitType", "IPD")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
@@ -68,7 +68,7 @@ public class DiagnosticReportControllerTest extends TestCase {
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
-        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
+        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports/visit", RestConstants.VERSION_1))
                 .param("visitType", "OP")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
@@ -78,12 +78,12 @@ public class DiagnosticReportControllerTest extends TestCase {
     }
 
     @Test
-    public void shouldReturn400OkOnInvalidPatientId() throws Exception {
+    public void shouldReturn400OnInvalidPatientId() throws Exception {
         when(validationService.isValidVisit("IPD")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
         when(diagnosticReportService.getDiagnosticReportsForVisit(anyString(), any(), anyString()))
                 .thenReturn(EMPTY_LIST);
-        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
+        mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports/visit", RestConstants.VERSION_1))
                 .param("visitType", "IPD")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745")
                 .param("fromDate", "2020-01-01")
@@ -94,8 +94,8 @@ public class DiagnosticReportControllerTest extends TestCase {
 
     @Test
     public void shouldReturnPatientIdRequestParameterIsMandatoryErrorMessage() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
+        MvcResult mvcResult = mockMvc.perform(get(String.format("/rest/%s/hip/diagnosticReports/program", RestConstants.VERSION_1))
+                .param("programName", "IPD")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
                 .accept(MediaType.APPLICATION_JSON))

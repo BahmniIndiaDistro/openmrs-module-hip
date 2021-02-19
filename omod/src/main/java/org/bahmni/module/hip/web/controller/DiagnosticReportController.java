@@ -1,7 +1,9 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.model.*;
+import org.bahmni.module.hip.web.model.BundledDiagnosticReportResponse;
+import org.bahmni.module.hip.web.model.DateRange;
+import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.service.DiagnosticReportService;
 import org.bahmni.module.hip.web.service.ValidationService;
 import org.openmrs.module.webservices.rest.web.RestConstants;

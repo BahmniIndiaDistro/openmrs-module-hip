@@ -1,17 +1,11 @@
 package org.bahmni.module.hip.api.dao.impl;
 
 import org.bahmni.module.hip.api.dao.EncounterDao;
-import org.bahmni.module.hip.model.PatientCareContext;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
-import org.hibernate.transform.Transformers;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.StringType;
-import org.openmrs.logic.op.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -87,7 +81,7 @@ public class EncounterDaoImpl implements EncounterDao {
             " \t\t\t\tppt.patient_program_id = pp.patient_program_id \n" +
             " \t\t\twhere (e.encounter_type =6 or e.encounter_type =9) and o.void_reason is null and o.concept_id=35 \n" +
             " \t\t\tand p.uuid = :patientUUID and p2.name= :programName and  ppt.value_reference= :programEnrollmentId and" +
-            "pp.date_enrolled between :fromDate and :toDate ";
+            " pp.date_enrolled between :fromDate and :toDate ";
 
     @Override
     public List<Integer> GetEncounterIdsForVisit(String patientUUID, String visit, Date fromDate, Date toDate) {
