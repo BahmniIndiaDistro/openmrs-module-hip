@@ -29,7 +29,7 @@ public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
 
     public List<DrugOrder> getDrugOrders(Patient patient, Date fromDate, Date toDate, OrderType orderType, String visitType) {
 
-        Integer [] encounterIds = encounterDao.GetEncounterIdsForVisit(patient.getUuid(), visitType, fromDate, toDate).toArray(new Integer[0]);
+        Integer [] encounterIds = encounterDao.GetEncounterIdsForVisitForPrescriptions(patient.getUuid(), visitType, fromDate, toDate).toArray(new Integer[0]);
         if(encounterIds.length == 0)
             return new ArrayList< DrugOrder > ();
         Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(Order.class);
@@ -47,7 +47,7 @@ public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
 
     public List<DrugOrder> getDrugOrdersForProgram(Patient patient, Date fromDate, Date toDate, OrderType orderType, String program, String programEnrollmentId) {
 
-        Integer [] encounterIds = encounterDao.GetEncounterIdsForProgram(patient.getUuid(), program, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
+        Integer [] encounterIds = encounterDao.GetEncounterIdsForProgramForPrescriptions(patient.getUuid(), program, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
         if(encounterIds.length == 0)
             return new ArrayList< DrugOrder > ();
         Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(Order.class);

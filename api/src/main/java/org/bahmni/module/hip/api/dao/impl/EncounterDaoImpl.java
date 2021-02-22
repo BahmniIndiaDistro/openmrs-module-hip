@@ -19,7 +19,7 @@ public class EncounterDaoImpl implements EncounterDao {
         this.sessionFactory = sessionFactory;
     }
 
-    private String sqlGetEncounterIdsForVisit = "select\n" +
+    private String sqlGetEncounterIdsForVisitForPrescriptions = "select\n" +
             "\te.encounter_id\n" +
             "from\n" +
             "\tvisit as v\n" +
@@ -37,7 +37,7 @@ public class EncounterDaoImpl implements EncounterDao {
             "\tand v.date_started between :fromDate and :toDate\n" +
             "\tand v.patient_id = (select person_id from person as p2 where p2.uuid = :patientUUID);";
 
-    private String sqlGetEncounterIdsForProgram = "select\n" +
+    private String sqlGetEncounterIdsForProgramForPrescriptions = "select\n" +
             "\tle.encounter_id\n" +
             "from\n" +
             "\tpatient_program as pp\n" +
@@ -68,25 +68,56 @@ public class EncounterDaoImpl implements EncounterDao {
             "\t\tand value_reference = :programEnrollmentId )\n" +
             "\tand pp.date_enrolled between :fromDate and :toDate ;";
 
-    private String sqlGetEncounterIdsForProgramForDiagnosticReports = "SELECT e.encounter_id from patient_program pp \n" +
-            " \t\t\t\tinner join obs o on \n" +
-            " \t\t\t\to.person_id = pp.patient_id\n" +
-            " \t\t\t\tinner join encounter e on \n" +
-            " \t\t\t\te.patient_id = o.person_id \n" +
-            " \t\t\t\tinner join person p on \n" +
-            " \t\t\t\tp.person_id = o.person_id \n" +
-            " \t\t\t\tinner join program p2 on \n" +
-            " \t\t\t\tp2.program_id = pp.program_id \n" +
-            " \t\t\t\tinner join patient_program_attribute ppt on \n" +
-            " \t\t\t\tppt.patient_program_id = pp.patient_program_id \n" +
-            " \t\t\twhere (e.encounter_type =6 or e.encounter_type =9) and o.void_reason is null and o.concept_id=35 \n" +
-            " \t\t\tand p.uuid = :patientUUID and p2.name= :programName and  ppt.value_reference= :programEnrollmentId and" +
-            " pp.date_enrolled between :fromDate and :toDate ";
+    private String sqlGetEncounterIdsForVisitForDiagnosticReports = "select \n" +
+            "            e.encounter_id \n" +
+            "            from \n" +
+            "            visit as v \n" +
+            "            inner join visit_type as vt on \n" +
+            "            \tvt.visit_type_id = v.visit_type_id \n" +
+            "            inner join encounter as e on \n" +
+            "            \te.visit_id = v.visit_id\n" +
+            "            inner join obs o on \n" +
+            "            \to.encounter_id = e.encounter_id \n" +
+            "            where\n" +
+            "            (e.encounter_type =6 or e.encounter_type =9) \n" +
+            "            and vt.name = :visit\n" +
+            "            and o.concept_id =35\n" +
+            "            and o.void_reason is null\n" +
+            "            and e.encounter_id not in ( \n" +
+            "            select \n" +
+            "            encounter_id \n" +
+            "            from \n" +
+            "            episode_encounter) \n" +
+            "            and v.date_started between :fromDate and :toDate \n" +
+            "            and v.patient_id = (select person_id from person as p2 where p2.uuid = :patientUUID) ;";
+
+    private String sqlGetEncounterIdsForProgramForDiagnosticReports = "SELECT encounter_id from" +
+            "(SELECT o.encounter_id,p.uuid,p2.name,ppa.value_reference,pp.date_enrolled,o.concept_id," +
+            "o.value_text,o.void_reason from obs o\n" +
+            "\tinner join person p on \t\n" +
+            "\t\tp.person_id = o.person_id \n" +
+            "\tinner join patient_program pp on \t\n" +
+            "\t\tpp.patient_id = p.person_id \n" +
+            "\tinner join program p2 on \t\n" +
+            "\t\tp2.program_id = pp.program_id \n" +
+            "\tinner join patient_program_attribute ppa on \t\n" +
+            "\t\tppa.patient_program_id = pp.patient_program_id \n" +
+            "\twhere encounter_id in \n" +
+            "\t(SELECT encounter_id from encounter e  where (e.encounter_type =6 or e.encounter_type =9) and visit_id  in \n" +
+            "\t\t(SELECT visit_id from encounter e2\n" +
+            "\t\t\tinner join episode_encounter ee  on \n" +
+            "\t\t\t\te2.encounter_id = ee.encounter_id ))) as t \n" +
+            "\t\t\t\t\t  where concept_id=35 \n" +
+            "\t\t\t\t\t\t\tand void_reason is null\n" +
+            "\t\t\t\t\t\t\tand uuid = :patientUUID\n" +
+            "\t\t\t\t\t\t\tand name= :programName\n" +
+            "\t\t\t\t\t\t\tand value_reference = :programEnrollmentId\n" +
+            "\t\t\t\t\t\t\tand date_enrolled between :fromDate and :toDate ;\n";
 
     @Override
-    public List<Integer> GetEncounterIdsForVisit(String patientUUID, String visit, Date fromDate, Date toDate) {
+    public List<Integer> GetEncounterIdsForVisitForPrescriptions(String patientUUID, String visit, Date fromDate, Date toDate) {
 
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisit);
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisitForPrescriptions);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("visit", visit);
         query.setParameter("fromDate", fromDate);
@@ -97,8 +128,8 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Integer> GetEncounterIdsForProgram(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgram);
+    public List<Integer> GetEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForPrescriptions);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);
         query.setParameter("programEnrollmentId", programEnrollmentID);
@@ -120,4 +151,16 @@ public class EncounterDaoImpl implements EncounterDao {
         return query.list();
     }
 
+    @Override
+    public List<Integer> GetEncounterIdsForVisitForDiagnosticReport(String patientUUID, String visit, Date fromDate, Date toDate) {
+
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisitForDiagnosticReports);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("visit", visit);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+
+
+        return query.list();
+    }
 }
