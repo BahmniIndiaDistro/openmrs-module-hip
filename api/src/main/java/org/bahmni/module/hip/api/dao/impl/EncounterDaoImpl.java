@@ -84,10 +84,8 @@ public class EncounterDaoImpl implements EncounterDao {
             "            and o.concept_id =35\n" +
             "            and o.void_reason is null\n" +
             "            and e.encounter_id not in ( \n" +
-            "            select \n" +
-            "            encounter_id \n" +
-            "            from \n" +
-            "            episode_encounter) \n" +
+            "            SELECT encounter_id from encounter e where e.visit_id in (SELECT visit_id from encounter e2 \n" +
+            "                      inner join episode_encounter ee  on e2.encounter_id = ee.encounter_id)) \n" +
             "            and v.date_started between :fromDate and :toDate \n" +
             "            and v.patient_id = (select person_id from person as p2 where p2.uuid = :patientUUID) ;";
 
