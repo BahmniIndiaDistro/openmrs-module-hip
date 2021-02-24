@@ -13,7 +13,8 @@ public enum ErrorCode {
     NO_VISIT_TYPE_SUPPLIED(1504),
     INVALID_VISIT_TYPE(1505),
     NO_PROGRAM_NAME_SUPPLIED (1506),
-    NO_PROGRAM_ID_SUPPLIED(1507);
+    NO_PROGRAM_ID_SUPPLIED(1507),
+    INVALID_PROGRAM_NAME(1508);
     private final int value;
 
     ErrorCode(int val) {

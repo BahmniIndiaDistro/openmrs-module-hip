@@ -66,9 +66,9 @@ public class PrescriptionController extends BaseRestController {
         if (patientId == null || patientId.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
         if (programName == null || programName.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
+            return ResponseEntity.badRequest().body(ClientError.noProgramNameProvided());
         if (!validationService.isValidProgram(programName))
-            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+            return ResponseEntity.badRequest().body(ClientError.invalidProgramName());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         List<PrescriptionBundle> prescriptionBundle =
