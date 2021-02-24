@@ -3,10 +3,16 @@ package org.bahmni.module.hip.web.model;
 import lombok.Getter;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Reference;
 import org.openmrs.EncounterProvider;
-import org.openmrs.Obs;
-import org.openmrs.module.fhir2.model.FhirDiagnosticReport;
 
 import java.util.Date;
 import java.util.List;
@@ -17,8 +23,6 @@ import java.util.stream.Collectors;
 
 @Getter
 public class FhirPrescription {
-
-    private List<Observation> observations;
     private Date encounterTimestamp;
     private Integer encounterID;
     private Encounter encounter;
@@ -39,12 +43,6 @@ public class FhirPrescription {
         this.medicationRequests = medicationRequests;
     }
 
-    private FhirPrescription(Date encounterDatetime, List<Observation> observations, Integer encounterID) {
-        this.encounterTimestamp = encounterDatetime;
-        this.observations = observations;
-        this.encounterID = encounterID;
-    }
-
     public static FhirPrescription from(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
 
         Date encounterDatetime = openMrsPrescription.getEncounter().getEncounterDatetime();
@@ -58,18 +56,8 @@ public class FhirPrescription {
         return new FhirPrescription(encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, medications, medicationRequests);
     }
 
-    public static FhirPrescription fromOpenmrsPrescription(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper) {
-        Date encounterDatetime = openMrsPrescription.getEncounter().getEncounterDatetime();
-        Integer encounterId = openMrsPrescription.getEncounter().getId();
-        List<Observation> observations = openMrsPrescription.getEncounter().getAllObs().stream().map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
-        for (Observation o : observations) {
-            String valueText = o.getValueStringType().getValueAsString();
-            o.getValueStringType().setValueAsString("/document_images/" + valueText);
-        }
-        return new FhirPrescription(encounterDatetime, observations, encounterId);
-    }
 
-    public Bundle bundle(String webUrl){
+    public Bundle bundle(String webUrl) {
         String bundleID = String.format("PR-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
 
@@ -82,15 +70,7 @@ public class FhirPrescription {
         return bundle;
     }
 
-    public Bundle bundleDiagnosticReport(String webUrl) {
-        String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
-
-        FHIRUtils.addToBundleEntry(bundle, observations, false);
-        return bundle;
-    }
-
-    private Composition compositionFrom(String webURL){
+    private Composition compositionFrom(String webURL) {
         Composition composition = initializeComposition(encounterTimestamp, webURL);
         Composition.SectionComponent compositionSection = composition.addSection();
 

@@ -3,13 +3,12 @@ package org.bahmni.module.hip.web.service;
 import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
-import org.bahmni.module.hip.web.model.OpenMrsPrescription;
+import org.bahmni.module.hip.web.model.OpenMrsDiagnosticReport;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
 import org.openmrs.Patient;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
-import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,19 +23,16 @@ public class DiagnosticReportService {
     private final FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder;
     private final PatientService patientService;
     private final EncounterService encounterService;
-    private final VisitService visitService;
     private final EncounterDao encounterDao;
 
     @Autowired
     public DiagnosticReportService(FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder,
                                    PatientService patientService,
                                    EncounterService encounterService,
-                                   VisitService visitService,
                                    EncounterDao encounterDao) {
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
         this.encounterService = encounterService;
-        this.visitService = visitService;
         this.encounterDao = encounterDao;
     }
 
@@ -45,9 +41,9 @@ public class DiagnosticReportService {
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
         HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(fromDate, toDate, patient, visitType);
-        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.fromDiagnosticReport(encounterListMap);
+        List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
 
-        return openMrsPrescriptions
+        return openMrsDiagnosticReports
                 .stream()
                 .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
@@ -73,9 +69,9 @@ public class DiagnosticReportService {
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
         HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForPrograms(fromDate, toDate, patient, programName, programEnrollmentId);
-        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.fromDiagnosticReport(encounterListMap);
+        List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
 
-        return openMrsPrescriptions
+        return openMrsDiagnosticReports
                 .stream()
                 .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
