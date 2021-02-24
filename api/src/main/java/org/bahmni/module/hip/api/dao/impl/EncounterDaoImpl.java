@@ -12,6 +12,9 @@ import java.util.List;
 @Repository
 public class EncounterDaoImpl implements EncounterDao {
 
+    private static final String RADIOLOGY_TYPE = "6";
+    private static final String PATIENT_DOCUMENT_TYPE = "9";
+    private static final String DOCUMENT_TYPE = "35";
     private SessionFactory sessionFactory;
 
     @Autowired
@@ -79,9 +82,9 @@ public class EncounterDaoImpl implements EncounterDao {
             "            inner join obs o on \n" +
             "            \to.encounter_id = e.encounter_id \n" +
             "            where\n" +
-            "            (e.encounter_type =6 or e.encounter_type =9) \n" +
+            "            (e.encounter_type =" + RADIOLOGY_TYPE + " or e.encounter_type =" + PATIENT_DOCUMENT_TYPE + ") \n" +
             "            and vt.name = :visit\n" +
-            "            and o.concept_id =35\n" +
+            "            and o.concept_id =" + DOCUMENT_TYPE + "\n" +
             "            and o.void_reason is null\n" +
             "            and e.encounter_id not in ( \n" +
             "            SELECT encounter_id from encounter e where e.visit_id in (SELECT visit_id from encounter e2 \n" +
@@ -89,28 +92,29 @@ public class EncounterDaoImpl implements EncounterDao {
             "            and v.date_started between :fromDate and :toDate \n" +
             "            and v.patient_id = (select person_id from person as p2 where p2.uuid = :patientUUID) ;";
 
-    private String sqlGetEncounterIdsForProgramForDiagnosticReports = "SELECT encounter_id from" +
-            "(SELECT o.encounter_id,p.uuid,p2.name,ppa.value_reference,pp.date_enrolled,o.concept_id," +
-            "o.value_text,o.void_reason from obs o\n" +
-            "\tinner join person p on \t\n" +
-            "\t\tp.person_id = o.person_id \n" +
-            "\tinner join patient_program pp on \t\n" +
-            "\t\tpp.patient_id = p.person_id \n" +
-            "\tinner join program p2 on \t\n" +
-            "\t\tp2.program_id = pp.program_id \n" +
-            "\tinner join patient_program_attribute ppa on \t\n" +
-            "\t\tppa.patient_program_id = pp.patient_program_id \n" +
-            "\twhere encounter_id in \n" +
-            "\t(SELECT encounter_id from encounter e  where (e.encounter_type =6 or e.encounter_type =9) and visit_id  in \n" +
-            "\t\t(SELECT visit_id from encounter e2\n" +
-            "\t\t\tinner join episode_encounter ee  on \n" +
-            "\t\t\t\te2.encounter_id = ee.encounter_id ))) as t \n" +
-            "\t\t\t\t\t  where concept_id=35 \n" +
-            "\t\t\t\t\t\t\tand void_reason is null\n" +
-            "\t\t\t\t\t\t\tand uuid = :patientUUID\n" +
-            "\t\t\t\t\t\t\tand name= :programName\n" +
-            "\t\t\t\t\t\t\tand value_reference = :programEnrollmentId\n" +
-            "\t\t\t\t\t\t\tand date_enrolled between :fromDate and :toDate ;\n";
+    private String sqlGetEncounterIdsForProgramForDiagnosticReports = "SELECT encounter_id from \n" +
+            "            (SELECT o.encounter_id,p.uuid,p2.name,ppa.value_reference,pp.date_enrolled,o.concept_id, \n" +
+            "            o.value_text,o.void_reason from obs o \n" +
+            "            inner join person p on  \n" +
+            "            p.person_id = o.person_id  \n" +
+            "            inner join patient_program pp on  \n" +
+            "            pp.patient_id = p.person_id  \n" +
+            "            inner join program p2 on  \n" +
+            "            p2.program_id = pp.program_id  \n" +
+            "            inner join patient_program_attribute ppa on  \n" +
+            "            ppa.patient_program_id = pp.patient_program_id  \n" +
+            "            where encounter_id in  \n" +
+            "            (SELECT encounter_id from encounter e  where (e.encounter_type =" + RADIOLOGY_TYPE +
+            " or e.encounter_type =" + PATIENT_DOCUMENT_TYPE + ") and visit_id  in  \n" +
+            "            (SELECT visit_id from encounter e2 \n" +
+            "            inner join episode_encounter ee  on  \n" +
+            "            e2.encounter_id = ee.encounter_id ))) as t  \n" +
+            "              where concept_id=" + DOCUMENT_TYPE + "  \n" +
+            "            and void_reason is null \n" +
+            "            and uuid = :patientUUID \n" +
+            "            and name= :programName \n" +
+            "            and value_reference = :programEnrollmentId \n" +
+            "            and date_enrolled between :fromDate and :toDate ;";
 
     @Override
     public List<Integer> GetEncounterIdsForVisitForPrescriptions(String patientUUID, String visit, Date fromDate, Date toDate) {
