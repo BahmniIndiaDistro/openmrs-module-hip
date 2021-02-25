@@ -83,4 +83,30 @@ public class DiagnosticReportController extends BaseRestController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
     }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/visit/lab", produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody
+    ResponseEntity<?> getLabResults(@RequestParam String patientId,
+                          @RequestParam String visitType,
+                          @RequestParam String fromDate,
+                          @RequestParam String toDate) throws ParseException {
+
+        if (patientId == null || patientId.isEmpty())
+            return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
+        if (visitType == null || visitType.isEmpty())
+            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
+        if (!validationService.isValidVisit(visitType))
+            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+        if (!validationService.isValidPatient(patientId))
+            return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
+
+        List<DiagnosticReportBundle> diagnosticReportBundle =
+                diagnosticReportService.getDiagnosticReportsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(new BundledDiagnosticReportResponse(diagnosticReportBundle));
+    }
+
 }

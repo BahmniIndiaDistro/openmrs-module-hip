@@ -165,4 +165,30 @@ public class EncounterDaoImpl implements EncounterDao {
 
         return query.list();
     }
+
+
+    @Override
+    public List<Integer> GetEncounterIdsForProgramForLabResults(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForDiagnosticReports);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("programName", program);
+        query.setParameter("programEnrollmentId", programEnrollmentID);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+
+        return query.list();
+    }
+
+    @Override
+    public List<Integer> GetEncounterIdsForVisitForLabResults(String patientUUID, String visit, Date fromDate, Date toDate) {
+
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisitForDiagnosticReports);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("visit", visit);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+
+
+        return query.list();
+    }
 }
