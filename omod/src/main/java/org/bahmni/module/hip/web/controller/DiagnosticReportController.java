@@ -6,6 +6,8 @@ import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.service.DiagnosticReportService;
 import org.bahmni.module.hip.web.service.ValidationService;
+import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
+import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResults;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,13 +102,13 @@ public class DiagnosticReportController extends BaseRestController {
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
 
-        List<DiagnosticReportBundle> diagnosticReportBundle =
-                diagnosticReportService.getDiagnosticReportsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+        LabOrderResults diagnosticReportBundle =
+                diagnosticReportService.getLabResultsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
 
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(new BundledDiagnosticReportResponse(diagnosticReportBundle));
+                .body(diagnosticReportBundle);
     }
 
 }

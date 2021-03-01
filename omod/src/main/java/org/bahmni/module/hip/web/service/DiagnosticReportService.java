@@ -8,6 +8,7 @@ import org.bahmni.module.hip.web.model.OpenMrsDiagnosticReport;
 import org.openmrs.*;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.VisitService;
 import org.openmrs.api.db.OrderDAO;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResults;
 import org.openmrs.module.bahmniemrapi.laborder.service.LabOrderResultsService;
@@ -31,6 +32,7 @@ public class DiagnosticReportService {
     private final EncounterService encounterService;
     private final EncounterDao encounterDao;
     private final org.bahmni.module.bahmnicore.dao.OrderDao orderDao;
+
     private LabOrderResultsService labOrderResultsService;
 
     @Autowired
@@ -106,12 +108,16 @@ public class DiagnosticReportService {
     }
 
 
-    public LabOrderResults getForPatient(String patientUuid, String visittype ) {
+    public LabOrderResults getLabResultsForVisit(String patientUuid, DateRange dateRange,  String visittype) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        List<Visit> visits = null;
+        List<Visit> visits, visitsWithOrders ;
+
+        List<Integer> visitsForVisitType =  encounterDao.GetEncounterIdsForVisitForLabResults(patientUuid, visittype, dateRange.getFrom(), dateRange.getTo() );
 
         visits = orderDao.getVisitsWithAllOrders(patient, "Order", true, null);
 
-        return labOrderResultsService.getAll(patient, visits, Integer.MAX_VALUE);
+        visitsWithOrders = visits.stream().filter(visit -> {return visitsForVisitType.contains(visit);}).collect(Collectors.toList());
+
+        return labOrderResultsService.getAll(patient, visitsWithOrders, Integer.MAX_VALUE);
     }
 }

@@ -116,6 +116,10 @@ public class EncounterDaoImpl implements EncounterDao {
             "            and value_reference = :programEnrollmentId \n" +
             "            and date_enrolled between :fromDate and :toDate ;";
 
+    private String sqlGetEncounterIdsForVisitForLabResults = "select distinct encounter.visit_id from encounter where encounter.visit_id not in (select encounter.visit_id from encounter inner join episode_encounter on episode_encounter.encounter_id = encounter.encounter_id) and patient_id=72;";
+
+    private String sqlGetEncounterIdsForProgramForLabResults = "select distinct encounter.visit_id from encounter where encounter.visit_id in (select encounter.visit_id from encounter inner join episode_encounter on episode_encounter.encounter_id = encounter.encounter_id) and patient_id=72;";
+
     @Override
     public List<Integer> GetEncounterIdsForVisitForPrescriptions(String patientUUID, String visit, Date fromDate, Date toDate) {
 
@@ -169,12 +173,12 @@ public class EncounterDaoImpl implements EncounterDao {
 
     @Override
     public List<Integer> GetEncounterIdsForProgramForLabResults(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForDiagnosticReports);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("programName", program);
-        query.setParameter("programEnrollmentId", programEnrollmentID);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForLabResults);
+       // query.setParameter("patientUUID", patientUUID);
+      //  query.setParameter("programName", program);
+       // query.setParameter("programEnrollmentId", programEnrollmentID);
+       // query.setParameter("fromDate", fromDate);
+       // query.setParameter("toDate", toDate);
 
         return query.list();
     }
@@ -182,11 +186,11 @@ public class EncounterDaoImpl implements EncounterDao {
     @Override
     public List<Integer> GetEncounterIdsForVisitForLabResults(String patientUUID, String visit, Date fromDate, Date toDate) {
 
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisitForDiagnosticReports);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("visit", visit);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForVisitForLabResults);
+//        query.setParameter("patientUUID", patientUUID);
+//        query.setParameter("visit", visit);
+//        query.setParameter("fromDate", fromDate);
+//        query.setParameter("toDate", toDate);
 
 
         return query.list();
