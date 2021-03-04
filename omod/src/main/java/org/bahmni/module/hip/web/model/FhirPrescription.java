@@ -8,7 +8,6 @@ import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
@@ -23,16 +22,19 @@ import java.util.stream.Collectors;
 
 @Getter
 public class FhirPrescription {
-    private Date encounterTimestamp;
-    private Integer encounterID;
-    private Encounter encounter;
-    private List<Practitioner> practitioners;
-    private Patient patient;
-    private Reference patientReference;
-    private List<Medication> medications;
-    private List<MedicationRequest> medicationRequests;
+    private final Date encounterTimestamp;
+    private final Integer encounterID;
+    private final Encounter encounter;
+    private final List<Practitioner> practitioners;
+    private final Patient patient;
+    private final Reference patientReference;
+    private final List<Medication> medications;
+    private final List<MedicationRequest> medicationRequests;
 
-    private FhirPrescription(Date encounterTimestamp, Integer encounterID, Encounter encounter, List<Practitioner> practitioners, Patient patient, Reference patientReference, List<Medication> medications, List<MedicationRequest> medicationRequests) {
+    private FhirPrescription(Date encounterTimestamp, Integer encounterID, Encounter encounter,
+                             List<Practitioner> practitioners, Patient patient,
+                             Reference patientReference, List<Medication> medications,
+                             List<MedicationRequest> medicationRequests) {
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
@@ -83,7 +85,7 @@ public class FhirPrescription {
                 .setSubject(patientReference);
 
         compositionSection
-                .setTitle("OPD Prescription")
+                .setTitle("Prescription")
                 .setCode(FHIRUtils.getPrescriptionType());
 
         medicationRequests

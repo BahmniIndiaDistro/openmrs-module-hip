@@ -4,7 +4,6 @@ import lombok.Getter;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterProvider;
-import org.openmrs.Obs;
 import org.openmrs.Patient;
 
 import java.util.List;
@@ -14,10 +13,10 @@ import java.util.stream.Collectors;
 
 @Getter
 public class OpenMrsPrescription {
-    private Encounter encounter;
-    private Set<EncounterProvider> encounterProviders;
-    private DrugOrders drugOrders;
-    private Patient patient;
+    private final Encounter encounter;
+    private final Set<EncounterProvider> encounterProviders;
+    private final DrugOrders drugOrders;
+    private final Patient patient;
 
     private OpenMrsPrescription(@NotEmpty Encounter encounter, DrugOrders drugOrders) {
         this.encounter = encounter;
