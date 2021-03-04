@@ -24,8 +24,16 @@
 
 
 	<!-- Annotation based controllers -->
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
+	<!-- <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/> -->
 
 	<context:component-scan base-package="org.bahmni.module.hip" />
 	<context:component-scan base-package="org.openmrs.module.fhir2" />
+	<context:component-scan base-package="org.openmrs.module.bahmniemrapi.laborder.service" />
+
+	<bean class="org.openmrs.module.bahmniemrapi.laborder.service.LabOrderResultsServiceImpl" id="labOrderResultsService"/>
+
+	<bean class="org.openmrs.ui.framework.StandardModuleUiConfiguration">
+		<property name="moduleId" value="bahmnicore"/>
+	</bean>
+
 </beans>

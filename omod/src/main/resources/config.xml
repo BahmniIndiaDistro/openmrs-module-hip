@@ -21,8 +21,14 @@
 	<require_version>${openmrs.platform.version}</require_version>
 
 	<require_modules>
+
+		<!-- <require_module>org.openmrs.module.webservices.rest</require_module> -->
+
 		<require_module>org.openmrs.module.webservices.rest</require_module>
 		<require_module version="1.0.0-20200925.143534-163">org.openmrs.module.fhir2</require_module>
+		<require_module>org.openmrs.module.emrapi</require_module>
+		<require_module>org.bahmni.module.bahmnicore</require_module>
+
 	</require_modules>
 	
 	<!-- AOP
@@ -40,6 +46,10 @@
 	</privilege>
 	 /Required Privileges -->
 
+	<advice>
+		<point>org.openmrs.module.bahmniemrapi.encountertransaction.service.BahmniEncounterTransactionService</point>
+		<class>org.openmrs.module.bahmniemrapi.encountertransaction.advisor.BahmniEncounterServiceAdvisor</class>
+	</advice>
 
 	<!-- Required Global Properties -->
 	<globalProperty>
