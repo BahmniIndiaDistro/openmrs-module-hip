@@ -26,6 +26,7 @@ public class HipOrderDaoImpl implements HipOrderDao {
     public List<Visit> GetVisitsWithOrders(String patientUUID, Date fromDate, Date toDate) {
         Session currentSession = this.sessionFactory.getCurrentSession();
 
+
         Query queryVisitsWithDrugOrders = currentSession.createQuery("select v from Orders o, Encounter e, Visit v where o.encounter = e.encounterId and e.visit = v.visitId and v.patient = (:patientId) " +
                 "and o.voided = false  group by v.visitId order by v.startDatetime desc");
 

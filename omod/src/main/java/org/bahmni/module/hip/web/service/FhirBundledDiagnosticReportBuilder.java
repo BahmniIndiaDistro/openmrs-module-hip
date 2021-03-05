@@ -9,6 +9,8 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class FhirBundledDiagnosticReportBuilder {
     private final CareContextService careContextService;
@@ -36,6 +38,17 @@ public class FhirBundledDiagnosticReportBuilder {
         return DiagnosticReportBundle.builder()
                 .bundle(diagnosticReportBundle)
                 .careContext(careContext)
+                .build();
+    }
+
+    public DiagnosticReportBundle fhirBundleResponseFor(FhirDiagnosticReport report) {
+        OrganizationContext organizationContext = organizationContextService.buildContext();
+
+        Bundle diagnosticReportBundle = report
+                .bundleLabResults(organizationContext.webUrl(), fhirResourceMapper);
+
+        return DiagnosticReportBundle.builder()
+                .bundle(diagnosticReportBundle)
                 .build();
     }
 }

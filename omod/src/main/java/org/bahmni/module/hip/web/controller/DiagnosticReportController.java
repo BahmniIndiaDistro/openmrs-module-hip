@@ -102,13 +102,13 @@ public class DiagnosticReportController extends BaseRestController {
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
 
-  //      LabOrderResults diagnosticReportBundle =
-    //            diagnosticReportService.getLabResultsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+        List<DiagnosticReportBundle> diagnosticReportBundles = diagnosticReportService.getLabResultsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+
 
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body("");
+                .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
     }
 
 }

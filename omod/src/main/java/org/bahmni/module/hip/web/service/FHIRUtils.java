@@ -54,6 +54,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getDiagnosticType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setCode("721981007");
+        coding.setDisplay("Diagnostic Report");
+        return type;
+    }
+
+
     public static void addToBundleEntry(Bundle bundle, Resource resource, boolean useIdPart) {
         String resourceType = resource.getResourceType().toString();
         String id = useIdPart ? resource.getIdElement().getIdPart() : resource.getId();
