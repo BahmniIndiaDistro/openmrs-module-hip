@@ -5,20 +5,17 @@ import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
+import  org.hl7.fhir.r4.model.DocumentReference;
 import org.openmrs.EncounterProvider;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FhirDiagnosticReport {
-    private final List<Observation> observations;
+    private final List<DocumentReference> documentReferences;
     private final Date encounterTimestamp;
     private final Integer encounterID;
     private final Encounter encounter;
@@ -26,11 +23,11 @@ public class FhirDiagnosticReport {
     private final Patient patient;
     private final Reference patientReference;
 
-    private FhirDiagnosticReport(Date encounterDatetime, List<Observation> observations, Integer encounterID,
+    private FhirDiagnosticReport(Date encounterDatetime, List<DocumentReference> documentReferences, Integer encounterID,
                                  Encounter encounter, List<Practitioner> practitioners, Patient patient,
                                  Reference patientReference) {
         this.encounterTimestamp = encounterDatetime;
-        this.observations = observations;
+        this.documentReferences = documentReferences;
         this.encounterID = encounterID;
         this.encounter = encounter;
         this.practitioners = practitioners;
@@ -46,7 +43,7 @@ public class FhirDiagnosticReport {
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
-        FHIRUtils.addToBundleEntry(bundle, observations, false);
+        FHIRUtils.addToBundleEntry(bundle, documentReferences, false);
         return bundle;
     }
 
@@ -59,13 +56,14 @@ public class FhirDiagnosticReport {
         Date encounterDatetime = openMrsDiagnosticReport.getEncounter().getEncounterDatetime();
         Integer encounterId = openMrsDiagnosticReport.getEncounter().getId();
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDiagnosticReport.getEncounterProviders());
-        List<Observation> observations = openMrsDiagnosticReport.getEncounter().getAllObs().stream()
-                .map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
-        for (Observation o : observations) {
-            String valueText = o.getValueStringType().getValueAsString();
-            o.getValueStringType().setValueAsString("/document_images/" + valueText);
+        List<DocumentReference> documentReferences = openMrsDiagnosticReport.getEncounter().getAllObs().stream().filter(obs -> obs.getConcept().getId() == 35)
+                .map(fhirResourceMapper::mapToDocumentReference).collect(Collectors.toList());
+        List<Reference> authors = new ArrayList<>();
+        authors.add(patientReference);
+        for (DocumentReference documentReference : documentReferences) {
+            documentReference.setAuthor(authors);
         }
-        return new FhirDiagnosticReport(encounterDatetime, observations, encounterId, encounter, practitioners, patient, patientReference);
+        return new FhirDiagnosticReport(encounterDatetime, documentReferences, encounterId, encounter, practitioners, patient, patientReference);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -84,7 +82,7 @@ public class FhirDiagnosticReport {
                 .setTitle("Diagnostic Report")
                 .setCode(FHIRUtils.getDiagnosticReportType());
 
-        observations
+        documentReferences
                 .stream()
                 .map(FHIRUtils::getReferenceToResource)
                 .forEach(compositionSection::addEntry);

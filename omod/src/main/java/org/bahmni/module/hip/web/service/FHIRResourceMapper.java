@@ -1,7 +1,10 @@
 package org.bahmni.module.hip.web.service;
 
+import org.hl7.fhir.r4.model.Attachment;
+import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Dosage;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.Observation;
@@ -18,6 +21,13 @@ import org.openmrs.module.fhir2.api.translators.impl.ObservationTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.PractitionerTranslatorProviderImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @Service
 public class FHIRResourceMapper {
@@ -45,6 +55,39 @@ public class FHIRResourceMapper {
 
     public Observation mapToObs(Obs obs) {
         return observationTranslator.toFhirResource(obs);
+    }
+
+    public DocumentReference mapToDocumentReference(Obs obs) {
+        DocumentReference documentReference = new DocumentReference();
+        try {
+            documentReference.setId(obs.getUuid());
+            documentReference.setStatus(Enumerations.DocumentReferenceStatus.CURRENT);
+            List<DocumentReference.DocumentReferenceContentComponent> documentReferenceContentComponentList = new ArrayList<>();
+            DocumentReference.DocumentReferenceContentComponent documentReferenceContentComponent =
+                    new DocumentReference.DocumentReferenceContentComponent();
+            Attachment attachment = new Attachment();
+            attachment.setContentType(getTypeOfTheObsDocument(obs.getValueText()));
+            byte[] fileContent = Files.readAllBytes(new File("/home/bahmni/document_images/" + obs.getValueText()).toPath());
+            attachment.setData(fileContent);
+            documentReferenceContentComponent.setAttachment(attachment);
+            documentReferenceContentComponentList.add(documentReferenceContentComponent);
+            documentReference.setContent(documentReferenceContentComponentList);
+            return documentReference;
+        } catch (IOException exception) {
+            return documentReference;
+        }
+    }
+
+    private String getTypeOfTheObsDocument(String valueText) {
+        if (valueText == null) return "";
+        String extension = valueText.substring(valueText.indexOf('.') + 1);
+        if (extension.compareTo("jpeg") == 0 || extension.compareTo("jpg") == 0) {
+            return "image/jpeg";
+        } else if (extension.compareTo("png") == 0 || extension.compareTo("gif") == 0) {
+            return "image/" + extension;
+        } else {
+            return "application/pdf";
+        }
     }
 
     public Patient mapToPatient(org.openmrs.Patient emrPatient) {
