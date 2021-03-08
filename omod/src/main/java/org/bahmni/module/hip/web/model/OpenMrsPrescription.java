@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterProvider;
+import org.openmrs.Obs;
 import org.openmrs.Patient;
 
 import java.util.List;

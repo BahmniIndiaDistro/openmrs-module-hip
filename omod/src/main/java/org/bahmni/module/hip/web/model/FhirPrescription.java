@@ -8,6 +8,7 @@ import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
@@ -55,11 +56,11 @@ public class FhirPrescription {
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsPrescription.getEncounterProviders());
         List<MedicationRequest> medicationRequests = medicationRequestsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
         List<Medication> medications = medicationsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
+
         return new FhirPrescription(encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, medications, medicationRequests);
     }
 
-
-    public Bundle bundle(String webUrl) {
+    public Bundle bundle(String webUrl){
         String bundleID = String.format("PR-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
 
@@ -72,7 +73,7 @@ public class FhirPrescription {
         return bundle;
     }
 
-    private Composition compositionFrom(String webURL) {
+    private Composition compositionFrom(String webURL){
         Composition composition = initializeComposition(encounterTimestamp, webURL);
         Composition.SectionComponent compositionSection = composition.addSection();
 
@@ -85,7 +86,7 @@ public class FhirPrescription {
                 .setSubject(patientReference);
 
         compositionSection
-                .setTitle("Prescription")
+                .setTitle("OPD Prescription")
                 .setCode(FHIRUtils.getPrescriptionType());
 
         medicationRequests
