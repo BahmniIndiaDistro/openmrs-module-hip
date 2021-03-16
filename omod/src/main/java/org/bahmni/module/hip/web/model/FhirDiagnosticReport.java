@@ -11,7 +11,11 @@ import org.hl7.fhir.r4.model.Reference;
 import  org.hl7.fhir.r4.model.DocumentReference;
 import org.openmrs.EncounterProvider;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FhirDiagnosticReport {

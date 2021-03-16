@@ -57,7 +57,7 @@ public class FHIRResourceMapper {
                     new DocumentReference.DocumentReferenceContentComponent();
             Attachment attachment = new Attachment();
             attachment.setContentType(getTypeOfTheObsDocument(obs.getValueText()));
-            byte[] fileContent = Files.readAllBytes(new File("/home/bahmni/document_images/" + obs.getValueText()).toPath());
+            byte[] fileContent = Files.readAllBytes(new File(Constants.PATIENT_DOCUMENTS_PATH + obs.getValueText()).toPath());
             attachment.setData(fileContent);
             documentReferenceContentComponent.setAttachment(attachment);
             documentReferenceContentComponentList.add(documentReferenceContentComponent);
@@ -71,12 +71,14 @@ public class FHIRResourceMapper {
     private String getTypeOfTheObsDocument(String valueText) {
         if (valueText == null) return "";
         String extension = valueText.substring(valueText.indexOf('.') + 1);
-        if (extension.compareTo("jpeg") == 0 || extension.compareTo("jpg") == 0) {
-            return "image/jpeg";
-        } else if (extension.compareTo("png") == 0 || extension.compareTo("gif") == 0) {
-            return "image/" + extension;
+        if (extension.compareTo(Constants.JPEG) == 0 || extension.compareTo(Constants.JPG) == 0) {
+            return Constants.MIMETYPE_IMAGE_JPEG;
+        } else if (extension.compareTo(Constants.PNG) == 0 || extension.compareTo(Constants.GIF) == 0) {
+            return Constants.IMAGE + extension;
+        } else if (extension.compareTo(Constants.PDF) == 0) {
+            return Constants.MIMETYPE_PDF;
         } else {
-            return "application/pdf";
+            return "";
         }
     }
 
