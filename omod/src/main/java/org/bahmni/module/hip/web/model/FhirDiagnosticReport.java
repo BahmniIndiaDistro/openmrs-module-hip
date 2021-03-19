@@ -2,8 +2,15 @@ package org.bahmni.module.hip.web.model;
 
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.openmrs.Patient;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.Encounter;
+
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Reference;
+import  org.hl7.fhir.r4.model.DocumentReference;
+import org.openmrs.EncounterProvider;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Composition;
@@ -12,92 +19,93 @@ import org.hl7.fhir.r4.model.DiagnosticReport;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.StringType;
-import org.openmrs.Encounter;
+
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FhirDiagnosticReport {
-    private final List<Observation> observations;
+    private final List<DocumentReference> documentReferences;
     private final Date encounterTimestamp;
+    private final Integer encounterID;
     private final Encounter encounter;
-    private String panelName;
+    private final List<Practitioner> practitioners;
     private final Patient patient;
+    private final Reference patientReference;
 
-
-    public void setPanelName(String panelName) {
-        this.panelName = panelName;
-    }
-    public String getPanelName() {
-        return panelName;
-    }
-
-    private FhirDiagnosticReport(Date encounterDatetime, List<Observation> observations, Encounter encounter, Patient patient ) {
+    private FhirDiagnosticReport(Date encounterDatetime, List<DocumentReference> documentReferences, Integer encounterID,
+                                 Encounter encounter, List<Practitioner> practitioners, Patient patient,
+                                 Reference patientReference) {
         this.encounterTimestamp = encounterDatetime;
-        this.observations = observations;
+        this.documentReferences = documentReferences;
+        this.encounterID = encounterID;
         this.encounter = encounter;
+        this.practitioners = practitioners;
         this.patient = patient;
+        this.patientReference = patientReference;
     }
+
+
     public Bundle bundleDiagnosticReport(String webUrl) {
-        String bundleID = String.format("LR-%d", encounter.getEncounterId());
+        String bundleID = String.format("PR-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
 
-        FHIRUtils.addToBundleEntry(bundle, observations, false);
-        return bundle;
-    }
-    public Bundle bundleLabResults (String webUrl, FHIRResourceMapper fhirResourceMapper) {
-        String bundleID = String.format("LR-%d", encounter.getEncounterId());
-
-        Bundle bundle = FHIRUtils.createBundle(this.encounterTimestamp, bundleID, webUrl);
-        addToBundleEntry(bundle, "", fhirResourceMapper);
-        return bundle;
-    }
-    private void addToBundleEntry(Bundle bundle, String webURL,  FHIRResourceMapper fhirResourceMapper) {
-        Composition composition = initializeComposition(encounterTimestamp, webURL);
-        Composition.SectionComponent compositionSection = composition.addSection();
-        org.hl7.fhir.r4.model.Patient patient = fhirResourceMapper.mapToPatient(this.patient);
-        org.hl7.fhir.r4.model.Encounter encounterFHIR = fhirResourceMapper.mapToEncounter(encounter);
-        List<Practitioner> practitioners = encounter.getEncounterProviders()
-                                                    .stream()
-                                                    .map( fhirResourceMapper::mapToPractitioner)
-                                                    .collect(Collectors.toList());
-        Reference subjectReference = FHIRUtils.getReferenceToResource(patient);
-        Reference encounterReference = FHIRUtils.getReferenceToResource(encounterFHIR);
-
-        practitioners.forEach(practitioner -> composition
-                                        .addAuthor()
-                                        .setResource(practitioner)
-                                        .setDisplay(FHIRUtils.getDisplay(practitioner)));
-
-        composition
-                .setTitle("Diagnostic Report Document")
-                .setEncounter(encounterReference)
-                .setSubject(subjectReference);
-
-        DiagnosticReport report = new DiagnosticReport();
-        report.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
-        report.setCode(new CodeableConcept().setText(panelName));
-        report.setSubject(subjectReference);
-
-        observations
-                .stream()
-                .map(FHIRUtils::getReferenceToResource)
-                .forEach(report::addResult);
-
-        compositionSection
-                .setTitle("# Diagnostic Report")
-                .setCode(FHIRUtils.getDiagnosticType())
-                .addEntry(FHIRUtils.getReferenceToResource(report));
-
-        FHIRUtils.addToBundleEntry(bundle, composition, false);
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
-        FHIRUtils.addToBundleEntry(bundle, encounterFHIR, false);
-        FHIRUtils.addToBundleEntry(bundle, report, false);
-        FHIRUtils.addToBundleEntry(bundle, observations, false);
+        FHIRUtils.addToBundleEntry(bundle, documentReferences, false);
+        return bundle;
     }
+
+    public static FhirDiagnosticReport fromOpenMrsDiagnosticReport(OpenMrsDiagnosticReport openMrsDiagnosticReport,
+                                                                   FHIRResourceMapper fhirResourceMapper) {
+
+        Patient patient = fhirResourceMapper.mapToPatient(openMrsDiagnosticReport.getPatient());
+        Reference patientReference = FHIRUtils.getReferenceToResource(patient);
+        Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsDiagnosticReport.getEncounter());
+        Date encounterDatetime = openMrsDiagnosticReport.getEncounter().getEncounterDatetime();
+        Integer encounterId = openMrsDiagnosticReport.getEncounter().getId();
+        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDiagnosticReport.getEncounterProviders());
+        List<DocumentReference> documentReferences = openMrsDiagnosticReport.getEncounter().getAllObs().stream().filter(obs -> obs.getConcept().getId() == 35)
+                .map(fhirResourceMapper::mapToDocumentReference).collect(Collectors.toList());
+        List<Reference> authors = new ArrayList<>();
+        authors.add(patientReference);
+        for (DocumentReference documentReference : documentReferences) {
+            documentReference.setAuthor(authors);
+        }
+        return new FhirDiagnosticReport(encounterDatetime, documentReferences, encounterId, encounter, practitioners, patient, patientReference);
+    }
+
+    private Composition compositionFrom(String webURL) {
+        Composition composition = initializeComposition(encounterTimestamp, webURL);
+        Composition.SectionComponent compositionSection = composition.addSection();
+
+        practitioners
+                .forEach(practitioner -> composition
+                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
+
+        composition
+                .setEncounter(FHIRUtils.getReferenceToResource(encounter))
+                .setSubject(patientReference);
+
+        compositionSection
+                .setTitle("Diagnostic Report")
+                .setCode(FHIRUtils.getDiagnosticReportType());
+
+        documentReferences
+                .stream()
+                .map(FHIRUtils::getReferenceToResource)
+                .forEach(compositionSection::addEntry);
+
+        return composition;
+    }
+
     private Composition initializeComposition(Date encounterTimestamp, String webURL) {
         Composition composition = new Composition();
 
@@ -105,44 +113,18 @@ public class FhirDiagnosticReport {
         composition.setDate(encounterTimestamp);
         composition.setIdentifier(FHIRUtils.getIdentifier(composition.getId(), webURL, "document"));
         composition.setStatus(Composition.CompositionStatus.FINAL);
-        composition.setType(FHIRUtils.getDiagnosticType());
+        composition.setType(FHIRUtils.getDiagnosticReportType());
         composition.setTitle("Diagnostic Report");
         return composition;
     }
-    public static FhirDiagnosticReport fromOpenMrsDiagnosticReport(OpenMrsDiagnosticReport openMrsDiagnosticReport,
-                                                                   FHIRResourceMapper fhirResourceMapper) {
-        Date encounterDatetime = openMrsDiagnosticReport.getEncounter().getEncounterDatetime();
-        Encounter encounter = openMrsDiagnosticReport.getEncounter();
-        List<Observation> observations = openMrsDiagnosticReport.getEncounter().getAllObs().stream()
-                .map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
-        for (Observation o : observations) {
-            String valueText = o.getValueStringType().getValueAsString();
-            o.getValueStringType().setValueAsString("/document_images/" + valueText);
-        }
-        return new FhirDiagnosticReport(encounterDatetime, observations, encounter, encounter.getPatient());
+
+    private static List<Practitioner> getPractitionersFrom(FHIRResourceMapper fhirResourceMapper, Set<EncounterProvider> encounterProviders) {
+        return encounterProviders
+                .stream()
+                .map(fhirResourceMapper::mapToPractitioner)
+                .collect(Collectors.toList());
     }
 
-    public static FhirDiagnosticReport fromOpenMrsLabResults(OpenMrsLabResults labresult) {
-        FhirDiagnosticReport report = new FhirDiagnosticReport(labresult.getEncounter().getEncounterDatetime(),
-                labresult.getLabOrderResults().stream().map(FhirDiagnosticReport::mapToObsFromLabResult).collect(Collectors.toList()),
-                labresult.getEncounter(),
-                labresult.getPatient());
-        report.setPanelName(labresult.getLabOrderResults().get(0).getPanelName());
-        return report;
-    }
-    private static Observation mapToObsFromLabResult(  LabOrderResult result) {
-        Observation obs = new Observation();
-        obs.setCode(new CodeableConcept().setText( result.getTestName( )));
-        try {
-            Float f = Float.parseFloat(result.getResult());
-            obs.setValue(new Quantity().setValue(f).setUnit(result.getTestUnitOfMeasurement()));
-        } catch (NumberFormatException ex ) {
-            obs.setValue(new StringType().setValue(result.getResult()));
-        }
-        obs.setStatus(Observation.ObservationStatus.FINAL);
-        return obs;
-    }
-    public static List<FhirDiagnosticReport> fromLabResults( List<OpenMrsLabResults> labResults) {
-        return labResults.stream().map(FhirDiagnosticReport::fromOpenMrsLabResults).collect(Collectors.toList());
-    }
+
+
 }

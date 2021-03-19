@@ -124,7 +124,7 @@ public class EncounterDaoImpl implements EncounterDao {
                     " vt.name = :visit \n" +
                     " and v.date_started between :fromDate and :toDate and\n" +
                     "e.visit_id not in (select e1.visit_id from encounter as e1 inner join episode_encounter on episode_encounter.encounter_id = e1.encounter_id) \n" +
-                    "and v.patient_id in (select person_id from person as p2 where p2.uuid = patientUUID) ;" ;
+                    "and v.patient_id in (select person_id from person as p2 where p2.uuid = :patientUUID) ;" ;
 
     private String sqlGetEncounterIdsForProgramForLabResults = "\n" +
             "select distinct e.visit_id from encounter as e, patient_program_attribute as ppa, visit as v, patient_program pp, program p where \n" +

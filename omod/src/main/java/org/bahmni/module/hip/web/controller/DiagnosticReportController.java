@@ -6,8 +6,6 @@ import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.service.DiagnosticReportService;
 import org.bahmni.module.hip.web.service.ValidationService;
-import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
-import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResults;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +53,9 @@ public class DiagnosticReportController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         List<DiagnosticReportBundle> diagnosticReportBundle =
                 diagnosticReportService.getDiagnosticReportsForVisit(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+
+        diagnosticReportBundle.addAll( diagnosticReportService.getLabResultsForVisits(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType ));
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundle));
@@ -81,58 +82,15 @@ public class DiagnosticReportController extends BaseRestController {
         List<DiagnosticReportBundle> diagnosticReportBundles =
                 diagnosticReportService.getDiagnosticReportsForProgram(patientId, new DateRange(parseDate(fromDate),
                         parseDate(toDate)), programName, programEnrollmentId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
-    }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/visit/lab", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody
-    ResponseEntity<?> getLabResults(@RequestParam String patientId,
-                          @RequestParam String visitType,
-                          @RequestParam String fromDate,
-                          @RequestParam String toDate) throws ParseException {
-
-        if (patientId == null || patientId.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
-        if (visitType == null || visitType.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
-        if (!validationService.isValidVisit(visitType))
-            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
-        if (!validationService.isValidPatient(patientId))
-            return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
-
-        List<DiagnosticReportBundle> diagnosticReportBundles = diagnosticReportService.getLabResultsForVisits(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), visitType);
+        diagnosticReportBundles.addAll(
+                diagnosticReportService.getLabResultsForPrograms(patientId, new DateRange(parseDate(fromDate),
+                        parseDate(toDate)), programName, programEnrollmentId) );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
     }
 
-
-    @RequestMapping(method = RequestMethod.GET, value = "/program/lab", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody
-    ResponseEntity<?> getLabResults(@RequestParam String patientId,
-                                    @RequestParam String fromDate,
-                                    @RequestParam String toDate,
-                                    @RequestParam String programName,
-                                    @RequestParam String programEnrollmentId) throws ParseException, UnsupportedEncodingException {
-
-        programName = URLDecoder.decode(programName, "UTF-8");
-        if (patientId == null || patientId.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
-        if (programName == null || programName.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
-        if (!validationService.isValidProgram(programName))
-            return ResponseEntity.badRequest().body(ClientError.invalidProgramName());
-        if (!validationService.isValidPatient(patientId))
-            return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
-
-        List<DiagnosticReportBundle> diagnosticReportBundles = diagnosticReportService.getLabResultsForPrograms(patientId, new DateRange(parseDate(fromDate), parseDate(toDate)), programName, programEnrollmentId);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
-    }
 
 }

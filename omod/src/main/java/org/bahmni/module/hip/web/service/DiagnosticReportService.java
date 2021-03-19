@@ -13,7 +13,13 @@ import org.openmrs.module.bahmniemrapi.laborder.service.LabOrderResultsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -121,17 +127,16 @@ public class DiagnosticReportService {
 
 
         List<OpenMrsLabResults> labResults = groupedByOrderUUID.entrySet().stream().map(entry -> {
-                    Order orderForUuid = orders
+                    Optional<Order> orderForUuid = orders
                             .stream()
                             .filter(order -> order.getUuid().equals(entry.getKey()))
-                            .findFirst()
-                            .get();
-                    return new OpenMrsLabResults(orderForUuid.getEncounter(), orderForUuid.getPatient(), entry.getValue());
-                } ).collect(Collectors.toList());
+                            .findFirst();
+                    if (orderForUuid.isPresent())
+                    return new OpenMrsLabResults(orderForUuid.get().getEncounter(), orderForUuid.get().getPatient(), entry.getValue());
+                    else return null;
+                } ).filter(Objects::nonNull).collect(Collectors.toList());
 
-        List<FhirDiagnosticReport> reports = FhirDiagnosticReport.fromLabResults( labResults );
-
-        List<DiagnosticReportBundle> bundles = reports.stream().map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor).collect(Collectors.toList());
+        List<DiagnosticReportBundle> bundles = labResults.stream().map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor).collect(Collectors.toList());
         return bundles;
     }
     public List<DiagnosticReportBundle> getLabResultsForVisits(String patientUuid, DateRange dateRange, String visittype)
