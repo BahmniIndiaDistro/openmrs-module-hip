@@ -2,10 +2,18 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.bahmnicore.dao.OrderDao;
 import org.bahmni.module.hip.api.dao.EncounterDao;
-import org.bahmni.module.hip.web.model.*;
-import org.openmrs.*;
+import org.bahmni.module.hip.api.dao.HipVisitDao;
+import org.bahmni.module.hip.web.model.DateRange;
+import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
+import org.bahmni.module.hip.web.model.OpenMrsDiagnosticReport;
+import org.bahmni.module.hip.web.model.OpenMrsLabResults;
+import org.openmrs.Encounter;
+import org.openmrs.Obs;
+import org.openmrs.Order;
+import org.openmrs.OrderType;
+import org.openmrs.Patient;
+import org.openmrs.Visit;
 import org.openmrs.api.EncounterService;
-import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResults;
@@ -28,7 +36,7 @@ public class DiagnosticReportService {
     private final PatientService patientService;
     private final EncounterService encounterService;
     private final EncounterDao encounterDao;
-    private final org.openmrs.api.OrderService orderService;
+    private HipVisitDao hipVisitDao;
     private OrderDao orderDao;
 
 
@@ -38,19 +46,19 @@ public class DiagnosticReportService {
     public DiagnosticReportService(FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder,
                                    PatientService patientService,
                                    EncounterService encounterService,
-                                   EncounterDao encounterDao, OrderService orderService,
                                    LabOrderResultsService labOrderResultsService,
-                                    OrderDao orderDao
-    //                               VisitService visitService
+                                   EncounterDao encounterDao,
+                                   HipVisitDao hipVisitDao,
+                                   OrderDao orderDao
     ) {
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
         this.encounterService = encounterService;
         this.encounterDao = encounterDao;
-        this.orderService = orderService;
+        this.hipVisitDao = hipVisitDao;
         this.labOrderResultsService = labOrderResultsService;
         this.orderDao = orderDao;
-        //this.visitService = visitService;
+
     }
 
     public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, DateRange dateRange, String visitType) {
@@ -141,13 +149,13 @@ public class DiagnosticReportService {
     }
     public List<DiagnosticReportBundle> getLabResultsForVisits(String patientUuid, DateRange dateRange, String visittype)
     {
-        List<Integer> visitsForVisitType =  encounterDao.GetEncounterIdsForVisitForLabResults(patientUuid, visittype, dateRange.getFrom(), dateRange.getTo() );
+        List<Integer> visitsForVisitType =  hipVisitDao.GetVisitIdsForVisitForLabResults(patientUuid, visittype, dateRange.getFrom(), dateRange.getTo() );
         return getLabResults(patientUuid, dateRange, visitsForVisitType);
     }
 
     public List<DiagnosticReportBundle> getLabResultsForPrograms(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId)
     {
-        List<Integer> visitsForProgram =  encounterDao.GetEncounterIdsForProgramForLabResults(patientUuid, programName, programEnrollmentId, dateRange.getFrom(), dateRange.getTo() );
+        List<Integer> visitsForProgram =  hipVisitDao.GetVisitIdsForProgramForLabResults(patientUuid, programName, programEnrollmentId, dateRange.getFrom(), dateRange.getTo() );
         return getLabResults(patientUuid, dateRange, visitsForProgram);
     }
 

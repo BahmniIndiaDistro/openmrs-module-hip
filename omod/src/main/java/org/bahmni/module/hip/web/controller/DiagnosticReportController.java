@@ -91,6 +91,4 @@ public class DiagnosticReportController extends BaseRestController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(new BundledDiagnosticReportResponse(diagnosticReportBundles));
     }
-
-
 }
