@@ -9,5 +9,4 @@ public interface EncounterDao {
     List<Integer> GetEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) ;
     List<Integer> GetEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate);
     List<Integer> GetEncounterIdsForVisitForDiagnosticReport(String patientUUID, String visit, Date fromDate, Date toDate) ;
-
 }

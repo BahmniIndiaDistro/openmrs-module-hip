@@ -116,7 +116,6 @@ public class EncounterDaoImpl implements EncounterDao {
             "            and value_reference = :programEnrollmentId \n" +
             "            and date_enrolled between :fromDate and :toDate ;";
 
-
     @Override
     public List<Integer> GetEncounterIdsForVisitForPrescriptions(String patientUUID, String visit, Date fromDate, Date toDate) {
 
@@ -166,6 +165,4 @@ public class EncounterDaoImpl implements EncounterDao {
 
         return query.list();
     }
-
-
 }

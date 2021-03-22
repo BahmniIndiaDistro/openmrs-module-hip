@@ -81,7 +81,7 @@ public class FHIRUtils {
     }
 
     public static void addToBundleEntry(Bundle bundle, List<? extends Resource> resources, boolean useIdPart) {
-        resources.forEach(resource ->  FHIRUtils.addToBundleEntry(bundle, resource, useIdPart));
+        resources.forEach(resource -> FHIRUtils.addToBundleEntry(bundle, resource, useIdPart));
     }
 
     public static Organization createOrgInstance(String hfrId, String hfrName, String hfrSystem) {

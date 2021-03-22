@@ -2,26 +2,14 @@ package org.bahmni.module.hip.web.model;
 
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Encounter;
-
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
 import  org.hl7.fhir.r4.model.DocumentReference;
 import org.openmrs.EncounterProvider;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Composition;
-import org.hl7.fhir.r4.model.Practitioner;
-import org.hl7.fhir.r4.model.DiagnosticReport;
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.StringType;
-
-import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -124,7 +112,4 @@ public class FhirDiagnosticReport {
                 .map(fhirResourceMapper::mapToPractitioner)
                 .collect(Collectors.toList());
     }
-
-
-
 }
