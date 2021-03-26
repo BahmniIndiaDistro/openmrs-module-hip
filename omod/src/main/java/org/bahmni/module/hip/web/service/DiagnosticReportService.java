@@ -38,6 +38,7 @@ public class DiagnosticReportService {
     private final EncounterDao encounterDao;
     private HipVisitDao hipVisitDao;
     private OrderDao orderDao;
+    private final String ORDER_TYPE = "Order";
 
 
     private LabOrderResultsService labOrderResultsService;
@@ -125,7 +126,7 @@ public class DiagnosticReportService {
 
         List<Visit> visits, visitsWithOrdersForVisitType ;
 
-        visits = orderDao.getVisitsWithAllOrders(patient, "Order", null, null );
+        visits = orderDao.getVisitsWithAllOrders(patient, ORDER_TYPE, null, null );
         visitsWithOrdersForVisitType = visits.stream().filter( visit -> visitsForVisitType.contains(visit.getVisitId()) ).collect(Collectors.toList());;
         List<Order> orders = orderDao.getAllOrdersForVisits(new OrderType(3), visitsWithOrdersForVisitType);
 
