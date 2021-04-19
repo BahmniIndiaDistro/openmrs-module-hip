@@ -9,16 +9,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ExistingPatientService {
 
     private List<Patient> existingPatients;
     private final PatientService patientService;
-    private Map<Patient, Boolean> patientMap;
 
     @Autowired
     public ExistingPatientService(PatientService patientService) {
@@ -29,54 +26,53 @@ public class ExistingPatientService {
                                                 String patientGender) {
 
         existingPatients = patientService.getAllPatients();
-        patientMap = new HashMap<>();
-        filter(patientName, patientYearOfBirth, patientGender);
-        List<Patient> matchingPatients = new ArrayList<>();
-        for (Map.Entry<Patient, Boolean> entry : patientMap.entrySet()) {
-            if (entry.getValue()) {
-                matchingPatients.add(entry.getKey());
-            }
-        }
-        return matchingPatients;
+        return filter(patientName, patientYearOfBirth, patientGender);
     }
 
-    private void filter(String patientName, int patientYearOfBirth, String patientGender) {
-        for (Patient patient : existingPatients) {
-            patientMap.put(patient, true);
+    private List<Patient> filter(String patientName, int patientYearOfBirth, String patientGender) {
+        List<Patient> patientsMatchedWithName = filterPatientsByName(patientName);
+        if(patientsMatchedWithName.size() != 1) {
+            List<Patient> patientsMatchedWithNameAndAge = filterPatientsByAge(patientYearOfBirth, patientsMatchedWithName);
+            if(patientsMatchedWithNameAndAge.size() != 1)
+                return filterPatientsByGender(patientGender, patientsMatchedWithNameAndAge);
+            return patientsMatchedWithNameAndAge;
         }
-
-        filterPatientsByGender(patientGender);
-        filterPatientsByName(patientName);
-        filterPatientsByAge(patientYearOfBirth);
+        return patientsMatchedWithName;
     }
 
-    private void filterPatientsByAge(int patientYearOfBirth) {
-        for (Patient patient : existingPatients) {
+    private List<Patient> filterPatientsByAge(int patientYearOfBirth, List<Patient> patientsMatchedWithNameAndGender) {
+        List<Patient> patients = new ArrayList<>();
+        for (Patient patient : patientsMatchedWithNameAndGender) {
             int yearOfBirth = Calendar.getInstance().get(Calendar.YEAR) - patient.getAge();
-            if (!verifyYearOfBirth(yearOfBirth, patientYearOfBirth)) {
-                patientMap.put(patient, false);
+            if (verifyYearOfBirth(yearOfBirth, patientYearOfBirth)) {
+                patients.add(patient);
             }
         }
+        return patients;
     }
 
     private boolean verifyYearOfBirth(int yearOfBirth, int patientYearOfBirth) {
         return yearOfBirth == patientYearOfBirth || Math.abs(yearOfBirth - patientYearOfBirth) <= 2;
     }
 
-    private void filterPatientsByName(String patientName) {
+    private List<Patient> filterPatientsByName(String patientName) {
+        List<Patient> patients = new ArrayList<>();
         for (Patient patient : existingPatients) {
             int distance = StringUtils.getLevenshteinDistance(patientName.toLowerCase(), patient.getPersonName().
                     toString().toLowerCase());
-            if (distance > 2)
-                patientMap.put(patient, false);
+            if (distance <= 2)
+                patients.add(patient);
         }
+        return patients;
     }
 
-    private void filterPatientsByGender(String patientGender) {
-        for (Patient patient : existingPatients) {
-            if (!patient.getGender().equals(patientGender))
-                patientMap.put(patient, false);
+    private List<Patient> filterPatientsByGender(String patientGender, List<Patient> patientMatchedWithName) {
+        List<Patient> patients = new ArrayList<>();
+        for (Patient patient : patientMatchedWithName) {
+            if (patient.getGender().equals(patientGender))
+                patients.add(patient);
         }
+        return patients;
     }
 
     public JSONObject getMatchingPatientDetails(List<Patient> matchingPatients) {
