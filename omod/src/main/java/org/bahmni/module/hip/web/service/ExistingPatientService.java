@@ -77,11 +77,11 @@ public class ExistingPatientService {
 
     public JSONObject getMatchingPatientDetails(List<Patient> matchingPatients) {
         JSONObject existingPatientsListObject = new JSONObject();
-        existingPatientsListObject.put("PatientName:", matchingPatients.get(0).getGivenName() + " " +
+        existingPatientsListObject.put("name", matchingPatients.get(0).getGivenName() + " " +
                 matchingPatients.get(0).getFamilyName());
-        existingPatientsListObject.put("PatientAge:", matchingPatients.get(0).getAge());
-        existingPatientsListObject.put("PatientGender:", matchingPatients.get(0).getGender());
-        existingPatientsListObject.put("PatientAddress:", matchingPatients.get(0).getPersonAddress().getCountyDistrict() +
+        existingPatientsListObject.put("age", matchingPatients.get(0).getAge());
+        existingPatientsListObject.put("gender", matchingPatients.get(0).getGender());
+        existingPatientsListObject.put("address", matchingPatients.get(0).getPersonAddress().getCountyDistrict() +
                 "," + matchingPatients.get(0).getPersonAddress().getStateProvince());
 
         return existingPatientsListObject;
