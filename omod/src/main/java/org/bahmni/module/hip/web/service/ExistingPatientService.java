@@ -13,57 +13,58 @@ import java.util.List;
 
 @Service
 public class ExistingPatientService {
-
-    private List<Patient> existingPatients;
     private final PatientService patientService;
+    static final int MATCHING_CRITERIA_CONSTANT = 2;
 
     @Autowired
     public ExistingPatientService(PatientService patientService) {
         this.patientService = patientService;
     }
 
-    public List<Patient> filterMatchingPatients(String patientName, int patientYearOfBirth,
-                                                String patientGender) {
-
-        existingPatients = patientService.getAllPatients();
-        return filter(patientName, patientYearOfBirth, patientGender);
+    public List<Patient> getMatchingPatients(String patientName, int patientYearOfBirth,
+                                             String patientGender) {
+        return getPatients(patientName, patientYearOfBirth, patientGender);
     }
 
-    private List<Patient> filter(String patientName, int patientYearOfBirth, String patientGender) {
+    private List<Patient> getPatients(String patientName, int patientYearOfBirth, String patientGender) {
         List<Patient> patientsMatchedWithName = filterPatientsByName(patientName);
-        if(patientsMatchedWithName.size() != 1) {
+        if (patientsMatchedWithName.size() != 1) {
             List<Patient> patientsMatchedWithNameAndAge = filterPatientsByAge(patientYearOfBirth, patientsMatchedWithName);
-            if(patientsMatchedWithNameAndAge.size() != 1)
+            if (patientsMatchedWithNameAndAge.size() != 1)
                 return filterPatientsByGender(patientGender, patientsMatchedWithNameAndAge);
             return patientsMatchedWithNameAndAge;
         }
         return patientsMatchedWithName;
     }
 
+    private List<Patient> filterPatientsByName(String patientName) {
+        List<Patient> existingPatients = patientService.getAllPatients();
+        List<Patient> patients = new ArrayList<>();
+        for (Patient patient : existingPatients) {
+            int distance = StringUtils.getLevenshteinDistance(patientName.toLowerCase(), patient.getPersonName().
+                    toString().toLowerCase());
+            if (distance <= MATCHING_CRITERIA_CONSTANT)
+                patients.add(patient);
+        }
+        return patients;
+    }
+
     private List<Patient> filterPatientsByAge(int patientYearOfBirth, List<Patient> patientsMatchedWithNameAndGender) {
         List<Patient> patients = new ArrayList<>();
         for (Patient patient : patientsMatchedWithNameAndGender) {
-            int yearOfBirth = Calendar.getInstance().get(Calendar.YEAR) - patient.getAge();
-            if (verifyYearOfBirth(yearOfBirth, patientYearOfBirth)) {
+            if (verifyYearOfBirth(getYearOfBirth(patient.getAge()), patientYearOfBirth)) {
                 patients.add(patient);
             }
         }
         return patients;
     }
 
-    private boolean verifyYearOfBirth(int yearOfBirth, int patientYearOfBirth) {
-        return yearOfBirth == patientYearOfBirth || Math.abs(yearOfBirth - patientYearOfBirth) <= 2;
+    private int getYearOfBirth(int age) {
+        return Calendar.getInstance().get(Calendar.YEAR) - age;
     }
 
-    private List<Patient> filterPatientsByName(String patientName) {
-        List<Patient> patients = new ArrayList<>();
-        for (Patient patient : existingPatients) {
-            int distance = StringUtils.getLevenshteinDistance(patientName.toLowerCase(), patient.getPersonName().
-                    toString().toLowerCase());
-            if (distance <= 2)
-                patients.add(patient);
-        }
-        return patients;
+    private boolean verifyYearOfBirth(int yearOfBirth, int patientYearOfBirth) {
+        return yearOfBirth == patientYearOfBirth || Math.abs(yearOfBirth - patientYearOfBirth) <= MATCHING_CRITERIA_CONSTANT;
     }
 
     private List<Patient> filterPatientsByGender(String patientGender, List<Patient> patientMatchedWithName) {
@@ -76,13 +77,14 @@ public class ExistingPatientService {
     }
 
     public JSONObject getMatchingPatientDetails(List<Patient> matchingPatients) {
+        Patient patient = matchingPatients.get(0);
         JSONObject existingPatientsListObject = new JSONObject();
-        existingPatientsListObject.put("name", matchingPatients.get(0).getGivenName() + " " +
-                matchingPatients.get(0).getFamilyName());
-        existingPatientsListObject.put("yearOfBirth", Calendar.getInstance().get(Calendar.YEAR)-matchingPatients.get(0).getAge());
-        existingPatientsListObject.put("gender", matchingPatients.get(0).getGender());
-        existingPatientsListObject.put("address",matchingPatients.get(0).getPersonAddress().getAddress1()+","+matchingPatients.get(0).getPersonAddress().getCountyDistrict() +
-                "," + matchingPatients.get(0).getPersonAddress().getStateProvince());
+        existingPatientsListObject.put("name", patient.getGivenName() + " " + patient.getFamilyName());
+        existingPatientsListObject.put("yearOfBirth", getYearOfBirth(patient.getAge()));
+        existingPatientsListObject.put("gender", patient.getGender());
+        existingPatientsListObject.put("address", patient.getPersonAddress().getAddress1() +
+                "," + patient.getPersonAddress().getCountyDistrict() +
+                "," + patient.getPersonAddress().getStateProvince());
 
         return existingPatientsListObject;
     }

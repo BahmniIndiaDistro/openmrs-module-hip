@@ -34,7 +34,7 @@ public class PatientController extends BaseRestController {
                                                @RequestParam String patientYearOfBirth,
                                                @RequestParam String patientGender) {
 
-        List<Patient> matchingPatients = existingPatientService.filterMatchingPatients(patientName,
+        List<Patient> matchingPatients = existingPatientService.getMatchingPatients(patientName,
                 Integer.parseInt(patientYearOfBirth), patientGender);
 
         if (matchingPatients.size() != 1)

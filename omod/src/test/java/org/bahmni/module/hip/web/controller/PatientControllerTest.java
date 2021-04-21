@@ -58,7 +58,7 @@ public class PatientControllerTest extends TestCase {
         existingPatientsListObject.put("PatientGender:", "M");
         existingPatientsListObject.put("PatientAddress:", "null, null");
 
-        when(existingPatientService.filterMatchingPatients(anyString(), anyInt(), anyString()))
+        when(existingPatientService.getMatchingPatients(anyString(), anyInt(), anyString()))
                 .thenReturn(patients);
         when(existingPatientService.getMatchingPatientDetails(patients))
                 .thenReturn(existingPatientsListObject);
@@ -80,7 +80,7 @@ public class PatientControllerTest extends TestCase {
         existingPatientsListObject.put("PatientGender:", "M");
         existingPatientsListObject.put("PatientAddress:", "null, null");
 
-        when(existingPatientService.filterMatchingPatients(anyString(), anyInt(), anyString()))
+        when(existingPatientService.getMatchingPatients(anyString(), anyInt(), anyString()))
                 .thenReturn(patients);
         when(existingPatientService.getMatchingPatientDetails(patients))
                 .thenReturn(existingPatientsListObject);
