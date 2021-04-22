@@ -36,5 +36,24 @@
     </changeSet>
     
     -->
+    <changeSet id="Adding-Health-Id-IdentifierType-220420210516"  author="Gogia, Swati">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">select count(*) from patient_identifier_type where name='Health ID'</sqlCheck>
+        </preConditions>
+        <comment>Adding Health Id Identifier type</comment>
+        <sql>
+            insert into patient_identifier_type( name, description,creator, uuid) Select 'Health ID','Health Id identifier type',creator,uuid() from users where username='admin';
+        </sql>
+    </changeSet>
+
+    <changeSet id="updating-extraPatientIdentifierTypes-global-property"  author="Gogia, Swati">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">select count(*) from patient_identifier_type where name='Health ID'</sqlCheck>
+        </preConditions>
+        <comment>Adding Health Id Identifier type</comment>
+        <sql>
+            update global_property set property_value=(SELECT CONCAT(property_value,uuid) from patient_identifier_type where name = 'Health ID') where property = 'bahmni.extraPatientIdentifierTypes';
+        </sql>
+    </changeSet>
  
 </databaseChangeLog>
