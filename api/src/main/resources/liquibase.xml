@@ -55,5 +55,5 @@
             update global_property set property_value=(SELECT CONCAT(property_value,',',uuid) from patient_identifier_type where name = 'Health ID') where property = 'bahmni.extraPatientIdentifierTypes';
         </sql>
     </changeSet>
- 
+
 </databaseChangeLog>
