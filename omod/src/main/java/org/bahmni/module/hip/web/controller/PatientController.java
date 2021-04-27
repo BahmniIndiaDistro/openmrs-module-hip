@@ -5,7 +5,6 @@ import org.bahmni.module.hip.web.service.ExistingPatientService;
 import org.json.JSONObject;
 import org.openmrs.Patient;
 import org.openmrs.module.webservices.rest.web.RestConstants;
-import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,7 +19,7 @@ import java.util.List;
 
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip")
 @RestController
-public class PatientController extends BaseRestController {
+public class PatientController{
     private final ExistingPatientService existingPatientService;
 
     @Autowired
