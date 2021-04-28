@@ -1,7 +1,7 @@
 package org.bahmni.module.hip.web.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.json.JSONObject;
+import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +46,13 @@ public class ExistingPatientService {
             int distanceOfGivenName = StringUtils.getLevenshteinDistance(givenName, patient.getGivenName().toLowerCase());
             int distanceOfFamilyName = StringUtils.getLevenshteinDistance(familyName, patient.getFamilyName().toLowerCase());
             if (distanceOfGivenName <= MATCHING_CRITERIA_CONSTANT
-                    && (distanceOfFamilyName<=MATCHING_CRITERIA_CONSTANT
-                    || patient.getFamilyName().charAt(0)==patientName.split(" ")[1].charAt(0)))
+                    && (distanceOfFamilyName <= MATCHING_CRITERIA_CONSTANT
+                    || patient.getFamilyName().charAt(0) == patientName.split(" ")[1].charAt(0)))
                 patients.add(patient);
         }
         return patients;
     }
+
     private List<Patient> filterPatientsByAge(int patientYearOfBirth, List<Patient> patientsMatchedWithNameAndGender) {
         List<Patient> patients = new ArrayList<>();
         for (Patient patient : patientsMatchedWithNameAndGender) {
@@ -62,7 +63,7 @@ public class ExistingPatientService {
         return patients;
     }
 
-    private int getYearOfBirth(int age) {
+    private Integer getYearOfBirth(int age) {
         return Calendar.getInstance().get(Calendar.YEAR) - age;
     }
 
@@ -79,16 +80,15 @@ public class ExistingPatientService {
         return patients;
     }
 
-    public JSONObject getMatchingPatientDetails(List<Patient> matchingPatients) {
+    public ExistingPatient getMatchingPatientDetails(List<Patient> matchingPatients) {
         Patient patient = matchingPatients.get(0);
-        JSONObject existingPatientsListObject = new JSONObject();
-        existingPatientsListObject.put("name", patient.getGivenName() + " " + patient.getFamilyName());
-        existingPatientsListObject.put("yearOfBirth", getYearOfBirth(patient.getAge()));
-        existingPatientsListObject.put("gender", patient.getGender());
-        existingPatientsListObject.put("address", patient.getPersonAddress().getAddress1() +
-                "," + patient.getPersonAddress().getCountyDistrict() +
-                "," + patient.getPersonAddress().getStateProvince());
+        ExistingPatient existingPatient = new ExistingPatient(patient.getGivenName() + " " + patient.getFamilyName(),
+                getYearOfBirth(patient.getAge()).toString(),
+                patient.getPersonAddress().getAddress1() +
+                        "," + patient.getPersonAddress().getCountyDistrict() +
+                        "," + patient.getPersonAddress().getStateProvince(),
+                patient.getGender());
 
-        return existingPatientsListObject;
+        return existingPatient;
     }
 }

@@ -1,13 +1,14 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.bahmni.module.hip.web.client.ClientError;
+import org.bahmni.module.hip.web.client.model.Error;
+import org.bahmni.module.hip.web.client.model.ErrorCode;
+import org.bahmni.module.hip.web.client.model.ErrorRepresentation;
+import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
-import org.json.JSONObject;
 import org.openmrs.Patient;
 import org.openmrs.module.webservices.rest.web.RestConstants;
-import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip")
 @RestController
-public class PatientController extends BaseRestController {
+public class PatientController {
     private final ExistingPatientService existingPatientService;
 
     @Autowired
@@ -31,17 +32,20 @@ public class PatientController extends BaseRestController {
     @RequestMapping(method = RequestMethod.GET, value = "/existingPatients", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
     ResponseEntity<?> getExistingPatients(@RequestParam(required = false) String patientName,
-                                               @RequestParam String patientYearOfBirth,
-                                               @RequestParam String patientGender) {
+                                          @RequestParam String patientYearOfBirth,
+                                          @RequestParam String patientGender) {
 
         List<Patient> matchingPatients = existingPatientService.getMatchingPatients(patientName,
                 Integer.parseInt(patientYearOfBirth), patientGender);
 
         if (matchingPatients.size() != 1)
-            return ResponseEntity.badRequest().body(ClientError.noPatientFound());
+            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
+                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
         else {
-            JSONObject existingPatientsListObject = existingPatientService.getMatchingPatientDetails(matchingPatients);
-            return ResponseEntity.status(HttpStatus.OK).body(existingPatientsListObject.toString());
+            ExistingPatient existingPatients = existingPatientService.getMatchingPatientDetails(matchingPatients);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .body(existingPatients);
         }
     }
 }

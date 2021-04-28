@@ -1,9 +1,13 @@
 package org.bahmni.module.hip.web.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.bahmni.module.hip.web.TestConfiguration;
+import org.bahmni.module.hip.web.client.model.Error;
+import org.bahmni.module.hip.web.client.model.ErrorCode;
+import org.bahmni.module.hip.web.client.model.ErrorRepresentation;
+import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +19,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -52,16 +57,12 @@ public class PatientControllerTest extends TestCase {
         Patient patient = mock(Patient.class);
         List<Patient> patients = new ArrayList<>();
         patients.add(patient);
-        JSONObject existingPatientsListObject = new JSONObject();
-        existingPatientsListObject.put("PatientName:", "sam tom");
-        existingPatientsListObject.put("PatientAge:", "35");
-        existingPatientsListObject.put("PatientGender:", "M");
-        existingPatientsListObject.put("PatientAddress:", "null, null");
 
+        ExistingPatient existingPatient = new ExistingPatient("sam tom", "35", "null, null", "M");
         when(existingPatientService.getMatchingPatients(anyString(), anyInt(), anyString()))
                 .thenReturn(patients);
         when(existingPatientService.getMatchingPatientDetails(patients))
-                .thenReturn(existingPatientsListObject);
+                .thenReturn(existingPatient);
 
         mockMvc.perform(get(String.format("/rest/%s/hip/existingPatients", RestConstants.VERSION_1))
                 .param("patientName", "sam tom")
@@ -72,24 +73,24 @@ public class PatientControllerTest extends TestCase {
     }
 
     @Test
-    public void shouldReturn400BadRequestWhenNoMatchingPatientFound() throws Exception {
+    public void shouldReturnNoRecordsWhenNoMatchingPatientFound() throws Exception {
         List<Patient> patients = new ArrayList<>();
-        JSONObject existingPatientsListObject = new JSONObject();
-        existingPatientsListObject.put("PatientName:", "sam tom");
-        existingPatientsListObject.put("PatientAge:", "35");
-        existingPatientsListObject.put("PatientGender:", "M");
-        existingPatientsListObject.put("PatientAddress:", "null, null");
+        ExistingPatient existingPatient = new ExistingPatient("sam tom", "35", "null, null", "M");
 
         when(existingPatientService.getMatchingPatients(anyString(), anyInt(), anyString()))
                 .thenReturn(patients);
-        when(existingPatientService.getMatchingPatientDetails(patients))
-                .thenReturn(existingPatientsListObject);
 
-        mockMvc.perform(get(String.format("/rest/%s/hip/existingPatients", RestConstants.VERSION_1))
+        MvcResult mvcResult = mockMvc.perform(get(String.format("/rest/%s/hip/existingPatients", RestConstants.VERSION_1))
                 .param("patientName", "sam tom")
                 .param("patientYearOfBirth", "1985")
                 .param("patientGender", "M")
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String value = objectMapper.writeValueAsString(new ErrorRepresentation
+                (new Error(ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+        assertEquals(value,
+                mvcResult.getResponse().getContentAsString());
     }
 }
