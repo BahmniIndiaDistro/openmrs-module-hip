@@ -1,6 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
-import org.bahmni.module.hip.web.model.OpenMrsChiefComplaint;
+import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.hl7.fhir.r4.model.Attachment;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DiagnosticReport;
@@ -109,12 +109,12 @@ public class FHIRResourceMapper {
         return attachments;
     }
 
-    public Condition mapToCondition(OpenMrsChiefComplaint openMrsChiefComplaint) {
+    public Condition mapToCondition(OpenMrsCondition openMrsCondition) {
         Condition condition = new Condition();
         CodeableConcept concept = new CodeableConcept();
-        concept.setText(openMrsChiefComplaint.getName());
+        concept.setText(openMrsCondition.getName());
         condition.setCode(concept);
-        condition.setId(openMrsChiefComplaint.getUuid());
+        condition.setId(openMrsCondition.getUuid());
         return condition;
     }
 

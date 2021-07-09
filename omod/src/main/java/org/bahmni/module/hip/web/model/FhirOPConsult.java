@@ -47,14 +47,14 @@ public class FhirOPConsult {
         return bundle;
     }
 
-    public static FhirOPConsult fromOpenMrsOpConsult(OpenMrsChiefComplaint openMrsChiefComplaint, FHIRResourceMapper fhirResourceMapper) {
-        Patient patient = fhirResourceMapper.mapToPatient(openMrsChiefComplaint.getPatient());
+    public static FhirOPConsult fromOpenMrsOpConsult(OpenMrsCondition openMrsCondition, FHIRResourceMapper fhirResourceMapper) {
+        Patient patient = fhirResourceMapper.mapToPatient(openMrsCondition.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
-        Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsChiefComplaint.getEncounter());
-        Date encounterDatetime = openMrsChiefComplaint.getEncounter().getEncounterDatetime();
-        Integer encounterId = openMrsChiefComplaint.getEncounter().getId();
-        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsChiefComplaint.getEncounterProviders());
-        Condition condition = fhirResourceMapper.mapToCondition(openMrsChiefComplaint);
+        Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsCondition.getEncounter());
+        Date encounterDatetime = openMrsCondition.getEncounter().getEncounterDatetime();
+        Integer encounterId = openMrsCondition.getEncounter().getId();
+        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsCondition.getEncounterProviders());
+        Condition condition = fhirResourceMapper.mapToCondition(openMrsCondition);
         return new FhirOPConsult(condition, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference);
     }
 

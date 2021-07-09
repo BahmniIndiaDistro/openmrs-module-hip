@@ -3,13 +3,11 @@ package org.bahmni.module.hip.api.dao.impl;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
-import org.openmrs.Obs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
@@ -35,6 +33,50 @@ public class OPConsultDaoImpl implements OPConsultDao {
         query.setParameter("fromDate", fromDate);
         query.setParameter("toDate", toDate);
 
+        return query.list();
+    }
+
+    @Override
+    public List getMedicalHistory(String patientUUID, String visit, Date fromDate, Date toDate) {
+        String medicalHistoryQueryString = "select\n" +
+                "\tc.condition_id,\n" +
+                "\tc.concept_id,\n" +
+                "\tc.uuid,\n" +
+                "\tencounterIdTable.encounter_id\n" +
+                "from\n" +
+                "\tconditions c\n" +
+                "inner join (\n" +
+                "\tselect\n" +
+                "\t\te.encounter_datetime,\n" +
+                "\t\te.encounter_id,\n" +
+                "\t\te.visit_id,\n" +
+                "\t\tv.patient_id\n" +
+                "\tfrom\n" +
+                "\t\tencounter e\n" +
+                "\tinner join visit v on\n" +
+                "\t\te.visit_id = v.visit_id\n" +
+                "\tinner join visit_type vt on\n" +
+                "\t\tv.visit_type_id = vt.visit_type_id\n" +
+                "\twhere\n" +
+                "\t\tv.patient_id = (\n" +
+                "\t\tselect\n" +
+                "\t\t\tp.person_id\n" +
+                "\t\tfrom\n" +
+                "\t\t\tperson p\n" +
+                "\t\twhere\n" +
+                "\t\t\tp.uuid = :patientUUID)\n" +
+                "\t\tand vt.name = :visit " +
+                "\t\tand v.date_started between :fromDate and :toDate) encounterIdTable on\n" +
+                "\tencounterIdTable.patient_id = c.patient_id\n" +
+                "where\n" +
+                "\tc.status = \"HISTORY_OF\"\n" +
+                "\tand c.date_created between encounterIdTable.encounter_datetime and " +
+                "date_add(encounterIdTable.encounter_datetime, interval 45 minute) group by c.condition_id;";
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryQueryString);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("visit", visit);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
         return query.list();
     }
 }

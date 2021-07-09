@@ -18,14 +18,14 @@ public class FhirBundledOPConsultBuilder {
         this.fhirResourceMapper = fhirResourceMapper;
     }
 
-    public OPConsultBundle fhirBundleResponseFor (OpenMrsChiefComplaint openMrsChiefComplaint) {
+    public OPConsultBundle fhirBundleResponseFor (OpenMrsCondition openMrsCondition) {
         OrganizationContext organizationContext = organizationContextService.buildContext();
 
-        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOpConsult(openMrsChiefComplaint, fhirResourceMapper).
+        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOpConsult(openMrsCondition, fhirResourceMapper).
                 bundleOPConsult(organizationContext.webUrl());
 
         CareContext careContext = careContextService.careContextFor(
-                openMrsChiefComplaint.getEncounter(),
+                openMrsCondition.getEncounter(),
                 organizationContext.careContextType());
 
         return OPConsultBundle.builder()
