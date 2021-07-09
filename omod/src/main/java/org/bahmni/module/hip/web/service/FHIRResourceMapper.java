@@ -1,14 +1,17 @@
 package org.bahmni.module.hip.web.service;
 
+import org.bahmni.module.hip.web.model.OpenMrsChiefComplaint;
 import org.hl7.fhir.r4.model.Attachment;
+import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DiagnosticReport;
-import org.hl7.fhir.r4.model.Dosage;
 import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Dosage;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
@@ -104,6 +107,15 @@ public class FHIRResourceMapper {
         attachment.setTitle(title.toString());
         attachments.add(attachment);
         return attachments;
+    }
+
+    public Condition mapToCondition(OpenMrsChiefComplaint openMrsChiefComplaint) {
+        Condition condition = new Condition();
+        CodeableConcept concept = new CodeableConcept();
+        concept.setText(openMrsChiefComplaint.getName());
+        condition.setCode(concept);
+        condition.setId(openMrsChiefComplaint.getUuid());
+        return condition;
     }
 
     public Observation mapToObs(Obs obs) {

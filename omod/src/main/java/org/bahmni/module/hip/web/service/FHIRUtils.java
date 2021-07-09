@@ -72,6 +72,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getOPConsultType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("371530004");
+        coding.setDisplay("OP Consult");
+        return type;
+    }
+
     public static void addToBundleEntry(Bundle bundle, Resource resource, boolean useIdPart) {
         String resourceType = resource.getResourceType().toString();
         String id = useIdPart ? resource.getIdElement().getIdPart() : resource.getId();
