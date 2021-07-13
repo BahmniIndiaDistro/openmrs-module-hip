@@ -50,11 +50,13 @@ public class OPConsultService {
 
         List<Integer> obsIdsOfChiefComplaints = opConsultDao.getChiefComplaints(patientUuid, visitType, fromDate, toDate);
         List<Obs> obsOfChiefComplaints = obsIdsOfChiefComplaints.stream().map(obsService::getObs).collect(Collectors.toList());
+
         List<OpenMrsCondition> openMrsConditionsForChiefComplaints = obsOfChiefComplaints.stream().map(o -> new OpenMrsCondition(o.getEncounter(), o.getUuid(),
                 o.getValueCoded().getDisplayString(), patient, o.getEncounter().getEncounterProviders())).collect(Collectors.toList());
         opConsultBundles.addAll(openMrsConditionsForChiefComplaints.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).
                 collect(Collectors.toList()));
+
         List<String[]> medicalHistoryIds =  opConsultDao.getMedicalHistory(patientUuid, visitType, fromDate, toDate);
         List<OpenMrsCondition> openMrsConditionsForMedicalHistory = new ArrayList<>();
         for (Object[] id : medicalHistoryIds) {
@@ -64,6 +66,11 @@ public class OPConsultService {
         }
         opConsultBundles.addAll(openMrsConditionsForMedicalHistory.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList()));
+
+        List<Integer> physicalExaminationObsIds = opConsultDao.getPhysicalExamination(patientUuid, visitType, fromDate, toDate);
+        List<Obs> physicalExaminationObs = physicalExaminationObsIds.stream().map(obsService::getObs).collect(Collectors.toList());
+
+        opConsultBundles.addAll(physicalExaminationObs.stream().map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList()));
         return opConsultBundles;
     }
 

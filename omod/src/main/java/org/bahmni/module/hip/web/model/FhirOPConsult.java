@@ -4,6 +4,7 @@ import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
+import org.openmrs.Obs;
 
 import java.util.Date;
 import java.util.List;
@@ -19,6 +20,7 @@ public class FhirOPConsult {
     private final List<Practitioner> practitioners;
     private final Patient patient;
     private final Reference patientReference;
+    private final Observation observation;
 
     public FhirOPConsult(Condition condition,
                          Date encounterTimestamp,
@@ -26,7 +28,7 @@ public class FhirOPConsult {
                          Encounter encounter,
                          List<Practitioner> practitioners,
                          Patient patient,
-                         Reference patientReference) {
+                         Reference patientReference, Observation observation) {
         this.condition = condition;
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
@@ -34,6 +36,7 @@ public class FhirOPConsult {
         this.practitioners = practitioners;
         this.patient = patient;
         this.patientReference = patientReference;
+        this.observation = observation;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -43,8 +46,24 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
-        FHIRUtils.addToBundleEntry(bundle, condition, false);
+        if(condition != null){
+            FHIRUtils.addToBundleEntry(bundle, condition, false);
+        }
+        if(observation != null){
+            FHIRUtils.addToBundleEntry(bundle, observation, false);
+        }
         return bundle;
+    }
+
+    public static FhirOPConsult fromOpenMrsOpConsult(Obs obs, FHIRResourceMapper fhirResourceMapper) {
+        Observation observation = fhirResourceMapper.mapToObs(obs);
+        Patient patient = fhirResourceMapper.mapToPatient(obs.getEncounter().getPatient());
+        Reference patientReference = FHIRUtils.getReferenceToResource(patient);
+        Encounter encounter = fhirResourceMapper.mapToEncounter(obs.getEncounter());
+        Date encounterDatetime = obs.getEncounter().getEncounterDatetime();
+        Integer encounterId = obs.getEncounter().getId();
+        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, obs.getEncounter().getEncounterProviders());
+        return new FhirOPConsult(null, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, observation);
     }
 
     public static FhirOPConsult fromOpenMrsOpConsult(OpenMrsCondition openMrsCondition, FHIRResourceMapper fhirResourceMapper) {
@@ -55,7 +74,7 @@ public class FhirOPConsult {
         Integer encounterId = openMrsCondition.getEncounter().getId();
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsCondition.getEncounterProviders());
         Condition condition = fhirResourceMapper.mapToCondition(openMrsCondition);
-        return new FhirOPConsult(condition, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference);
+        return new FhirOPConsult(condition, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, null);
     }
 
     private static List<Practitioner> getPractitionersFrom(FHIRResourceMapper fhirResourceMapper, Set<EncounterProvider> encounterProviders) {
@@ -78,7 +97,7 @@ public class FhirOPConsult {
                 .setSubject(patientReference);
 
         compositionSection
-                .setTitle("Chief Complaint")
+                .setTitle("OP Consult")
                 .setCode(FHIRUtils.getOPConsultType());
 
         Reference reference = FHIRUtils.getReferenceToResource(condition);
@@ -94,7 +113,7 @@ public class FhirOPConsult {
         composition.setIdentifier(FHIRUtils.getIdentifier(composition.getId(), webURL, "document"));
         composition.setStatus(Composition.CompositionStatus.FINAL);
         composition.setType(FHIRUtils.getOPConsultType());
-        composition.setTitle("Chief Complaint");
+        composition.setTitle("OP Consult");
         return composition;
     }
 }

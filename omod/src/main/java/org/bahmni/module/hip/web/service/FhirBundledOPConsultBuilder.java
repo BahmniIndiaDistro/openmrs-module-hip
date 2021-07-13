@@ -2,6 +2,7 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.web.model.*;
 import org.hl7.fhir.r4.model.Bundle;
+import org.openmrs.Obs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,22 @@ public class FhirBundledOPConsultBuilder {
 
         CareContext careContext = careContextService.careContextFor(
                 openMrsCondition.getEncounter(),
+                organizationContext.careContextType());
+
+        return OPConsultBundle.builder()
+                .bundle(opConsultBundle)
+                .careContext(careContext)
+                .build();
+    }
+
+    public OPConsultBundle fhirBundleResponseFor (Obs obs){
+        OrganizationContext organizationContext = organizationContextService.buildContext();
+
+        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOpConsult(obs, fhirResourceMapper).
+                bundleOPConsult(organizationContext.webUrl());
+
+        CareContext careContext = careContextService.careContextFor(
+                obs.getEncounter(),
                 organizationContext.careContextType());
 
         return OPConsultBundle.builder()
