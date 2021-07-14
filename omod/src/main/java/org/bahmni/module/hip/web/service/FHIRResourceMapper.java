@@ -115,6 +115,7 @@ public class FHIRResourceMapper {
         concept.setText(openMrsCondition.getName());
         condition.setCode(concept);
         condition.setId(openMrsCondition.getUuid());
+        condition.setRecordedDate(openMrsCondition.getRecordedDate());
         return condition;
     }
 

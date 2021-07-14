@@ -42,7 +42,8 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\tc.condition_id,\n" +
                 "\tc.concept_id,\n" +
                 "\tc.uuid,\n" +
-                "\tencounterIdTable.encounter_id\n" +
+                "\tencounterIdTable.encounter_id,\n" +
+                "\tc.date_created \n" +
                 "from\n" +
                 "\tconditions c\n" +
                 "inner join (\n" +

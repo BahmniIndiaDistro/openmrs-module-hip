@@ -2,7 +2,6 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.web.model.*;
 import org.hl7.fhir.r4.model.Bundle;
-import org.openmrs.Obs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,30 +18,14 @@ public class FhirBundledOPConsultBuilder {
         this.fhirResourceMapper = fhirResourceMapper;
     }
 
-    public OPConsultBundle fhirBundleResponseFor (OpenMrsCondition openMrsCondition) {
+    public OPConsultBundle fhirBundleResponseFor (OpenMrsOPConsult openMrsOPConsult) {
         OrganizationContext organizationContext = organizationContextService.buildContext();
 
-        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOpConsult(openMrsCondition, fhirResourceMapper).
+        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper).
                 bundleOPConsult(organizationContext.webUrl());
 
         CareContext careContext = careContextService.careContextFor(
-                openMrsCondition.getEncounter(),
-                organizationContext.careContextType());
-
-        return OPConsultBundle.builder()
-                .bundle(opConsultBundle)
-                .careContext(careContext)
-                .build();
-    }
-
-    public OPConsultBundle fhirBundleResponseFor (Obs obs){
-        OrganizationContext organizationContext = organizationContextService.buildContext();
-
-        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOpConsult(obs, fhirResourceMapper).
-                bundleOPConsult(organizationContext.webUrl());
-
-        CareContext careContext = careContextService.careContextFor(
-                obs.getEncounter(),
+                openMrsOPConsult.getEncounter(),
                 organizationContext.careContextType());
 
         return OPConsultBundle.builder()

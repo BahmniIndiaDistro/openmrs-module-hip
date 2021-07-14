@@ -13,30 +13,32 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class FhirOPConsult {
-    private final Condition condition;
+    private final List<Condition> chiefComplaints;
+    private final List<Condition> medicalHistory;
     private final Date encounterTimestamp;
     private final Integer encounterID;
     private final Encounter encounter;
     private final List<Practitioner> practitioners;
     private final Patient patient;
     private final Reference patientReference;
-    private final Observation observation;
+    private final List<Observation> observations;
 
-    public FhirOPConsult(Condition condition,
-                         Date encounterTimestamp,
+    public FhirOPConsult(List<Condition> chiefComplaints,
+                         List<Condition> medicalHistory, Date encounterTimestamp,
                          Integer encounterID,
                          Encounter encounter,
                          List<Practitioner> practitioners,
                          Patient patient,
-                         Reference patientReference, Observation observation) {
-        this.condition = condition;
+                         Reference patientReference, List<Observation> observations) {
+        this.chiefComplaints = chiefComplaints;
+        this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
         this.practitioners = practitioners;
         this.patient = patient;
         this.patientReference = patientReference;
-        this.observation = observation;
+        this.observations = observations;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -46,35 +48,74 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
-        if(condition != null){
-            FHIRUtils.addToBundleEntry(bundle, condition, false);
-        }
-        if(observation != null){
-            FHIRUtils.addToBundleEntry(bundle, observation, false);
-        }
+        FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
+        FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
+        FHIRUtils.addToBundleEntry(bundle, observations, false);
         return bundle;
     }
 
-    public static FhirOPConsult fromOpenMrsOpConsult(Obs obs, FHIRResourceMapper fhirResourceMapper) {
-        Observation observation = fhirResourceMapper.mapToObs(obs);
-        Patient patient = fhirResourceMapper.mapToPatient(obs.getEncounter().getPatient());
+    public static FhirOPConsult fromOpenMrsOPConsult(OpenMrsOPConsult openMrsOPConsult, FHIRResourceMapper fhirResourceMapper) {
+        Patient patient = fhirResourceMapper.mapToPatient(openMrsOPConsult.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
-        Encounter encounter = fhirResourceMapper.mapToEncounter(obs.getEncounter());
-        Date encounterDatetime = obs.getEncounter().getEncounterDatetime();
-        Integer encounterId = obs.getEncounter().getId();
-        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, obs.getEncounter().getEncounterProviders());
-        return new FhirOPConsult(null, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, observation);
+        Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
+        Date encounterDatetime = openMrsOPConsult.getEncounter().getEncounterDatetime();
+        Integer encounterId = openMrsOPConsult.getEncounter().getId();
+        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsOPConsult.getEncounter().getEncounterProviders());
+        List<Condition> fhirChiefComplaintConditionList = openMrsOPConsult.getChiefComplaintConditions().stream().
+                    map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
+        List<Condition> fhirMedicalHistoryList = openMrsOPConsult.getMedicalHistoryConditions().stream().
+                    map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
+        List<Observation> fhirObservationList = openMrsOPConsult.getObservations().stream().
+                    map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
+        return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList);
     }
 
-    public static FhirOPConsult fromOpenMrsOpConsult(OpenMrsCondition openMrsCondition, FHIRResourceMapper fhirResourceMapper) {
-        Patient patient = fhirResourceMapper.mapToPatient(openMrsCondition.getPatient());
-        Reference patientReference = FHIRUtils.getReferenceToResource(patient);
-        Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsCondition.getEncounter());
-        Date encounterDatetime = openMrsCondition.getEncounter().getEncounterDatetime();
-        Integer encounterId = openMrsCondition.getEncounter().getId();
-        List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsCondition.getEncounterProviders());
-        Condition condition = fhirResourceMapper.mapToCondition(openMrsCondition);
-        return new FhirOPConsult(condition, encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, null);
+    private Composition compositionFrom(String webURL) {
+        Composition composition = initializeComposition(encounterTimestamp, webURL);
+        composition
+                .setEncounter(FHIRUtils.getReferenceToResource(encounter))
+                .setSubject(patientReference);
+
+        Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
+        chiefComplaintsCompositionSection
+                .setTitle("Chief complaint")
+                .setCode(FHIRUtils.getChiefComplaintType());
+        chiefComplaints
+                .stream()
+                .map(FHIRUtils::getReferenceToResource)
+                .forEach(chiefComplaintsCompositionSection::addEntry);
+
+        Composition.SectionComponent medicalHistoryCompositionSection = composition.addSection();
+        medicalHistoryCompositionSection
+                .setTitle("Medical history")
+                .setCode(FHIRUtils.getMedicalHistoryType());
+        medicalHistory
+                .stream()
+                .map(FHIRUtils::getReferenceToResource)
+                .forEach(medicalHistoryCompositionSection::addEntry);
+
+        Composition.SectionComponent physicalExaminationsCompositionSection = composition.addSection();
+        medicalHistoryCompositionSection
+                .setTitle("Physical examination")
+                .setCode(FHIRUtils.getPhysicalExaminationType());
+        medicalHistory
+                .stream()
+                .map(FHIRUtils::getReferenceToResource)
+                .forEach(physicalExaminationsCompositionSection::addEntry);
+
+        return composition;
+    }
+
+    private Composition initializeComposition(Date encounterTimestamp, String webURL) {
+        Composition composition = new Composition();
+        composition.setId(UUID.randomUUID().toString());
+        composition.setDate(encounterTimestamp);
+        composition.setIdentifier(FHIRUtils.getIdentifier(composition.getId(), webURL, "Composition"));
+        composition.setStatus(Composition.CompositionStatus.FINAL);
+        composition.setType(FHIRUtils.getOPConsultType());
+        composition.setTitle("OP Consultation Document");
+        return composition;
     }
 
     private static List<Practitioner> getPractitionersFrom(FHIRResourceMapper fhirResourceMapper, Set<EncounterProvider> encounterProviders) {
@@ -84,36 +125,4 @@ public class FhirOPConsult {
                 .collect(Collectors.toList());
     }
 
-    private Composition compositionFrom(String webURL) {
-        Composition composition = initializeComposition(encounterTimestamp, webURL);
-        Composition.SectionComponent compositionSection = composition.addSection();
-
-        practitioners
-                .forEach(practitioner -> composition
-                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
-
-        composition
-                .setEncounter(FHIRUtils.getReferenceToResource(encounter))
-                .setSubject(patientReference);
-
-        compositionSection
-                .setTitle("OP Consult")
-                .setCode(FHIRUtils.getOPConsultType());
-
-        Reference reference = FHIRUtils.getReferenceToResource(condition);
-        compositionSection.addEntry(reference);
-
-        return composition;
-    }
-    private Composition initializeComposition(Date encounterTimestamp, String webURL) {
-        Composition composition = new Composition();
-
-        composition.setId(UUID.randomUUID().toString());
-        composition.setDate(encounterTimestamp);
-        composition.setIdentifier(FHIRUtils.getIdentifier(composition.getId(), webURL, "document"));
-        composition.setStatus(Composition.CompositionStatus.FINAL);
-        composition.setType(FHIRUtils.getOPConsultType());
-        composition.setTitle("OP Consult");
-        return composition;
-    }
 }
