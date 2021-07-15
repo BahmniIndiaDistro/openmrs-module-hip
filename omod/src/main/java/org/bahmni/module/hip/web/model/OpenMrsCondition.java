@@ -15,4 +15,13 @@ public class OpenMrsCondition {
         this.name = name;
         this.recordedDate = recordedDate;
     }
+
+    @Override
+    public String toString() {
+        return "OpenMrsCondition{" +
+                "name='" + name + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", recordedDate=" + recordedDate +
+                '}';
+    }
 }

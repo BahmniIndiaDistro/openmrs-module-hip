@@ -83,4 +83,16 @@ public class OpenMrsOPConsult {
         }
         return openMrsOPConsultList;
     }
+
+    @Override
+    public String toString() {
+        return "OpenMrsOPConsult{" +
+                "encounter=" + encounter +
+                ", chiefComplaintConditions=" + chiefComplaintConditions +
+                ", medicalHistoryConditions=" + medicalHistoryConditions +
+                ", observations=" + observations +
+                ", patient=" + patient +
+                ", encounterProviders=" + encounterProviders +
+                '}';
+    }
 }

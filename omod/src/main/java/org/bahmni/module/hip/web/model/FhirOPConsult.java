@@ -77,32 +77,38 @@ public class FhirOPConsult {
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference);
 
-        Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
-        chiefComplaintsCompositionSection
-                .setTitle("Chief complaint")
-                .setCode(FHIRUtils.getChiefComplaintType());
-        chiefComplaints
-                .stream()
-                .map(FHIRUtils::getReferenceToResource)
-                .forEach(chiefComplaintsCompositionSection::addEntry);
+        if (chiefComplaints.size() > 0){
+            Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
+            chiefComplaintsCompositionSection
+                    .setTitle("Chief complaint")
+                    .setCode(FHIRUtils.getChiefComplaintType());
+            chiefComplaints
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(chiefComplaintsCompositionSection::addEntry);
+        }
 
-        Composition.SectionComponent medicalHistoryCompositionSection = composition.addSection();
-        medicalHistoryCompositionSection
-                .setTitle("Medical history")
-                .setCode(FHIRUtils.getMedicalHistoryType());
-        medicalHistory
-                .stream()
-                .map(FHIRUtils::getReferenceToResource)
-                .forEach(medicalHistoryCompositionSection::addEntry);
+        if (medicalHistory.size() > 0) {
+            Composition.SectionComponent medicalHistoryCompositionSection = composition.addSection();
+            medicalHistoryCompositionSection
+                    .setTitle("Medical history")
+                    .setCode(FHIRUtils.getMedicalHistoryType());
+            medicalHistory
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(medicalHistoryCompositionSection::addEntry);
+        }
 
-        Composition.SectionComponent physicalExaminationsCompositionSection = composition.addSection();
-        medicalHistoryCompositionSection
-                .setTitle("Physical examination")
-                .setCode(FHIRUtils.getPhysicalExaminationType());
-        medicalHistory
-                .stream()
-                .map(FHIRUtils::getReferenceToResource)
-                .forEach(physicalExaminationsCompositionSection::addEntry);
+        if (observations.size() > 0) {
+            Composition.SectionComponent physicalExaminationsCompositionSection = composition.addSection();
+            physicalExaminationsCompositionSection
+                    .setTitle("Physical examination")
+                    .setCode(FHIRUtils.getPhysicalExaminationType());
+            medicalHistory
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(physicalExaminationsCompositionSection::addEntry);
+        }
 
         return composition;
     }
