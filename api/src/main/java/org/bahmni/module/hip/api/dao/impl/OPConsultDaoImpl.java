@@ -43,12 +43,21 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\tc.concept_id,\n" +
                 "\tc.uuid,\n" +
                 "\tencounterIdTable.encounter_id,\n" +
-                "\tc.date_created \n" +
+                "\tc.date_created\n" +
                 "from\n" +
                 "\tconditions c\n" +
                 "inner join (\n" +
                 "\tselect\n" +
                 "\t\te.encounter_datetime,\n" +
+                "\t\t(select\n" +
+                "\t\t\te2.encounter_datetime\n" +
+                "\t\tfrom\n" +
+                "\t\t\tencounter e2\n" +
+                "\t\twhere\n" +
+                "\t\t\te2.encounter_id > e.encounter_id\n" +
+                "\t\t\tand e2.patient_id = e.patient_id\n" +
+                "\t\tORDER BY\n" +
+                "\t\t\te.encounter_datetime LIMIT 1) end_time,\n" +
                 "\t\te.encounter_id,\n" +
                 "\t\te.visit_id,\n" +
                 "\t\tv.patient_id\n" +
@@ -59,20 +68,23 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\tinner join visit_type vt on\n" +
                 "\t\tv.visit_type_id = vt.visit_type_id\n" +
                 "\twhere\n" +
-                "\t\tv.patient_id = (\n" +
+                "\t\te.encounter_type = 1\n" +
+                "\t\tand v.patient_id = (\n" +
                 "\t\tselect\n" +
                 "\t\t\tp.person_id\n" +
                 "\t\tfrom\n" +
                 "\t\t\tperson p\n" +
                 "\t\twhere\n" +
                 "\t\t\tp.uuid = :patientUUID)\n" +
-                "\t\tand vt.name = :visit " +
+                "\t\tand vt.name = :visit \n" +
                 "\t\tand v.date_started between :fromDate and :toDate) encounterIdTable on\n" +
                 "\tencounterIdTable.patient_id = c.patient_id\n" +
                 "where\n" +
-                "\tc.status = \"HISTORY_OF\"\n" +
-                "\tand c.date_created between encounterIdTable.encounter_datetime and " +
-                "date_add(encounterIdTable.encounter_datetime, interval 45 minute) group by c.condition_id;";
+                "\tc.status = 'HISTORY_OF' and\n" +
+                "\t((c.date_created > encounterIdTable.encounter_datetime and encounterIdTable.end_time is NULL)\n" +
+                "\tor c.date_created between encounterIdTable.encounter_datetime and encounterIdTable.end_time)\n" +
+                "group by\n" +
+                "\tc.condition_id ;";
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryQueryString);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("visit", visit);

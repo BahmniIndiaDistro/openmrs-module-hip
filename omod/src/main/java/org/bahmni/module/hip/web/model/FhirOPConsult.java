@@ -104,7 +104,7 @@ public class FhirOPConsult {
             physicalExaminationsCompositionSection
                     .setTitle("Physical examination")
                     .setCode(FHIRUtils.getPhysicalExaminationType());
-            medicalHistory
+            observations
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(physicalExaminationsCompositionSection::addEntry);
