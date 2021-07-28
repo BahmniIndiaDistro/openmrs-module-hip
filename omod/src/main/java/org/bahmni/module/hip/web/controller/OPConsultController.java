@@ -3,7 +3,6 @@ package org.bahmni.module.hip.web.controller;
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.BundledOPConsultResponse;
 import org.bahmni.module.hip.web.model.DateRange;
-import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.service.OPConsultService;
 import org.bahmni.module.hip.web.service.ValidationService;
@@ -20,7 +19,7 @@ import java.util.List;
 
 import static org.bahmni.module.hip.web.utils.DateUtils.parseDate;
 
-@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/opConsult")
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/opConsults")
 @RestController
 public class OPConsultController extends BaseRestController {
     private final OPConsultService opConsultService;

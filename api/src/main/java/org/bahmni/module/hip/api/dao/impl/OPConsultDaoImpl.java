@@ -134,7 +134,8 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\t\t\t\t\t\t\tOR cn.name = 'Operative Notes'\n" +
                 "\t\t\t\t\t\t\tOR cn.name = 'USG Notes'\n" +
                 "\t\t\t\t\t\t\tOR cn.name = 'Procedure Notes'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Triage Reference'))\n" +
+                "\t\t\t\t\t\t\tOR cn.name = 'Triage Reference'" +
+                "\t\t\t\t\t\t\tOR cn.name = 'History and Examination'))\n" +
                 "\t\t\tAND et.name = 'Consultation'\n" +
                 "\t\t\tAND o.concept_id NOT in(\n" +
                 "\t\t\t\tSELECT\n" +
