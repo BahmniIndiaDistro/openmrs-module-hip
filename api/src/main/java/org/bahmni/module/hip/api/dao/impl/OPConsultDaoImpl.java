@@ -6,12 +6,14 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
     private SessionFactory sessionFactory;
+    final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
 
     @Autowired
     public OPConsultDaoImpl(SessionFactory sessionFactory) {
@@ -38,8 +40,16 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List getMedicalHistory(String patientUUID, String visit, Date fromDate, Date toDate) {
-        String medicalHistoryQueryString = "select\n" +
-                "\tc.condition_id,\n" +
+        List medicalHistory = new ArrayList();
+        medicalHistory.addAll(getMedicalHistoryConditions(patientUUID, visit, fromDate, toDate));
+        medicalHistory.addAll(getMedicalHistoryDiagnosis(patientUUID, visit, fromDate, toDate));
+        return medicalHistory;
+    }
+
+    private List getMedicalHistoryConditions(String patientUUID, String visit, Date fromDate, Date toDate) {
+        final String conditionStatusActive = "ACTIVE";
+        final String conditionStatusHistoryOf = "HISTORY_OF";
+        String medicalHistoryConditionsQueryString = "select\n" +
                 "\tc.concept_id,\n" +
                 "\tc.uuid,\n" +
                 "\tencounterIdTable.encounter_id,\n" +
@@ -68,7 +78,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\tinner join visit_type vt on\n" +
                 "\t\tv.visit_type_id = vt.visit_type_id\n" +
                 "\twhere\n" +
-                "\t\te.encounter_type = 1\n" +
+                "\t\te.encounter_type = " + CONSULTATION_ENCOUNTER_TYPE_ID + "\n" +
                 "\t\tand v.patient_id = (\n" +
                 "\t\tselect\n" +
                 "\t\t\tp.person_id\n" +
@@ -80,12 +90,34 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\t\tand v.date_started between :fromDate and :toDate) encounterIdTable on\n" +
                 "\tencounterIdTable.patient_id = c.patient_id\n" +
                 "where\n" +
-                "\tc.status = 'HISTORY_OF' and\n" +
+                "\t(c.status = " + conditionStatusActive + " or c.status = " + conditionStatusHistoryOf + ") and \n" +
                 "\t((c.date_created > encounterIdTable.encounter_datetime and encounterIdTable.end_time is NULL)\n" +
                 "\tor c.date_created between encounterIdTable.encounter_datetime and encounterIdTable.end_time)\n" +
                 "group by\n" +
                 "\tc.condition_id ;";
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryQueryString);
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryConditionsQueryString);
+        query.setParameter("patientUUID", patientUUID);
+        query.setParameter("visit", visit);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+        return query.list();
+    }
+
+    private List getMedicalHistoryDiagnosis(String patientUUID, String visit, Date fromDate, Date toDate) {
+        final int diagnosisValueConceptId = 15;
+        String medicalHistoryDiagnosisQueryString = "select\n " +
+            "\t\t\to.value_coded, o.uuid, o.encounter_id, o.date_created \n" +
+            "\t\t\tfrom obs o inner join encounter e on \n" +
+            "\t\t\te.encounter_id = o.encounter_id \n" +
+            "\t\t\tinner join visit v on \n" +
+            "\t\t\tv.visit_id = e.visit_id \n" +
+            "\t\t\tinner join visit_type vt on \n" +
+            "\t\t\tv.visit_type_id = vt.visit_type_id \n" +
+            "\t\t\twhere v.patient_id = (select p.person_id from person p where p.uuid = :patientUUID) \n" +
+            "\t\t\tand v.date_started between :fromDate and :toDate \n" +
+            "\t\t\tand e.encounter_type = " + CONSULTATION_ENCOUNTER_TYPE_ID + " \n" +
+            "\t\t\tand vt.name = :visit and o.concept_id = " + diagnosisValueConceptId + ";";
+        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryDiagnosisQueryString);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("visit", visit);
         query.setParameter("fromDate", fromDate);
