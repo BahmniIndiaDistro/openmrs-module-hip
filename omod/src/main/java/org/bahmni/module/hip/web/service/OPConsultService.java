@@ -90,12 +90,12 @@ public class OPConsultService {
         List<String[]> medicalHistoryIds =  opConsultDao.getMedicalHistory(patientUuid, visitType, fromDate, toDate);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = new HashMap<>();
         for (Object[] id : medicalHistoryIds) {
-            Encounter encounter = encounterService.getEncounter(Integer.parseInt(String.valueOf(id[3])));
+            Encounter encounter = encounterService.getEncounter(Integer.parseInt(String.valueOf(id[2])));
             if (!encounterMedicalHistoryMap.containsKey(encounter))
                 encounterMedicalHistoryMap.put(encounter, new ArrayList<>());
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date date = dateFormat.parse(String.valueOf(id[4]));
-            encounterMedicalHistoryMap.get(encounter).add(new OpenMrsCondition(String.valueOf(id[2]), conceptService.getConcept(Integer.parseInt(String.valueOf(id[1]))).getDisplayString(), date));
+            Date date = dateFormat.parse(String.valueOf(id[3]));
+            encounterMedicalHistoryMap.get(encounter).add(new OpenMrsCondition(String.valueOf(id[1]), conceptService.getConcept(Integer.parseInt(String.valueOf(id[0]))).getDisplayString(), date));
         }
         return encounterMedicalHistoryMap;
     }
