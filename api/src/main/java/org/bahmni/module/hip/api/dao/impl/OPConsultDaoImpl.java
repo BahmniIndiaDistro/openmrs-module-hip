@@ -47,8 +47,8 @@ public class OPConsultDaoImpl implements OPConsultDao {
     }
 
     private List getMedicalHistoryConditions(String patientUUID, String visit, Date fromDate, Date toDate) {
-        final String conditionStatusActive = "ACTIVE";
-        final String conditionStatusHistoryOf = "HISTORY_OF";
+        final String conditionStatusHistoryOf = "'HISTORY_OF'";
+        final String conditionStatusActive = "'ACTIVE'";
         String medicalHistoryConditionsQueryString = "select\n" +
                 "\tc.concept_id,\n" +
                 "\tc.uuid,\n" +
@@ -89,10 +89,9 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\t\tand vt.name = :visit \n" +
                 "\t\tand v.date_started between :fromDate and :toDate) encounterIdTable on\n" +
                 "\tencounterIdTable.patient_id = c.patient_id\n" +
-                "where\n" +
-                "\t(c.status = " + conditionStatusActive + " or c.status = " + conditionStatusHistoryOf + ") and \n" +
-                "\t((c.date_created > encounterIdTable.encounter_datetime and encounterIdTable.end_time is NULL)\n" +
-                "\tor c.date_created between encounterIdTable.encounter_datetime and encounterIdTable.end_time)\n" +
+                "\t\twhere (c.status = " + conditionStatusHistoryOf +" or c.status = "+ conditionStatusActive + ") and\n" +
+                "\t\t((c.date_created > encounterIdTable.encounter_datetime and encounterIdTable.end_time is NULL)\n" +
+                "\t\tor c.date_created between encounterIdTable.encounter_datetime and encounterIdTable.end_time)\n" +
                 "group by\n" +
                 "\tc.condition_id ;";
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(medicalHistoryConditionsQueryString);
@@ -127,6 +126,12 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List<Integer> getPhysicalExamination(String patientUUID, String visit, Date fromDate, Date toDate) {
+        final String[] formNames = new String[]{"'Discharge Summary'","'Death Note'", "'Delivery Note'", "'Opioid Substitution Therapy - Intake'", "'Opportunistic Infection'",
+                "'Safe Abortion'", "'ECG Notes'", "'Operative Notes'", "'USG Notes'", "'Procedure Notes'", "'Triage Reference'", "'History and Examination'"};
+        final String[] conceptNames = new String[]{"'Treatment Plan'","'Next Followup Visit'","'Plan for next visit'","'Patient Category'","'Current Followup Visit After'",
+                "'Plan for next visit'","'Parents name'","'Death Date'","'Contact number'","'Vitamin A Capsules Provided'","'Albendazole Given'","'Referred out'",
+                "'Vitamin A Capsules Provided'","'Albendazole Given'","'Bal Vita provided'","'Bal Vita Provided by FCHV'","'Condoms given'","'Marital Status'","'Contact Number'",
+                "'Transferred out (Complete Section)'"};
         String physicalExamination = "SELECT\n" +
                 "\to.obs_id\n" +
                 "FROM\n" +
@@ -156,43 +161,13 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\t\t\t\t\t\tSELECT\n" +
                 "\t\t\t\t\t\t\tcn.concept_id FROM concept_name cn\n" +
                 "\t\t\t\t\t\tWHERE\n" +
-                "\t\t\t\t\t\t\tcn.name = 'Discharge Summary'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Death Note'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Delivery Note'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Opioid Substitution Therapy - Intake'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Opportunistic Infection'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Safe Abortion'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'ECG Notes'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Operative Notes'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'USG Notes'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Procedure Notes'\n" +
-                "\t\t\t\t\t\t\tOR cn.name = 'Triage Reference'" +
-                "\t\t\t\t\t\t\tOR cn.name = 'History and Examination'))\n" +
+                "\t\t\t\t\t\t\tcn.name in ("+ String.join( ",", formNames) +")))\n" +
                 "\t\t\tAND et.name = 'Consultation'\n" +
                 "\t\t\tAND o.concept_id NOT in(\n" +
                 "\t\t\t\tSELECT\n" +
                 "\t\t\t\t\tcn.concept_id FROM concept_name cn\n" +
                 "\t\t\t\tWHERE\n" +
-                "\t\t\t\t\tcn.name = 'Treatment Plan'\n" +
-                "\t\t\t\t\tOR cn.name = 'Next Followup Visit'\n" +
-                "\t\t\t\t\tOR cn.name = 'Plan for next visit'\n" +
-                "\t\t\t\t\tOR cn.name = 'Patient Category'\n" +
-                "\t\t\t\t\tOR cn.name = 'Current Followup Visit After'\n" +
-                "\t\t\t\t\tOR cn.name = 'Plan for next visit'\n" +
-                "\t\t\t\t\tOR cn.name = 'Parents name'\n" +
-                "\t\t\t\t\tOR cn.name = 'Death Date'\n" +
-                "\t\t\t\t\tOR cn.name = 'Contact number'\n" +
-                "\t\t\t\t\tOR cn.name = 'Vitamin A Capsules Provided'\n" +
-                "\t\t\t\t\tOR cn.name = 'Albendazole Given'\n" +
-                "\t\t\t\t\tOR cn.name = 'Referred out'\n" +
-                "\t\t\t\t\tOR cn.name = 'Vitamin A Capsules Provided'\n" +
-                "\t\t\t\t\tOR cn.name = 'Albendazole Given'\n" +
-                "\t\t\t\t\tOR cn.name = 'Bal Vita provided'\n" +
-                "\t\t\t\t\tOR cn.name = 'Bal Vita Provided by FCHV'\n" +
-                "\t\t\t\t\tOR cn.name = 'Condoms given'\n" +
-                "\t\t\t\t\tOR cn.name = 'Marital Status'\n" +
-                "\t\t\t\t\tOR cn.name = 'Contact Number'\n" +
-                "\t\t\t\t\tOR cn.name = 'Transferred out (Complete Section)') ;";
+                "\t\t\t\t\tcn.name in ("+ String.join(",", conceptNames) +")) ;";
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(physicalExamination);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("visit", visit);
