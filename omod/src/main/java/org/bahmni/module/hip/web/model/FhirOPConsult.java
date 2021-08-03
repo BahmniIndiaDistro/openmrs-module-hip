@@ -4,7 +4,6 @@ import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
-import org.openmrs.Obs;
 
 import java.util.Date;
 import java.util.List;
@@ -22,6 +21,7 @@ public class FhirOPConsult {
     private final Patient patient;
     private final Reference patientReference;
     private final List<Observation> observations;
+    private final List<MedicationRequest> medicationRequests;
 
     public FhirOPConsult(List<Condition> chiefComplaints,
                          List<Condition> medicalHistory, Date encounterTimestamp,
@@ -29,7 +29,9 @@ public class FhirOPConsult {
                          Encounter encounter,
                          List<Practitioner> practitioners,
                          Patient patient,
-                         Reference patientReference, List<Observation> observations) {
+                         Reference patientReference,
+                         List<Observation> observations,
+                         List<MedicationRequest> medicationRequests) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
@@ -39,6 +41,7 @@ public class FhirOPConsult {
         this.patient = patient;
         this.patientReference = patientReference;
         this.observations = observations;
+        this.medicationRequests = medicationRequests;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -51,6 +54,7 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
         FHIRUtils.addToBundleEntry(bundle, observations, false);
+        FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         return bundle;
     }
 
@@ -60,6 +64,7 @@ public class FhirOPConsult {
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
         Date encounterDatetime = openMrsOPConsult.getEncounter().getEncounterDatetime();
         Integer encounterId = openMrsOPConsult.getEncounter().getId();
+        List<MedicationRequest> medicationRequestsList = openMrsOPConsult.getDrugOrders().stream().map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsOPConsult.getEncounter().getEncounterProviders());
         List<Condition> fhirChiefComplaintConditionList = openMrsOPConsult.getChiefComplaintConditions().stream().
                     map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
@@ -68,7 +73,7 @@ public class FhirOPConsult {
         List<Observation> fhirObservationList = openMrsOPConsult.getObservations().stream().
                     map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
-                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList);
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -77,6 +82,16 @@ public class FhirOPConsult {
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference);
 
+        if(medicationRequests.size() > 0){
+            Composition.SectionComponent medicationRequestsCompositionSection = composition.addSection();
+            medicationRequestsCompositionSection
+                    .setTitle("Medication request")
+                    .setCode(FHIRUtils.getPrescriptionType());
+            medicationRequests
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(medicationRequestsCompositionSection::addEntry);
+        }
         if (chiefComplaints.size() > 0){
             Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
             chiefComplaintsCompositionSection

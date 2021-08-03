@@ -19,6 +19,7 @@ public class FhirBundledOPConsultBuilder {
     }
 
     public OPConsultBundle fhirBundleResponseFor (OpenMrsOPConsult openMrsOPConsult) {
+
         OrganizationContext organizationContext = organizationContextService.buildContext();
 
         Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper).
