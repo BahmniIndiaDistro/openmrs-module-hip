@@ -51,12 +51,24 @@ public class OPConsultService {
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patientUuid, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
+        Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patientUuid, visitType, fromDate, toDate);
 
-        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, patient);
+        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap, patient);
         List<OPConsultBundle> opConsultBundles = openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
 
         return opConsultBundles;
+    }
+
+    private Map<Encounter, Obs> getEncounterProcedureMap(String patientUuid, String visitType, Date fromDate, Date toDate) {
+        List<Integer> obsIds = opConsultDao.getProcedures(patientUuid, visitType, fromDate, toDate);
+        Map<Encounter, Obs> encounterProcedureMap = new HashMap<>();
+        for (int obsId:obsIds) {
+            Obs obs = obsService.getObs(obsId);
+            Encounter encounter = obs.getEncounter();
+            encounterProcedureMap.put(encounter, obs);
+        }
+        return encounterProcedureMap;
     }
 
     private Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(String patientUuid, String visitType, Date fromDate, Date toDate) {

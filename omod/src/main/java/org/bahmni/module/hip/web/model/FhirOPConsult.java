@@ -22,6 +22,7 @@ public class FhirOPConsult {
     private final Reference patientReference;
     private final List<Observation> observations;
     private final List<MedicationRequest> medicationRequests;
+    private final Procedure procedure;
 
     public FhirOPConsult(List<Condition> chiefComplaints,
                          List<Condition> medicalHistory, Date encounterTimestamp,
@@ -31,7 +32,7 @@ public class FhirOPConsult {
                          Patient patient,
                          Reference patientReference,
                          List<Observation> observations,
-                         List<MedicationRequest> medicationRequests) {
+                         List<MedicationRequest> medicationRequests, Procedure procedure) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
@@ -42,6 +43,7 @@ public class FhirOPConsult {
         this.patientReference = patientReference;
         this.observations = observations;
         this.medicationRequests = medicationRequests;
+        this.procedure = procedure;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -55,6 +57,7 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
         FHIRUtils.addToBundleEntry(bundle, observations, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        FHIRUtils.addToBundleEntry(bundle, procedure, false);
         return bundle;
     }
 
@@ -72,8 +75,10 @@ public class FhirOPConsult {
                     map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
         List<Observation> fhirObservationList = openMrsOPConsult.getObservations().stream().
                     map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
+        Procedure procedure = openMrsOPConsult.getProcedure() != null ?
+                fhirResourceMapper.mapToProcedure(openMrsOPConsult.getProcedure()) : null;
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
-                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList);
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, procedure);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -81,6 +86,15 @@ public class FhirOPConsult {
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference);
+
+        if (procedure != null) {
+            Composition.SectionComponent procedureCompositionSection = composition.addSection();
+            procedureCompositionSection
+                    .setTitle("Procedure")
+                    .setCode(FHIRUtils.getProcedureType());
+
+            procedureCompositionSection.addEntry(FHIRUtils.getReferenceToResource(procedure));
+        }
 
         if(medicationRequests.size() > 0){
             Composition.SectionComponent medicationRequestsCompositionSection = composition.addSection();
@@ -92,6 +106,7 @@ public class FhirOPConsult {
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(medicationRequestsCompositionSection::addEntry);
         }
+
         if (chiefComplaints.size() > 0){
             Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
             chiefComplaintsCompositionSection

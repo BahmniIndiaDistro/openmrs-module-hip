@@ -7,4 +7,5 @@ public interface OPConsultDao {
     List<Integer> getChiefComplaints(String patientUUID, String visit, Date fromDate, Date toDate);
     List<String[]> getMedicalHistory(String patientUUID, String visit, Date fromDate, Date toDate);
     List<Integer> getPhysicalExamination(String patientUUID, String visit, Date fromDate, Date toDate);
+    List<Integer> getProcedures(String patientUUID, String visit, Date fromDate, Date toDate);
 }

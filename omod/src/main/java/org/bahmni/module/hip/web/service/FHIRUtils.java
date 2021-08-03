@@ -108,6 +108,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getProcedureType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("36969009");
+        coding.setDisplay("Procedure");
+        return type;
+    }
+
     public static void addToBundleEntry(Bundle bundle, Resource resource, boolean useIdPart) {
         String resourceType = resource.getResourceType().toString();
         String id = useIdPart ? resource.getIdElement().getIdPart() : resource.getId();
