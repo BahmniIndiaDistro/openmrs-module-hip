@@ -72,6 +72,25 @@ public class FHIRResourceMapper {
         }
     }
 
+    public DocumentReference mapToDocumentDocumentReference(Obs obs) {
+        DocumentReference documentReference = new DocumentReference();
+        documentReference.setId(obs.getUuid());
+        List<DocumentReference.DocumentReferenceContentComponent> contents = new ArrayList<>();
+        try {
+            List<Attachment> attachments = getAttachments(obs);
+            for (Attachment attachment : attachments) {
+                DocumentReference.DocumentReferenceContentComponent documentReferenceContentComponent
+                        = new DocumentReference.DocumentReferenceContentComponent();
+                documentReferenceContentComponent.setAttachment(attachment);
+                contents.add(documentReferenceContentComponent);
+            }
+            documentReference.setContent(contents);
+            return documentReference;
+        } catch (IOException exception) {
+            return documentReference;
+        }
+    }
+
     private List<Attachment> getAttachments(Obs obs) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
         Attachment attachment = new Attachment();

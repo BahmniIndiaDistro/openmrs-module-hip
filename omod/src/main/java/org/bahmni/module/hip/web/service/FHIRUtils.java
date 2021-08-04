@@ -72,6 +72,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getPatientDocumentType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("371530004");
+        coding.setDisplay("Clinical consultation report");
+        return type;
+    }
+
     public static CodeableConcept getOPConsultType() {
         CodeableConcept type = new CodeableConcept();
         Coding coding = type.addCoding();

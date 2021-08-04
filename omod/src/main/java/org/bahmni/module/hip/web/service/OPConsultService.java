@@ -1,7 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.api.dao.OPConsultDao;
-import org.bahmni.module.hip.web.controller.HipControllerAdvice;
 import org.bahmni.module.hip.web.model.*;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
@@ -27,11 +26,13 @@ public class OPConsultService {
     private final ObsService obsService;
     private final ConceptService conceptService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
+    private final DiagnosticReportService diagnosticReportService;
 
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder, OPConsultDao opConsultDao,
                             PatientService patientService, EncounterService encounterService, ObsService obsService,
-                            ConceptService conceptService, OpenMRSDrugOrderClient openMRSDrugOrderClient) {
+                            ConceptService conceptService, OpenMRSDrugOrderClient openMRSDrugOrderClient,
+                            DiagnosticReportService diagnosticReportService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
@@ -39,6 +40,7 @@ public class OPConsultService {
         this.obsService = obsService;
         this.conceptService = conceptService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
+        this.diagnosticReportService = diagnosticReportService;
     }
 
     public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, DateRange dateRange, String visitType) throws ParseException {
@@ -52,12 +54,30 @@ public class OPConsultService {
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patientUuid, visitType, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
 
-        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap, patient);
+        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
+                encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
+                encounterPatientDocumentsMap, patient);
         List<OPConsultBundle> opConsultBundles = openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
 
         return opConsultBundles;
+    }
+
+    private Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(String visitType, Date fromDate, Date toDate, Patient patient) {
+        final int patientDocumentEncounterType = 9;
+        Map<Encounter, List<Obs>> encounterDiagnosticReportsMap = diagnosticReportService.getAllObservationsForVisits(fromDate, toDate, patient, visitType);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = new HashMap<>();
+        for (Encounter e : encounterDiagnosticReportsMap.keySet()) {
+            List<Obs> patientDocuments = e.getAllObs().stream().
+                    filter(o -> (o.getEncounter().getEncounterType().getEncounterTypeId() == patientDocumentEncounterType && o.getValueText() == null))
+                    .collect(Collectors.toList());
+            if (patientDocuments.size() > 0) {
+                encounterPatientDocumentsMap.put(e, patientDocuments);
+            }
+        }
+        return encounterPatientDocumentsMap;
     }
 
     private Map<Encounter, Obs> getEncounterProcedureMap(String patientUuid, String visitType, Date fromDate, Date toDate) {

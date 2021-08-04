@@ -4,7 +4,6 @@ import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +22,7 @@ public class FhirOPConsult {
     private final List<Observation> observations;
     private final List<MedicationRequest> medicationRequests;
     private final Procedure procedure;
+    private final List<DocumentReference> patientDocuments;
 
     public FhirOPConsult(List<Condition> chiefComplaints,
                          List<Condition> medicalHistory, Date encounterTimestamp,
@@ -32,7 +32,7 @@ public class FhirOPConsult {
                          Patient patient,
                          Reference patientReference,
                          List<Observation> observations,
-                         List<MedicationRequest> medicationRequests, Procedure procedure) {
+                         List<MedicationRequest> medicationRequests, Procedure procedure, List<DocumentReference> patientDocuments) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
@@ -44,6 +44,7 @@ public class FhirOPConsult {
         this.observations = observations;
         this.medicationRequests = medicationRequests;
         this.procedure = procedure;
+        this.patientDocuments = patientDocuments;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -57,7 +58,8 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
         FHIRUtils.addToBundleEntry(bundle, observations, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
-        FHIRUtils.addToBundleEntry(bundle, procedure, false);
+        if (procedure != null) FHIRUtils.addToBundleEntry(bundle, procedure, false);
+        FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
         return bundle;
     }
 
@@ -77,8 +79,11 @@ public class FhirOPConsult {
                     map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
         Procedure procedure = openMrsOPConsult.getProcedure() != null ?
                 fhirResourceMapper.mapToProcedure(openMrsOPConsult.getProcedure()) : null;
+        List<DocumentReference> patientDocuments = openMrsOPConsult.getPatientDocuments().stream().
+                map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
+
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
-                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, procedure);
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, procedure, patientDocuments);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -86,6 +91,17 @@ public class FhirOPConsult {
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference);
+
+        if (patientDocuments.size() > 0) {
+            Composition.SectionComponent patientDocumentsCompositionSection = composition.addSection();
+            patientDocumentsCompositionSection
+                    .setTitle("Patient Document")
+                    .setCode(FHIRUtils.getPatientDocumentType());
+            patientDocuments
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(patientDocumentsCompositionSection::addEntry);
+        }
 
         if (procedure != null) {
             Composition.SectionComponent procedureCompositionSection = composition.addSection();
