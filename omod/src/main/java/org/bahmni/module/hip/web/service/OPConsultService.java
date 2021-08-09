@@ -1,6 +1,8 @@
 package org.bahmni.module.hip.web.service;
 
+import org.apache.log4j.Logger;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
+import org.bahmni.module.hip.web.controller.HipControllerAdvice;
 import org.bahmni.module.hip.web.model.*;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class OPConsultService {
+    private static final Logger log = Logger.getLogger(OPConsultService.class);
     private final FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder;
     private final OPConsultDao opConsultDao;
     private final PatientService patientService;
@@ -48,7 +51,7 @@ public class OPConsultService {
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
 
-        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = getEncounterChiefComplaintsMap(patientUuid, visitType, fromDate, toDate);
+        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = getEncounterMedicalHistoryMap(patientUuid, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patientUuid, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
@@ -105,20 +108,16 @@ public class OPConsultService {
         return encounterPhysicalExaminationMap;
     }
 
-    private Map<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(String patientUuid, String visitType, Date fromDate, Date toDate) {
-        List<Integer> obsIdsOfChiefComplaints = opConsultDao.getChiefComplaints(patientUuid, visitType, fromDate, toDate);
-
-        List<Obs> chiefComplaintsObs = obsIdsOfChiefComplaints.stream().map(obsService::getObs).collect(Collectors.toList());
+    private Map<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Patient patient, String visitType, Date fromDate, Date toDate) {
+        List<Obs> chiefComplaints = opConsultDao.getChiefComplaints(patient, visitType, fromDate, toDate);
 
         HashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new HashMap<>();
 
-        for (Obs o : chiefComplaintsObs) {
-            Encounter encounter = o.getEncounter();
-            if(!encounterChiefComplaintsMap.containsKey(encounter)) {
-                encounterChiefComplaintsMap.put(encounter, new ArrayList<>());
-            }
-            encounterChiefComplaintsMap.get(encounter).add(new OpenMrsCondition(o.getUuid(), o.getValueCoded().getDisplayString(), o.getDateCreated()));
+        for (Obs o : chiefComplaints) {
+            log.warn(o.toString());
         }
+
+
         return encounterChiefComplaintsMap;
     }
 

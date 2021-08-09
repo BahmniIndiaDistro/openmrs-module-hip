@@ -1,8 +1,11 @@
 package org.bahmni.module.hip.api.dao.impl;
 
 import org.bahmni.module.hip.api.dao.OPConsultDao;
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Restrictions;
+import org.openmrs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -12,16 +15,16 @@ import java.util.List;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
+    public static final String HISTORY_AND_EXAMINATION = "History and Examination";
     private SessionFactory sessionFactory;
     final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
-
     @Autowired
     public OPConsultDaoImpl(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
     @Override
-    public List<Integer> getChiefComplaints(String patientUUID, String visit, Date fromDate, Date toDate) {
+    public List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate) {
         String chiefComplaintsQueryString = "select o1.obs_id from obs o1 where o1.obs_datetime in (select max(o2.obs_datetime) from obs o2\n" +
                 "\t\tinner join encounter e on o2.encounter_id = e.encounter_id \n" +
                 "\t\tinner join visit v on e.visit_id = v.visit_id \n" +
@@ -29,13 +32,18 @@ public class OPConsultDaoImpl implements OPConsultDao {
                 "\t\tand v.date_started between :fromDate and :toDate and \n" +
                 "\t\to2.person_id = (select p.person_id from person p where p.uuid = :patientUUID)\n" +
                 "\t\tand o2.concept_id = 156 group by o2.obs_group_id) and o1.value_coded is not null ;";
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(chiefComplaintsQueryString);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("visit", visit);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
+        Criteria criteria = this.sessionFactory.openStatelessSession().createCriteria(Obs.class, "o");
+                criteria.createCriteria("o.concept", "c")
+                .createCriteria("c.names", "cn")
+                .createCriteria("o.encounter", "e")
+                .createCriteria("e.visit", "v")
+                .createCriteria("v.visitType", "vt")
+                .add(Restrictions.eq("vt.name", visit));
+        criteria.add(Restrictions.eq("cn.name", HISTORY_AND_EXAMINATION));
+        criteria.add(Restrictions.eq("v.patient", patient));
+        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+        return criteria.list();
 
-        return query.list();
     }
 
     @Override
