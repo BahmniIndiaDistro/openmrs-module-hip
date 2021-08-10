@@ -114,9 +114,11 @@ public class OPConsultService {
         HashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new HashMap<>();
 
         for (Obs o : chiefComplaints) {
-            log.warn(o.toString());
+            if(!encounterChiefComplaintsMap.containsKey(o.getEncounter())){
+                encounterChiefComplaintsMap.put(o.getEncounter(), new ArrayList<>());
+            }
+            encounterChiefComplaintsMap.get(o.getEncounter()).add(new OpenMrsCondition(o.getUuid(), o.getValueCoded().getDisplayString(), o.getDateCreated()));
         }
-
 
         return encounterChiefComplaintsMap;
     }

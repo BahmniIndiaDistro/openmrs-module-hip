@@ -1,5 +1,7 @@
 package org.bahmni.module.hip.api.dao.impl;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -15,9 +17,11 @@ import java.util.List;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
-    public static final String HISTORY_AND_EXAMINATION = "History and Examination";
+    public static final String CHIEF_COMPLAINT = "Chief Complaint";
     private SessionFactory sessionFactory;
     final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
+    protected static final Log log = LogFactory.getLog(PrescriptionOrderDaoImpl.class);
+
     @Autowired
     public OPConsultDaoImpl(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -25,25 +29,20 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate) {
-        String chiefComplaintsQueryString = "select o1.obs_id from obs o1 where o1.obs_datetime in (select max(o2.obs_datetime) from obs o2\n" +
-                "\t\tinner join encounter e on o2.encounter_id = e.encounter_id \n" +
-                "\t\tinner join visit v on e.visit_id = v.visit_id \n" +
-                "\t\tinner join visit_type vt on v.visit_type_id = vt.visit_type_id where vt.name = :visit" +
-                "\t\tand v.date_started between :fromDate and :toDate and \n" +
-                "\t\to2.person_id = (select p.person_id from person p where p.uuid = :patientUUID)\n" +
-                "\t\tand o2.concept_id = 156 group by o2.obs_group_id) and o1.value_coded is not null ;";
-        Criteria criteria = this.sessionFactory.openStatelessSession().createCriteria(Obs.class, "o");
-                criteria.createCriteria("o.concept", "c")
-                .createCriteria("c.names", "cn")
-                .createCriteria("o.encounter", "e")
-                .createCriteria("e.visit", "v")
-                .createCriteria("v.visitType", "vt")
-                .add(Restrictions.eq("vt.name", visit));
-        criteria.add(Restrictions.eq("cn.name", HISTORY_AND_EXAMINATION));
-        criteria.add(Restrictions.eq("v.patient", patient));
-        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
+            criteria.createCriteria("o.concept", "c");
+            criteria.createCriteria("c.names", "cn");
+            criteria.createCriteria("o.encounter", "e");
+            criteria.createCriteria("e.visit", "v");
+            criteria.createCriteria("v.visitType", "vt");
+            criteria.add(Restrictions.eq("vt.name", visit));
+            criteria.add(Restrictions.eq("cn.name", CHIEF_COMPLAINT));
+            criteria.add(Restrictions.eq("o.voided", false));
+            criteria.add(Restrictions.eq("v.patient", patient));
+            criteria.add(Restrictions.isNotNull("o.valueCoded"));
+            criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+            criteria.add(Restrictions.eq("cn.localePreferred", true));
         return criteria.list();
-
     }
 
     @Override
