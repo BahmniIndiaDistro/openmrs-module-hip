@@ -19,6 +19,7 @@ import java.util.List;
 public class OPConsultDaoImpl implements OPConsultDao {
     public static final String CHIEF_COMPLAINT = "Chief Complaint";
     public static final String PROCEDURE_NOTES = "Procedure Notes, Procedure";
+    public static final String CONSULTATION = "Consultation";
     private SessionFactory sessionFactory;
     final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
     protected static final Log log = LogFactory.getLog(PrescriptionOrderDaoImpl.class);
@@ -133,70 +134,24 @@ public class OPConsultDaoImpl implements OPConsultDao {
     }
 
     @Override
-    public List<Integer> getPhysicalExamination(String patientUUID, String visit, Date fromDate, Date toDate) {
-        final String[] formNames = new String[]{"'Discharge Summary'","'Death Note'", "'Delivery Note'", "'Opioid Substitution Therapy - Intake'", "'Opportunistic Infection'",
-                "'Safe Abortion'", "'ECG Notes'", "'Operative Notes'", "'USG Notes'", "'Procedure Notes'", "'Triage Reference'", "'History and Examination'"};
-        final String[] conceptNames = new String[]{"'Treatment Plan'","'Next Followup Visit'","'Plan for next visit'","'Patient Category'","'Current Followup Visit After'",
-                "'Plan for next visit'","'Parents name'","'Death Date'","'Contact number'","'Vitamin A Capsules Provided'","'Albendazole Given'","'Referred out'",
-                "'Vitamin A Capsules Provided'","'Albendazole Given'","'Bal Vita provided'","'Bal Vita Provided by FCHV'","'Condoms given'","'Marital Status'","'Contact Number'",
-                "'Transferred out (Complete Section)'"};
-        String physicalExamination = "SELECT\n" +
-                "\to.obs_id\n" +
-                "FROM\n" +
-                "\tobs o\n" +
-                "\tINNER JOIN encounter e ON e.encounter_id = o.encounter_id\n" +
-                "\tINNER JOIN encounter_type et ON e.encounter_type = et.encounter_type_id\n" +
-                "\tINNER JOIN visit v ON v.visit_id = e.visit_id\n" +
-                "WHERE\n" +
-                "\tv.patient_id = (\n" +
-                "\t\tSELECT\n" +
-                "\t\t\tp.person_id\n" +
-                "\t\tFROM\n" +
-                "\t\t\tperson p\n" +
-                "\t\tWHERE\n" +
-                "\t\t\tp.uuid = :patientUUID)\n" +
-                "\t\tAND v.visit_type_id = (\n" +
-                "\t\t\tSELECT\n" +
-                "\t\t\t\tvt.visit_type_id\n" +
-                "\t\t\tFROM\n" +
-                "\t\t\t\tvisit_type vt\n" +
-                "\t\t\tWHERE\n" +
-                "\t\t\t\tvt.name = :visit)\n" +
-                "\t\t\tAND v.date_started BETWEEN :fromDate AND :toDate\n" +
-                "\t\t\tAND o.obs_datetime NOT in( SELECT DISTINCT\n" +
-                "\t\t\t\t\t(o2.obs_datetime)\n" +
-                "\t\t\t\t\tFROM obs o2 WHERE o2.concept_id in(\n" +
-                "\t\t\t\t\t\tSELECT\n" +
-                "\t\t\t\t\t\t\tcn.concept_id FROM concept_name cn\n" +
-                "\t\t\t\t\t\tWHERE\n" +
-                "\t\t\t\t\t\t\tcn.name in ("+ String.join( ",", formNames) +")))\n" +
-                "\t\t\tAND et.name = 'Consultation'\n" +
-                "\t\t\tAND o.concept_id NOT in(\n" +
-                "\t\t\t\tSELECT\n" +
-                "\t\t\t\t\tcn.concept_id FROM concept_name cn\n" +
-                "\t\t\t\tWHERE\n" +
-                "\t\t\t\t\tcn.name in ("+ String.join(",", conceptNames) +")) ;";
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(physicalExamination);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("visit", visit);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
-//
-//        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
-//        criteria.createCriteria("o.concept", "c");
-//        criteria.createCriteria("c.names", "cn");
-//        criteria.createCriteria("o.encounter", "e");
-//        criteria.createCriteria("e.visit", "v");
-//        criteria.createCriteria("v.visitType", "vt");
-//        criteria.add(Restrictions.eq("vt.name", visit));
-//        criteria.add(Restrictions.in("cn.name", formNames));
-//        criteria.add(Restrictions.eq("o.voided", false));
-//        criteria.add(Restrictions.eq("v.patient", patient));
-//        criteria.add(Restrictions.isNotNull("o.valueCoded"));
-//        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
-//        criteria.add(Restrictions.eq("cn.localePreferred", true));
-//        return criteria.list();
-        return query.list();
+    public List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate) {
+        final String[] formNames = new String[]{"Discharge Summary","Death Note", "Delivery Note", "Opioid Substitution Therapy - Intake", "Opportunistic Infection",
+                "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination"};
+        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
+        criteria.createCriteria("o.concept", "c");
+        criteria.createCriteria("c.names", "cn");
+        criteria.createCriteria("o.encounter", "e");
+        criteria.createCriteria("e.encounterType", "et");
+        criteria.createCriteria("e.visit", "v");
+        criteria.createCriteria("v.visitType", "vt");
+        criteria.add(Restrictions.eq("vt.name", visit));
+        criteria.add(Restrictions.not(Restrictions.in("cn.name", formNames)));
+        criteria.add(Restrictions.eq("et.name", CONSULTATION));
+        criteria.add(Restrictions.isNull("o.obsGroup"));
+        criteria.add(Restrictions.eq("v.patient", patient));
+        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+        criteria.add(Restrictions.eq("cn.localePreferred", true));
+        return criteria.list();
     }
 
     @Override
