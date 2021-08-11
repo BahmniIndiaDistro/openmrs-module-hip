@@ -56,7 +56,7 @@ public class OPConsultService {
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patientUuid, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
-        Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patientUuid, visitType, fromDate, toDate);
+        Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
@@ -83,13 +83,11 @@ public class OPConsultService {
         return encounterPatientDocumentsMap;
     }
 
-    private Map<Encounter, Obs> getEncounterProcedureMap(String patientUuid, String visitType, Date fromDate, Date toDate) {
-        List<Integer> obsIds = opConsultDao.getProcedures(patientUuid, visitType, fromDate, toDate);
+    private Map<Encounter, Obs> getEncounterProcedureMap(Patient patient, String visitType, Date fromDate, Date toDate) {
+        List<Obs> obsProcedures = opConsultDao.getProcedures(patient, visitType, fromDate, toDate);
         Map<Encounter, Obs> encounterProcedureMap = new HashMap<>();
-        for (int obsId:obsIds) {
-            Obs obs = obsService.getObs(obsId);
-            Encounter encounter = obs.getEncounter();
-            encounterProcedureMap.put(encounter, obs);
+        for(Obs o: obsProcedures){
+            encounterProcedureMap.put(o.getEncounter(), o);
         }
         return encounterProcedureMap;
     }

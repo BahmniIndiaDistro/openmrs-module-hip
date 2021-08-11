@@ -18,6 +18,7 @@ import java.util.List;
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
     public static final String CHIEF_COMPLAINT = "Chief Complaint";
+    public static final String PROCEDURE_NOTES = "Procedure Notes, Procedure";
     private SessionFactory sessionFactory;
     final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
     protected static final Log log = LogFactory.getLog(PrescriptionOrderDaoImpl.class);
@@ -180,38 +181,38 @@ public class OPConsultDaoImpl implements OPConsultDao {
         query.setParameter("visit", visit);
         query.setParameter("fromDate", fromDate);
         query.setParameter("toDate", toDate);
+//
+//        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
+//        criteria.createCriteria("o.concept", "c");
+//        criteria.createCriteria("c.names", "cn");
+//        criteria.createCriteria("o.encounter", "e");
+//        criteria.createCriteria("e.visit", "v");
+//        criteria.createCriteria("v.visitType", "vt");
+//        criteria.add(Restrictions.eq("vt.name", visit));
+//        criteria.add(Restrictions.in("cn.name", formNames));
+//        criteria.add(Restrictions.eq("o.voided", false));
+//        criteria.add(Restrictions.eq("v.patient", patient));
+//        criteria.add(Restrictions.isNotNull("o.valueCoded"));
+//        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+//        criteria.add(Restrictions.eq("cn.localePreferred", true));
+//        return criteria.list();
         return query.list();
     }
 
     @Override
-    public List<Integer> getProcedures(String patientUUID, String visit, Date fromDate, Date toDate) {
-        String procedureQuery = "select\n" +
-                "\to.obs_id\n" +
-                "from\n" +
-                "\tobs o\n" +
-                "inner join encounter e on\n" +
-                "\te.encounter_id = o.encounter_id\n" +
-                "inner join visit v on\n" +
-                "\tv.visit_id = e.visit_id\n" +
-                "inner join visit_type vt on\n" +
-                "\tvt.visit_type_id = v.visit_type_id\n" +
-                "where\n" +
-                "\to.concept_id = 3005\n" +
-                "\tand o.person_id = (\n" +
-                "\tselect\n" +
-                "\t\tp.person_id\n" +
-                "\tfrom\n" +
-                "\t\tperson p\n" +
-                "\twhere\n" +
-                "\t\tp.uuid = :patientUUID)\n" +
-                "\tand vt.name = :visit\n" +
-                "\tand v.date_created between :fromDate and :toDate ;";
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(procedureQuery);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("visit", visit);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
-        return query.list();
+    public List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate) {
+        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
+        criteria.createCriteria("o.concept", "c");
+        criteria.createCriteria("c.names", "cn");
+        criteria.createCriteria("o.encounter", "e");
+        criteria.createCriteria("e.visit", "v");
+        criteria.createCriteria("v.visitType", "vt");
+        criteria.add(Restrictions.eq("vt.name", visit));
+        criteria.add(Restrictions.eq("cn.name", PROCEDURE_NOTES));
+        criteria.add(Restrictions.eq("o.voided", false));
+        criteria.add(Restrictions.eq("v.patient", patient));
+        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
+        return criteria.list();
     }
 
 
