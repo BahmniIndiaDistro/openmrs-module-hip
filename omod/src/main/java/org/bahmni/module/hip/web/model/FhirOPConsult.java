@@ -92,6 +92,10 @@ public class FhirOPConsult {
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference);
 
+        practitioners
+                .forEach(practitioner -> composition
+                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
+
         if (patientDocuments.size() > 0) {
             Composition.SectionComponent patientDocumentsCompositionSection = composition.addSection();
             patientDocumentsCompositionSection
