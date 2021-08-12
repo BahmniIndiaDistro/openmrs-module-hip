@@ -136,7 +136,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
     @Override
     public List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate) {
         final String[] formNames = new String[]{"Discharge Summary","Death Note", "Delivery Note", "Opioid Substitution Therapy - Intake", "Opportunistic Infection",
-                "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination"};
+                "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination", "Visit Diagnoses"};
         Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
         criteria.createCriteria("o.concept", "c");
         criteria.createCriteria("c.names", "cn");

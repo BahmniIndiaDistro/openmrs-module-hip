@@ -4,10 +4,8 @@ import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FhirOPConsult {
@@ -21,6 +19,7 @@ public class FhirOPConsult {
     private final Reference patientReference;
     private final List<Observation> observations;
     private final List<MedicationRequest> medicationRequests;
+    private final List<Medication> medications;
     private final Procedure procedure;
     private final List<DocumentReference> patientDocuments;
 
@@ -32,7 +31,7 @@ public class FhirOPConsult {
                          Patient patient,
                          Reference patientReference,
                          List<Observation> observations,
-                         List<MedicationRequest> medicationRequests, Procedure procedure, List<DocumentReference> patientDocuments) {
+                         List<MedicationRequest> medicationRequests, List<Medication> medications, Procedure procedure, List<DocumentReference> patientDocuments) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
@@ -43,6 +42,7 @@ public class FhirOPConsult {
         this.patientReference = patientReference;
         this.observations = observations;
         this.medicationRequests = medicationRequests;
+        this.medications = medications;
         this.procedure = procedure;
         this.patientDocuments = patientDocuments;
     }
@@ -58,6 +58,7 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
         FHIRUtils.addToBundleEntry(bundle, observations, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        FHIRUtils.addToBundleEntry(bundle, medications, false);
         if (procedure != null) FHIRUtils.addToBundleEntry(bundle, procedure, false);
         FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
         return bundle;
@@ -69,7 +70,10 @@ public class FhirOPConsult {
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
         Date encounterDatetime = openMrsOPConsult.getEncounter().getEncounterDatetime();
         Integer encounterId = openMrsOPConsult.getEncounter().getId();
-        List<MedicationRequest> medicationRequestsList = openMrsOPConsult.getDrugOrders().stream().map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
+        List<MedicationRequest> medicationRequestsList = openMrsOPConsult.getDrugOrders().stream().
+                map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
+        List<Medication> medications = openMrsOPConsult.getDrugOrders().stream().map(fhirResourceMapper::mapToMedication).
+                filter(medication -> !Objects.isNull(medication)).collect(Collectors.toList());
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsOPConsult.getEncounter().getEncounterProviders());
         List<Condition> fhirChiefComplaintConditionList = openMrsOPConsult.getChiefComplaintConditions().stream().
                     map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
@@ -83,7 +87,7 @@ public class FhirOPConsult {
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
 
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
-                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, procedure, patientDocuments);
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments);
     }
 
     private Composition compositionFrom(String webURL) {
