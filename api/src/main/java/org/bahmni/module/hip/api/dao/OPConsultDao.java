@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface OPConsultDao {
     List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate);
-    List<String[]> getMedicalHistory(String patientUUID, String visit, Date fromDate, Date toDate);
+    List<String[]> getMedicalHistory(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate);
 }
