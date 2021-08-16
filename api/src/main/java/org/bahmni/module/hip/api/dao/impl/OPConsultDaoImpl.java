@@ -9,12 +9,11 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.*;
 import org.openmrs.api.EncounterService;
+import org.openmrs.api.ObsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
@@ -22,13 +21,16 @@ public class OPConsultDaoImpl implements OPConsultDao {
     public static final String PROCEDURE_NOTES = "Procedure Notes, Procedure";
     public static final String CONSULTATION = "Consultation";
     private static final String CODED_DIAGNOSIS = "Coded Diagnosis";
+    public static final String OPD = "OPD";
+    private final ObsService obsService;
     private SessionFactory sessionFactory;
     final static int CONSULTATION_ENCOUNTER_TYPE_ID = 1;
     protected static final Log log = LogFactory.getLog(PrescriptionOrderDaoImpl.class);
 
     @Autowired
-    public OPConsultDaoImpl(SessionFactory sessionFactory) {
+    public OPConsultDaoImpl(SessionFactory sessionFactory, ObsService obsService) {
         this.sessionFactory = sessionFactory;
+        this.obsService = obsService;
     }
 
     @Override
@@ -157,19 +159,20 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate) {
-        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
-        criteria.createCriteria("o.concept", "c");
-        criteria.createCriteria("c.names", "cn");
-        criteria.createCriteria("o.encounter", "e");
-        criteria.createCriteria("e.visit", "v");
-        criteria.createCriteria("v.visitType", "vt");
-        criteria.add(Restrictions.eq("vt.name", visit));
-        criteria.add(Restrictions.eq("cn.name", PROCEDURE_NOTES));
-        criteria.add(Restrictions.eq("o.voided", false));
-        criteria.add(Restrictions.eq("v.patient", patient));
-        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
-        return criteria.list();
+        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
+        List<Obs> obsMap = new ArrayList<>();
+        for(Obs o :patientObs){
+            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
+                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
+                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
+                    && Objects.equals(o.getConcept().getName().getName(), PROCEDURE_NOTES)
+                    && !o.getVoided()
+            )
+            {
+                obsMap.add(o);
+            }
+        }
+        return obsMap;
     }
-
-
 }

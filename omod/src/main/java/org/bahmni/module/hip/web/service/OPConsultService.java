@@ -6,7 +6,6 @@ import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.*;
 import org.openmrs.*;
 import org.openmrs.api.*;
-import org.openmrs.api.ConditionService;
 import org.openmrs.parameter.EncounterSearchCriteria;
 import org.openmrs.parameter.EncounterSearchCriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +31,12 @@ public class OPConsultService {
     private final ConceptService conceptService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
-    private final ConditionService conditionService;
 
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder, OPConsultDao opConsultDao,
                             PatientService patientService, EncounterService encounterService, ObsService obsService,
                             ConceptService conceptService, OpenMRSDrugOrderClient openMRSDrugOrderClient,
-                            DiagnosticReportService diagnosticReportService, ConditionService conditionService) {
+                            DiagnosticReportService diagnosticReportService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
@@ -47,7 +45,6 @@ public class OPConsultService {
         this.conceptService = conceptService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
-        this.conditionService = conditionService;
     }
 
     public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, DateRange dateRange, String visitType) throws ParseException {
@@ -156,13 +153,6 @@ public class OPConsultService {
         for (Encounter e : encounters) {
             log.warn(e.toString());
         }
-
-        List<Condition> conditions = conditionService.getActiveConditions(patient);
-        for (Condition condition : conditions) {
-            log.warn(condition.toString());
-        }
-
         return encounterMedicalHistoryMap;
     }
-
 }
