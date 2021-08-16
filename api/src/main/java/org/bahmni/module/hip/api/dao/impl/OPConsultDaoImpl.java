@@ -35,20 +35,22 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate) {
-        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
-            criteria.createCriteria("o.concept", "c");
-            criteria.createCriteria("c.names", "cn");
-            criteria.createCriteria("o.encounter", "e");
-            criteria.createCriteria("e.visit", "v");
-            criteria.createCriteria("v.visitType", "vt");
-            criteria.add(Restrictions.eq("vt.name", visit));
-            criteria.add(Restrictions.eq("cn.name", CHIEF_COMPLAINT));
-            criteria.add(Restrictions.eq("o.voided", false));
-            criteria.add(Restrictions.eq("v.patient", patient));
-            criteria.add(Restrictions.isNotNull("o.valueCoded"));
-            criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
-            criteria.add(Restrictions.eq("cn.localePreferred", true));
-        return criteria.list();
+        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
+        List<Obs> chiefComplaintObsMap = new ArrayList<>();
+        for(Obs o :patientObs){
+            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
+                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
+                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
+                    && Objects.equals(o.getConcept().getName().getName(), CHIEF_COMPLAINT)
+                    && o.getValueCoded() != null
+                    && o.getConcept().getName().getLocalePreferred()
+            )
+            {
+                chiefComplaintObsMap.add(o);
+            }
+        }
+        return chiefComplaintObsMap;
     }
 
     @Override
@@ -160,7 +162,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
     @Override
     public List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate) {
         List<Obs> patientObs = obsService.getObservationsByPerson(patient);
-        List<Obs> obsMap = new ArrayList<>();
+        List<Obs> proceduresObsMap = new ArrayList<>();
         for(Obs o :patientObs){
             if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
                     && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
@@ -170,9 +172,9 @@ public class OPConsultDaoImpl implements OPConsultDao {
                     && !o.getVoided()
             )
             {
-                obsMap.add(o);
+                proceduresObsMap.add(o);
             }
         }
-        return obsMap;
+        return proceduresObsMap;
     }
 }
