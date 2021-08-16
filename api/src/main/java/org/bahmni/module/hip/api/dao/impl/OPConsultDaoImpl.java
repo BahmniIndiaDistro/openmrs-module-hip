@@ -142,21 +142,23 @@ public class OPConsultDaoImpl implements OPConsultDao {
     public List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate) {
         final String[] formNames = new String[]{"Discharge Summary","Death Note", "Delivery Note", "Opioid Substitution Therapy - Intake", "Opportunistic Infection",
                 "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination", "Visit Diagnoses"};
-        Criteria criteria = this.sessionFactory.openSession().createCriteria(Obs.class, "o");
-        criteria.createCriteria("o.concept", "c");
-        criteria.createCriteria("c.names", "cn");
-        criteria.createCriteria("o.encounter", "e");
-        criteria.createCriteria("e.encounterType", "et");
-        criteria.createCriteria("e.visit", "v");
-        criteria.createCriteria("v.visitType", "vt");
-        criteria.add(Restrictions.eq("vt.name", visit));
-        criteria.add(Restrictions.not(Restrictions.in("cn.name", formNames)));
-        criteria.add(Restrictions.eq("et.name", CONSULTATION));
-        criteria.add(Restrictions.isNull("o.obsGroup"));
-        criteria.add(Restrictions.eq("v.patient", patient));
-        criteria.add(Restrictions.between("v.dateCreated", fromDate, toDate));
-        criteria.add(Restrictions.eq("cn.localePreferred", true));
-        return criteria.list();
+        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
+        List<Obs> physicalExaminationObsMap = new ArrayList<>();
+        for(Obs o :patientObs){
+            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
+                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
+                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
+                    && o.getValueCoded() == null
+                    && o.getConcept().getName().getLocalePreferred()
+                    && o.getObsGroup() == null
+                    && !Arrays.asList(formNames).contains(o.getConcept().getName().getName())
+            )
+            {
+                physicalExaminationObsMap.add(o);
+            }
+        }
+        return physicalExaminationObsMap;
     }
 
     @Override

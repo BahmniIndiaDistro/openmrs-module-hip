@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @Service
 public class OPConsultService {
     protected static final Log log = LogFactory.getLog(OPConsultService.class);
-    public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Treatment Plan","Next Followup Visit","Plan for next visit","Patient Category","Current Followup Visit After",
-            "Plan for next visit","Parents name","Death Date","Contact number","Vitamin A Capsules Provided","Albendazole Given","Referred out",
-            "Vitamin A Capsules Provided","Albendazole Given","Bal Vita provided","Bal Vita Provided by FCHV","Condoms given","Marital Status","Contact Number",
-            "Transferred out (Complete Section)"));
+    public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Tuberculosis, Treatment Plan","Tuberculosis, Next Followup Visit","Tuberculosis, Plan for next visit","Tuberculosis, Patient Category","Current Followup Visit After",
+            "Tuberculosis, Plan for next visit","Malaria, Parents Name","Malaria, Death Date", "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Childhood Illness, Referred out",
+            "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Nutrition, Bal Vita Provided by FCHV","Bal Vita Provided by FCHV","ART, Condoms given","HIVTC, Marital Status","Malaria, Contact number",
+            "HIVTC, Transferred out", "HIVTC, Regimen when transferred out", "HIVTC, Date of transferred out", "HIVTC, Transferred out to", "HIVTC, Chief Complaint"));
 
     private final FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder;
     private final OPConsultDao opConsultDao;
