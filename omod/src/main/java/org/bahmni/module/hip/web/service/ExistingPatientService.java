@@ -44,9 +44,12 @@ public class ExistingPatientService {
         List<Patient> patients = new ArrayList<>();
         for (Patient patient : existingPatients) {
             String givenName = patientName.split(" ")[0].toLowerCase();
-            String familyName = patientName.split(" ")[1].toLowerCase();
+            String familyName = getFamilyName(patientName);
             int distanceOfGivenName = StringUtils.getLevenshteinDistance(givenName, patient.getGivenName().toLowerCase());
-            int distanceOfFamilyName = StringUtils.getLevenshteinDistance(familyName, patient.getFamilyName().toLowerCase());
+            int distanceOfFamilyName = 0;
+            if (familyName != null) {
+                distanceOfFamilyName = StringUtils.getLevenshteinDistance(familyName, patient.getFamilyName().toLowerCase());
+            }
             if (distanceOfGivenName <= MATCHING_CRITERIA_CONSTANT
                     && (distanceOfFamilyName <= MATCHING_CRITERIA_CONSTANT
                     || patient.getFamilyName().charAt(0) == patientName.split(" ")[1].charAt(0)))
@@ -54,6 +57,13 @@ public class ExistingPatientService {
         }
         return patients;
     }
+
+    private String getFamilyName(String patientName) {
+        String[] name = patientName.split(" ");
+        if (name.length != 1) return name[1].toLowerCase();
+        return null;
+    }
+
 
     private List<Patient> filterPatientsByAge(int patientYearOfBirth, List<Patient> patientsMatchedWithNameAndGender) {
         List<Patient> patients = new ArrayList<>();
