@@ -2,10 +2,25 @@ package org.bahmni.module.hip.web.model;
 
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Condition;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Composition;
 import org.openmrs.EncounterProvider;
 
-import java.util.*;
+import java.util.List;
+import java.util.Date;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FhirOPConsult {

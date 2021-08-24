@@ -1,10 +1,14 @@
 package org.bahmni.module.hip.web.service;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
-import org.bahmni.module.hip.web.model.*;
+import org.bahmni.module.hip.web.model.OPConsultBundle;
+import org.bahmni.module.hip.web.model.DateRange;
+import org.bahmni.module.hip.web.model.OpenMrsCondition;
+import org.bahmni.module.hip.web.model.DrugOrders;
+import org.bahmni.module.hip.web.model.OpenMrsOPConsult;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
 import org.openmrs.Patient;
-import org.openmrs.api.*;
+import org.openmrs.api.PatientService;
 import org.openmrs.module.emrapi.conditionslist.Condition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
