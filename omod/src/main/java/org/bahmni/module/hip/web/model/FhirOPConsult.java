@@ -15,6 +15,7 @@ import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.openmrs.EncounterProvider;
+import org.openmrs.Order;
 
 import java.util.List;
 import java.util.Date;
@@ -100,6 +101,8 @@ public class FhirOPConsult {
                 fhirResourceMapper.mapToProcedure(openMrsOPConsult.getProcedure()) : null;
         List<DocumentReference> patientDocuments = openMrsOPConsult.getPatientDocuments().stream().
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
+        List<ServiceRequest> orders = openMrsOPConsult.getOrders().stream().
+                map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
                 encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments);

@@ -7,6 +7,7 @@ import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.OpenMrsOPConsult;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.emrapi.conditionslist.Condition;
@@ -52,12 +53,27 @@ public class OPConsultService {
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
 
+        Map<Encounter, List<Order>> encounterOrdersMap = getEncounterOrdersMap(visitType, fromDate, toDate, patient);
+
+
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
                 encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
-                encounterPatientDocumentsMap, patient);
+                encounterPatientDocumentsMap, encounterOrdersMap, patient);
 
         return openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
+    }
+
+    private Map<Encounter, List<Order>> getEncounterOrdersMap(String visitType, Date fromDate, Date toDate, Patient patient) {
+        List<Order> orders = opConsultDao.getOrders(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<Order>> encounterOrdersMap = new HashMap<>();
+        for(Order order : orders){
+            if (!encounterOrdersMap.containsKey(order.getEncounter())) {
+                encounterOrdersMap.put(order.getEncounter(), new ArrayList<>());
+            }
+            encounterOrdersMap.get(order.getEncounter()).add(order);
+        }
+        return encounterOrdersMap;
     }
 
     private Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(String visitType, Date fromDate, Date toDate, Patient patient) {

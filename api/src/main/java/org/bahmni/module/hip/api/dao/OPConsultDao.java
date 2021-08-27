@@ -2,6 +2,7 @@ package org.bahmni.module.hip.api.dao;
 
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.module.emrapi.conditionslist.Condition;
 
@@ -15,4 +16,5 @@ public interface OPConsultDao {
     List<Obs> getMedicalHistoryDiagnosis(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate);
+    List<Order> getOrders(Patient patient, String visit, Date fromDate, Date toDate);
 }

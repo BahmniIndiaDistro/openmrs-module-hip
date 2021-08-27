@@ -5,6 +5,7 @@ import org.hl7.fhir.r4.model.*;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
 import org.openmrs.module.fhir2.api.translators.MedicationTranslator;
 import org.openmrs.module.fhir2.api.translators.PatientTranslator;
@@ -126,6 +127,15 @@ public class FHIRResourceMapper {
         condition.setId(openMrsCondition.getUuid());
         condition.setRecordedDate(openMrsCondition.getRecordedDate());
         return condition;
+    }
+
+    public ServiceRequest mapToOrder(Order order){
+        ServiceRequest serviceRequest = new ServiceRequest();
+        CodeableConcept concept = new CodeableConcept();
+        concept.setText(order.getOrderType().toString());
+        serviceRequest.setCode(concept);
+        serviceRequest.setId(order.getUuid());
+        return serviceRequest;
     }
 
     public Observation mapToObs(Obs obs) {
