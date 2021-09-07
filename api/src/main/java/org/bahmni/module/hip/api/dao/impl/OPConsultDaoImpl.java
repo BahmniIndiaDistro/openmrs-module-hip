@@ -20,6 +20,9 @@ public class OPConsultDaoImpl implements OPConsultDao {
     public static final String CONSULTATION = "Consultation";
     private static final String CODED_DIAGNOSIS = "Coded Diagnosis";
     public static final String OPD = "OPD";
+    public static final String ORDER_ACTION = "DISCONTINUE";
+    public static final String LAB_ORDER = "Lab Order";
+    public static final String RADIOLOGY_ORDER = "Radiology Order";
     private final ObsService obsService;
     private final ConditionService conditionService;
     private final EncounterService encounterService;
@@ -166,7 +169,8 @@ public class OPConsultDaoImpl implements OPConsultDao {
         List<Order> orderMap = orders.stream().filter(order -> matchesVisitType(visit, order))
                 .filter(order -> order.getEncounter().getVisit().getStartDatetime().after(fromDate))
                 .filter(order -> order.getEncounter().getVisit().getStartDatetime().before(toDate))
-                .filter(order -> order.getOrderType().getName().equals("Lab Order") || order.getOrderType().getName().equals("Radiology Order"))
+                .filter(order -> order.getDateStopped() == null && order.getAction().toString()!= ORDER_ACTION)
+                .filter(order -> order.getOrderType().getName().equals(LAB_ORDER) || order.getOrderType().getName().equals(RADIOLOGY_ORDER))
                 .collect(Collectors.toList());
         return orderMap;
     }

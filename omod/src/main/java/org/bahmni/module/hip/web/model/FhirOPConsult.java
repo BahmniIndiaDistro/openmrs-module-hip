@@ -3,6 +3,7 @@ package org.bahmni.module.hip.web.model;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Condition;
+import org.hl7.fhir.r4.model.ServiceRequest;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Patient;
@@ -15,7 +16,6 @@ import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.openmrs.EncounterProvider;
-import org.openmrs.Order;
 
 import java.util.List;
 import java.util.Date;
@@ -38,6 +38,7 @@ public class FhirOPConsult {
     private final List<Medication> medications;
     private final Procedure procedure;
     private final List<DocumentReference> patientDocuments;
+    private final List<ServiceRequest> serviceRequest;
 
     public FhirOPConsult(List<Condition> chiefComplaints,
                          List<Condition> medicalHistory, Date encounterTimestamp,
@@ -47,7 +48,12 @@ public class FhirOPConsult {
                          Patient patient,
                          Reference patientReference,
                          List<Observation> observations,
-                         List<MedicationRequest> medicationRequests, List<Medication> medications, Procedure procedure, List<DocumentReference> patientDocuments) {
+                         List<MedicationRequest> medicationRequests,
+                         List<Medication> medications,
+                         Procedure procedure,
+                         List<DocumentReference> patientDocuments,
+                         List<ServiceRequest> serviceRequest
+    ) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.encounterTimestamp = encounterTimestamp;
@@ -61,6 +67,7 @@ public class FhirOPConsult {
         this.medications = medications;
         this.procedure = procedure;
         this.patientDocuments = patientDocuments;
+        this.serviceRequest = serviceRequest;
     }
 
     public Bundle bundleOPConsult(String webUrl) {
@@ -75,6 +82,7 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, observations, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
+        FHIRUtils.addToBundleEntry(bundle, serviceRequest, false);
         if (procedure != null) FHIRUtils.addToBundleEntry(bundle, procedure, false);
         FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
         return bundle;
@@ -101,11 +109,11 @@ public class FhirOPConsult {
                 fhirResourceMapper.mapToProcedure(openMrsOPConsult.getProcedure()) : null;
         List<DocumentReference> patientDocuments = openMrsOPConsult.getPatientDocuments().stream().
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
-        List<ServiceRequest> orders = openMrsOPConsult.getOrders().stream().
+        List<ServiceRequest> serviceRequest = openMrsOPConsult.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList,
-                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments);
+                encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments, serviceRequest);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -136,6 +144,16 @@ public class FhirOPConsult {
                     .setCode(FHIRUtils.getProcedureType());
 
             procedureCompositionSection.addEntry(FHIRUtils.getReferenceToResource(procedure));
+        }
+
+        if (serviceRequest.size() > 0) {
+            Composition.SectionComponent serviceRequestCompositionSection = composition.addSection();
+            serviceRequestCompositionSection
+                    .setTitle("Order")
+                    .setCode(FHIRUtils.getOrdersType());
+            serviceRequest.stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(serviceRequestCompositionSection::addEntry);
         }
 
         if(medicationRequests.size() > 0){

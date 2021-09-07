@@ -132,7 +132,7 @@ public class FHIRResourceMapper {
     public ServiceRequest mapToOrder(Order order){
         ServiceRequest serviceRequest = new ServiceRequest();
         CodeableConcept concept = new CodeableConcept();
-        concept.setText(order.getOrderType().toString());
+        concept.setText(order.getConcept().getDisplayString());
         serviceRequest.setCode(concept);
         serviceRequest.setId(order.getUuid());
         return serviceRequest;
