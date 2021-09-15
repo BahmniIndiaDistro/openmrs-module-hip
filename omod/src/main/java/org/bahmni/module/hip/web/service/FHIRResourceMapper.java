@@ -1,8 +1,9 @@
 package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
-import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.DiagnosticReport;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Attachment;
 import org.hl7.fhir.r4.model.Condition;
@@ -15,6 +16,7 @@ import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.Dosage;
 import org.hl7.fhir.r4.model.Medication;
+
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
@@ -31,9 +33,12 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.nio.file.Files;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
 
 import static org.bahmni.module.hip.web.service.Constants.DOCUMENT_TYPE;
 import static org.bahmni.module.hip.web.service.Constants.GIF;
@@ -59,6 +64,7 @@ public class FHIRResourceMapper {
     private final MedicationTranslator medicationTranslator;
     private final EncounterTranslatorImpl encounterTranslator;
     private final ObservationTranslatorImpl observationTranslator;
+    public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Follow up Date", "Additional Advice on Discharge", "Discharge Summary, Plan for follow up"));
 
     @Autowired
     public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator) {
@@ -83,6 +89,41 @@ public class FHIRResourceMapper {
             return diagnosticReport;
         } catch (IOException exception) {
             return diagnosticReport;
+        }
+    }
+
+    public CarePlan mapToCarePlan(Obs obs){
+        List<Obs> groupMembers = new ArrayList<>();
+        getGroupMembersOfObs(obs, groupMembers);
+        CarePlan carePlan = new CarePlan();
+        carePlan.setId(obs.getUuid());
+        String description = "";
+        for(Obs o : groupMembers){
+            if(o.getValueDatetime() != null) {
+                description += description != "" ? ", " : "";
+                description += o.getValueDatetime();
+            } else if(o.getValueText() != null && Objects.equals(o.getConcept().getName().getName(), "Additional Advice on Discharge")){
+                description += description != "" ? ", " : "";
+                description +=  o.getValueText();
+            }
+            if(o.getValueText() != null && Objects.equals(o.getConcept().getName().getName(), "Discharge Summary, Plan for follow up")){
+                carePlan.setTitle(o.getValueText());
+                carePlan.setUserData("Discharge Summary, Plan for follow up", o.getValueText());
+            }
+        }
+        if(!description.isEmpty()){
+            carePlan.setDescription(description);
+        }
+        return carePlan;
+    }
+
+    private void getGroupMembersOfObs(Obs obs, List<Obs> groupMembers) {
+        if (obs.getGroupMembers().size() > 0) {
+            for (Obs groupMember : obs.getGroupMembers()) {
+                if (conceptNames.contains(groupMember.getConcept().getDisplayString())){
+                    groupMembers.add(groupMember);
+                }
+            }
         }
     }
 
