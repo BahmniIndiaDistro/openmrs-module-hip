@@ -37,6 +37,7 @@ public class OPConsultService {
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
     private final ConsultationDao consultationDao;
+    private final ConsultationService consultationService;
 
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder,
@@ -44,13 +45,14 @@ public class OPConsultService {
                             PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
                             DiagnosticReportService diagnosticReportService,
-                            ConsultationDao consultationDao) {
+                            ConsultationDao consultationDao, ConsultationService consultationService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
         this.consultationDao = consultationDao;
+        this.consultationService = consultationService;
     }
 
     public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, DateRange dateRange, String visitType) {
@@ -58,7 +60,7 @@ public class OPConsultService {
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
 
-        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = getEncounterMedicalHistoryConditionsMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patient, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
@@ -135,19 +137,6 @@ public class OPConsultService {
         } else {
             groupMembers.add(physicalExamination);
         }
-    }
-
-    private Map<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Patient patient, String visitType, Date fromDate, Date toDate) {
-        List<Obs> chiefComplaints = consultationDao.getChiefComplaints(patient, visitType, fromDate, toDate);
-        HashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new HashMap<>();
-
-        for (Obs o : chiefComplaints) {
-            if(!encounterChiefComplaintsMap.containsKey(o.getEncounter())){
-                encounterChiefComplaintsMap.put(o.getEncounter(), new ArrayList<>());
-            }
-            encounterChiefComplaintsMap.get(o.getEncounter()).add(new OpenMrsCondition(o.getUuid(), o.getValueCoded().getDisplayString(), o.getDateCreated()));
-        }
-        return encounterChiefComplaintsMap;
     }
 
     private Map<Encounter, List<OpenMrsCondition>> getEncounterMedicalHistoryConditionsMap(Patient patient, String visit, Date fromDate, Date toDate) {
