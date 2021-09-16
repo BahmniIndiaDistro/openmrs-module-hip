@@ -3,6 +3,8 @@ package org.bahmni.module.hip.web.model;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
@@ -15,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FhirDischargeSummary {
@@ -24,6 +27,8 @@ public class FhirDischargeSummary {
     private final Encounter encounter;
     private final List<Practitioner> practitioners;
     private final Patient patient;
+    private final List<MedicationRequest> medicationRequests;
+    private final List<Medication> medications;
     private final Reference patientReference;
     private final List<CarePlan> carePlan;
 
@@ -32,12 +37,16 @@ public class FhirDischargeSummary {
                                 Date encounterTimestamp,
                                 List<Practitioner> practitioners,
                                 Reference patientReference,
+                                List<MedicationRequest> medicationRequests,
+                                List<Medication> medications,
                                 Patient patient,
                                 List<CarePlan> carePlan){
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
         this.practitioners = practitioners;
+        this.medicationRequests = medicationRequests;
+        this.medications = medications;
         this.patient = patient;
         this.patientReference = patientReference;
         this.carePlan = carePlan;
@@ -51,8 +60,12 @@ public class FhirDischargeSummary {
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDischargeSummary.getEncounter().getEncounterProviders());
         List<CarePlan> carePlans = openMrsDischargeSummary.getObservations().stream().
                 map(fhirResourceMapper::mapToCarePlan).collect(Collectors.toList());
+        List<MedicationRequest> medicationRequestsList = openMrsDischargeSummary.getDrugOrders().stream().
+                map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
+        List<Medication> medications = openMrsDischargeSummary.getDrugOrders().stream().map(fhirResourceMapper::mapToMedication).
+                filter(medication -> !Objects.isNull(medication)).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, patient, carePlans);
+        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, medicationRequestsList, medications, patient, carePlans);
     }
 
     public Bundle bundleDischargeSummary(String webUrl){
@@ -60,6 +73,8 @@ public class FhirDischargeSummary {
         Bundle bundle = FHIRUtils.createBundle(encounterTimestamp, bundleID, webUrl);
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, carePlan, false);
@@ -85,6 +100,17 @@ public class FhirDischargeSummary {
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(physicalExaminationsCompositionSection::addEntry);
+        }
+
+        if(medicationRequests.size() > 0){
+            Composition.SectionComponent medicationRequestsCompositionSection = composition.addSection();
+            medicationRequestsCompositionSection
+                    .setTitle("Medication request")
+                    .setCode(FHIRUtils.getPrescriptionType());
+            medicationRequests
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(medicationRequestsCompositionSection::addEntry);
         }
 
         return composition;
