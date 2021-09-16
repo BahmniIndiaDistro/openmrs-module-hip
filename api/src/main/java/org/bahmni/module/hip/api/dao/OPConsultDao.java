@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface OPConsultDao {
-    List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate);
     Map<Encounter, List<Condition>> getMedicalHistoryConditions(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getMedicalHistoryDiagnosis(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate);

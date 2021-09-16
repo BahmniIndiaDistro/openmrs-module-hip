@@ -11,6 +11,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.Condition;
 import org.openmrs.EncounterProvider;
 
 import java.util.Date;
@@ -26,6 +27,7 @@ public class FhirDischargeSummary {
     private final Integer encounterID;
     private final Encounter encounter;
     private final List<Practitioner> practitioners;
+    private final List<Condition> chiefComplaints;
     private final Patient patient;
     private final List<MedicationRequest> medicationRequests;
     private final List<Medication> medications;
@@ -37,6 +39,7 @@ public class FhirDischargeSummary {
                                 Date encounterTimestamp,
                                 List<Practitioner> practitioners,
                                 Reference patientReference,
+                                List<Condition> chiefComplaints,
                                 List<MedicationRequest> medicationRequests,
                                 List<Medication> medications,
                                 Patient patient,
@@ -44,6 +47,7 @@ public class FhirDischargeSummary {
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
+        this.chiefComplaints = chiefComplaints;
         this.practitioners = practitioners;
         this.medicationRequests = medicationRequests;
         this.medications = medications;
@@ -60,12 +64,14 @@ public class FhirDischargeSummary {
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDischargeSummary.getEncounter().getEncounterProviders());
         List<CarePlan> carePlans = openMrsDischargeSummary.getObservations().stream().
                 map(fhirResourceMapper::mapToCarePlan).collect(Collectors.toList());
+        List<Condition> chiefComplaints = openMrsDischargeSummary.getChiefComplaints().stream().
+                map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
         List<MedicationRequest> medicationRequestsList = openMrsDischargeSummary.getDrugOrders().stream().
                 map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
         List<Medication> medications = openMrsDischargeSummary.getDrugOrders().stream().map(fhirResourceMapper::mapToMedication).
                 filter(medication -> !Objects.isNull(medication)).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, medicationRequestsList, medications, patient, carePlans);
+        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, patient, carePlans);
     }
 
     public Bundle bundleDischargeSummary(String webUrl){
@@ -74,6 +80,7 @@ public class FhirDischargeSummary {
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
@@ -111,6 +118,17 @@ public class FhirDischargeSummary {
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(medicationRequestsCompositionSection::addEntry);
+        }
+
+        if (chiefComplaints.size() > 0){
+            Composition.SectionComponent chiefComplaintsCompositionSection = composition.addSection();
+            chiefComplaintsCompositionSection
+                    .setTitle("Chief complaint")
+                    .setCode(FHIRUtils.getChiefComplaintType());
+            chiefComplaints
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(chiefComplaintsCompositionSection::addEntry);
         }
 
         return composition;

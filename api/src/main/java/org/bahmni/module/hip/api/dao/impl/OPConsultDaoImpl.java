@@ -35,27 +35,6 @@ public class OPConsultDaoImpl implements OPConsultDao {
         this.orderService = orderService;
     }
 
-
-    @Override
-    public List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate) {
-        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
-        List<Obs> chiefComplaintObsMap = new ArrayList<>();
-        for(Obs o :patientObs){
-            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
-                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
-                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
-                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
-                    && Objects.equals(o.getConcept().getName().getName(), CHIEF_COMPLAINT)
-                    && o.getValueCoded() != null
-                    && o.getConcept().getName().getLocalePreferred()
-            )
-            {
-                chiefComplaintObsMap.add(o);
-            }
-        }
-        return chiefComplaintObsMap;
-    }
-
     @Override
     public Map<Encounter, List<Condition>> getMedicalHistoryConditions(Patient patient, String visit, Date fromDate, Date toDate) {
         final String conditionStatusHistoryOf = "HISTORY_OF";

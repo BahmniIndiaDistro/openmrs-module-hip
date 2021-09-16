@@ -1,4 +1,5 @@
 package org.bahmni.module.hip.web.service;
+import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -35,16 +36,21 @@ public class OPConsultService {
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
+    private final ConsultationDao consultationDao;
 
     @Autowired
-    public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder, OPConsultDao opConsultDao,
-                            PatientService patientService, OpenMRSDrugOrderClient openMRSDrugOrderClient,
-                            DiagnosticReportService diagnosticReportService) {
+    public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder,
+                            OPConsultDao opConsultDao,
+                            PatientService patientService,
+                            OpenMRSDrugOrderClient openMRSDrugOrderClient,
+                            DiagnosticReportService diagnosticReportService,
+                            ConsultationDao consultationDao) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
+        this.consultationDao = consultationDao;
     }
 
     public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, DateRange dateRange, String visitType) {
@@ -132,7 +138,7 @@ public class OPConsultService {
     }
 
     private Map<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Patient patient, String visitType, Date fromDate, Date toDate) {
-        List<Obs> chiefComplaints = opConsultDao.getChiefComplaints(patient, visitType, fromDate, toDate);
+        List<Obs> chiefComplaints = consultationDao.getChiefComplaints(patient, visitType, fromDate, toDate);
         HashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new HashMap<>();
 
         for (Obs o : chiefComplaints) {
