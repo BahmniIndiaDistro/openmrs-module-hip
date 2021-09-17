@@ -1,5 +1,4 @@
 package org.bahmni.module.hip.web.service;
-import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -11,7 +10,6 @@ import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
-import org.openmrs.module.emrapi.conditionslist.Condition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.Set;
@@ -36,7 +34,6 @@ public class OPConsultService {
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
-    private final ConsultationDao consultationDao;
     private final ConsultationService consultationService;
 
     @Autowired
@@ -45,13 +42,12 @@ public class OPConsultService {
                             PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
                             DiagnosticReportService diagnosticReportService,
-                            ConsultationDao consultationDao, ConsultationService consultationService) {
+                            ConsultationService consultationService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
-        this.consultationDao = consultationDao;
         this.consultationService = consultationService;
     }
 
@@ -61,7 +57,7 @@ public class OPConsultService {
         Patient patient = patientService.getPatientByUuid(patientUuid);
 
         Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
-        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = getEncounterMedicalHistoryConditionsMap(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patient, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
@@ -137,27 +133,5 @@ public class OPConsultService {
         } else {
             groupMembers.add(physicalExamination);
         }
-    }
-
-    private Map<Encounter, List<OpenMrsCondition>> getEncounterMedicalHistoryConditionsMap(Patient patient, String visit, Date fromDate, Date toDate) {
-        Map<Encounter, List<Condition>> medicalHistoryConditionsMap =  opConsultDao.getMedicalHistoryConditions(patient, visit, fromDate, toDate);
-        List<Obs> medicalHistoryDiagnosisMap =  opConsultDao.getMedicalHistoryDiagnosis(patient, visit, fromDate, toDate);
-        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = new HashMap<>();
-
-        for(Map.Entry<Encounter, List<Condition>> medicalHistory : medicalHistoryConditionsMap.entrySet()){
-            if (!encounterMedicalHistoryMap.containsKey(medicalHistory.getKey())){
-                encounterMedicalHistoryMap.put(medicalHistory.getKey(), new ArrayList<>());
-            }
-            for(Condition condition : medicalHistory.getValue()){
-                encounterMedicalHistoryMap.get(medicalHistory.getKey()).add(new OpenMrsCondition(condition.getUuid(), condition.getConcept().getDisplayString(), condition.getDateCreated()));
-            }
-        }
-        for(Obs obs : medicalHistoryDiagnosisMap){
-            if (!encounterMedicalHistoryMap.containsKey(obs.getEncounter())){
-                encounterMedicalHistoryMap.put(obs.getEncounter(), new ArrayList<>());
-            }
-            encounterMedicalHistoryMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), obs.getValueCoded().getDisplayString(), obs.getDateCreated()));
-        }
-        return encounterMedicalHistoryMap;
     }
 }

@@ -21,24 +21,27 @@ public class OpenMrsDischargeSummary {
     private final Set<EncounterProvider> encounterProviders;
     private final List<DrugOrder> drugOrders;
     private final List<OpenMrsCondition> chiefComplaints;
+    private final List<OpenMrsCondition> medicalHistory;
 
     public OpenMrsDischargeSummary(Encounter encounter,
                                    List<Obs> observations,
                                    List<DrugOrder> drugOrders,
                                    Patient patient,
                                    Set<EncounterProvider> encounterProviders,
-                                   List<OpenMrsCondition> chiefComplaints
-                                   ){
+                                   List<OpenMrsCondition> chiefComplaints,
+                                   List<OpenMrsCondition> medicalHistory){
         this.encounter = encounter;
         this.observations = observations;
         this.drugOrders = drugOrders;
         this.patient = patient;
         this.encounterProviders = encounterProviders;
         this.chiefComplaints = chiefComplaints;
+        this.medicalHistory = medicalHistory;
     }
     public static List<OpenMrsDischargeSummary> getOpenMrsDischargeSummaryList(Map<Encounter, List<Obs>> encounterCarePlanMap,
                                                                                Map<Encounter, DrugOrders> encounterDrugOrdersMap,
                                                                                Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap,
+                                                                               Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap,
                                                                                Patient patient){
         List<OpenMrsDischargeSummary> openMrsDischargeSummaryList = new ArrayList<>();
 
@@ -46,6 +49,7 @@ public class OpenMrsDischargeSummary {
             List<Obs> carePlanList = encounterCarePlanMap.get(encounterListEntry.getKey());
             List<DrugOrder> drugOrdersList = new ArrayList<>();
             List<OpenMrsCondition> chiefComplaintList = new ArrayList<>();
+            List<OpenMrsCondition> medicalHistoryList = new ArrayList<>();
             if (encounterDrugOrdersMap.get(encounterListEntry.getKey()) != null){
                 drugOrdersList = encounterDrugOrdersMap.get(encounterListEntry.getKey()).getOpenMRSDrugOrders();
                 encounterDrugOrdersMap.remove(encounterListEntry.getKey());
@@ -54,24 +58,44 @@ public class OpenMrsDischargeSummary {
                 chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, encounterListEntry.getKey());
                 encounterChiefComplaintsMap.remove(encounterListEntry.getKey());
             }
-            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), carePlanList, drugOrdersList, patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList));
+            if(encounterMedicalHistoryMap.get(encounterListEntry.getKey()) != null) {
+                medicalHistoryList = getEncounterConditions(encounterMedicalHistoryMap, encounterListEntry.getKey());
+                encounterMedicalHistoryMap.remove(encounterListEntry.getKey());
+            }
+            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), carePlanList, drugOrdersList, patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList, medicalHistoryList));
         }
 
         for(Map.Entry<Encounter, DrugOrders> encounterListEntry : encounterDrugOrdersMap.entrySet()){
             List<DrugOrder> drugOrdersList = encounterDrugOrdersMap.get(encounterListEntry.getKey()).getOpenMRSDrugOrders();
             List<OpenMrsCondition> chiefComplaintList = new ArrayList<>();
+            List<OpenMrsCondition> medicalHistoryList = new ArrayList<>();
             if (encounterChiefComplaintsMap.get(encounterListEntry.getKey()) != null) {
                 chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, encounterListEntry.getKey());
                 encounterChiefComplaintsMap.remove(encounterListEntry.getKey());
             }
-            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), new ArrayList<>(), drugOrdersList, patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList));
+            if(encounterMedicalHistoryMap.get(encounterListEntry.getKey()) != null) {
+                medicalHistoryList = getEncounterConditions(encounterMedicalHistoryMap, encounterListEntry.getKey());
+                encounterMedicalHistoryMap.remove(encounterListEntry.getKey());
+            }
+            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), new ArrayList<>(), drugOrdersList, patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList, medicalHistoryList));
         }
 
         for(Map.Entry<Encounter, List<OpenMrsCondition>> encounterListEntry : encounterChiefComplaintsMap.entrySet()){
             List<OpenMrsCondition> chiefComplaintList = new ArrayList<>();
+            List<OpenMrsCondition> medicalHistoryList = new ArrayList<>();
             chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, encounterListEntry.getKey());
-            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), new ArrayList<>(), new ArrayList<>(), patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList));
+            if(encounterMedicalHistoryMap.get(encounterListEntry.getKey()) != null) {
+                medicalHistoryList = getEncounterConditions(encounterMedicalHistoryMap, encounterListEntry.getKey());
+                encounterMedicalHistoryMap.remove(encounterListEntry.getKey());
+            }
+            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(encounterListEntry.getKey(), new ArrayList<>(), new ArrayList<>(), patient, encounterListEntry.getKey().getEncounterProviders(), chiefComplaintList, medicalHistoryList));
         }
+
+        for(Map.Entry<Encounter, List<OpenMrsCondition>> medicalHistoryEntry : encounterMedicalHistoryMap.entrySet()){
+            List<OpenMrsCondition> medicalHistoryList = getEncounterConditions(encounterChiefComplaintsMap, medicalHistoryEntry.getKey());
+            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(medicalHistoryEntry.getKey(), new ArrayList<>(), new ArrayList<>(), patient, medicalHistoryEntry.getKey().getEncounterProviders(), new ArrayList<>(), medicalHistoryList));
+        }
+
         return openMrsDischargeSummaryList;
     }
 

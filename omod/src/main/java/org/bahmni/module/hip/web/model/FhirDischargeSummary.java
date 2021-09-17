@@ -31,6 +31,7 @@ public class FhirDischargeSummary {
     private final Patient patient;
     private final List<MedicationRequest> medicationRequests;
     private final List<Medication> medications;
+    private final List<Condition> medicalHistory;
     private final Reference patientReference;
     private final List<CarePlan> carePlan;
 
@@ -42,6 +43,7 @@ public class FhirDischargeSummary {
                                 List<Condition> chiefComplaints,
                                 List<MedicationRequest> medicationRequests,
                                 List<Medication> medications,
+                                List<Condition> medicalHistory,
                                 Patient patient,
                                 List<CarePlan> carePlan){
         this.encounterTimestamp = encounterTimestamp;
@@ -51,6 +53,7 @@ public class FhirDischargeSummary {
         this.practitioners = practitioners;
         this.medicationRequests = medicationRequests;
         this.medications = medications;
+        this.medicalHistory = medicalHistory;
         this.patient = patient;
         this.patientReference = patientReference;
         this.carePlan = carePlan;
@@ -70,8 +73,10 @@ public class FhirDischargeSummary {
                 map(fhirResourceMapper::mapToMedicationRequest).collect(Collectors.toList());
         List<Medication> medications = openMrsDischargeSummary.getDrugOrders().stream().map(fhirResourceMapper::mapToMedication).
                 filter(medication -> !Objects.isNull(medication)).collect(Collectors.toList());
+        List<Condition> fhirMedicalHistoryList = openMrsDischargeSummary.getMedicalHistory().stream().
+                map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, patient, carePlans);
+        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans);
     }
 
     public Bundle bundleDischargeSummary(String webUrl){
@@ -82,6 +87,7 @@ public class FhirDischargeSummary {
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
+        FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, carePlan, false);
@@ -129,6 +135,17 @@ public class FhirDischargeSummary {
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(chiefComplaintsCompositionSection::addEntry);
+        }
+
+        if (medicalHistory.size() > 0) {
+            Composition.SectionComponent medicalHistoryCompositionSection = composition.addSection();
+            medicalHistoryCompositionSection
+                    .setTitle("Medical history")
+                    .setCode(FHIRUtils.getMedicalHistoryType());
+            medicalHistory
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(medicalHistoryCompositionSection::addEntry);
         }
 
         return composition;
