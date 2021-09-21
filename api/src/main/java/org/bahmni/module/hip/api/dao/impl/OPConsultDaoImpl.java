@@ -13,11 +13,9 @@ import java.util.stream.Collectors;
 
 @Repository
 public class OPConsultDaoImpl implements OPConsultDao {
-    public static final String CHIEF_COMPLAINT = "Chief Complaint";
     public static final String PROCEDURE_NOTES = "Procedure Notes, Procedure";
     public static final String CONSULTATION = "Consultation";
     private static final String CODED_DIAGNOSIS = "Coded Diagnosis";
-    public static final String OPD = "OPD";
     public static final String ORDER_ACTION = "DISCONTINUE";
     public static final String LAB_ORDER = "Lab Order";
     public static final String RADIOLOGY_ORDER = "Radiology Order";
@@ -44,7 +42,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
                                                      .filter(encounter -> Objects.equals(encounter.getEncounterType().getName(), "Consultation") &&
                                                                          encounter.getDateCreated().after(fromDate) &&
                                                                          encounter.getDateCreated().before(toDate) &&
-                                                                         Objects.equals(encounter.getVisit().getVisitType().getName(), OPD))
+                                                                         Objects.equals(encounter.getVisit().getVisitType().getName(), visit))
                                                      .collect(Collectors.toList());
         List<Condition> conditions = conditionService.getActiveConditions(patient)
                                                      .stream()
@@ -95,29 +93,6 @@ public class OPConsultDaoImpl implements OPConsultDao {
     }
 
     @Override
-    public List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate) {
-        final String[] formNames = new String[]{"Discharge Summary","Death Note", "Delivery Note", "Opioid Substitution Therapy - Intake", "Opportunistic Infection",
-                "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination", "Visit Diagnoses"};
-        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
-        List<Obs> physicalExaminationObsMap = new ArrayList<>();
-        for(Obs o :patientObs){
-            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
-                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
-                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
-                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
-                    && o.getValueCoded() == null
-                    && o.getConcept().getName().getLocalePreferred()
-                    && o.getObsGroup() == null
-                    && !Arrays.asList(formNames).contains(o.getConcept().getName().getName())
-            )
-            {
-                physicalExaminationObsMap.add(o);
-            }
-        }
-        return physicalExaminationObsMap;
-    }
-
-    @Override
     public List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate) {
         List<Obs> patientObs = obsService.getObservationsByPerson(patient);
         List<Obs> proceduresObsMap = new ArrayList<>();
@@ -125,7 +100,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
             if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
                     && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
                     && o.getEncounter().getVisit().getStartDatetime().before(toDate)
-                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), visit)
                     && Objects.equals(o.getConcept().getName().getName(), PROCEDURE_NOTES)
                     && !o.getVoided()
             )

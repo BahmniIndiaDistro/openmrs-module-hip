@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ConsultationDao {
     List<Obs> getChiefComplaints(Patient patient, String visit, Date fromDate, Date toDate);
+    List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate);
 }

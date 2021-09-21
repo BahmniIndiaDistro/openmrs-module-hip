@@ -1,4 +1,5 @@
 package org.bahmni.module.hip.web.service;
+import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -12,9 +13,6 @@ import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Date;
 import java.util.Map;
@@ -24,13 +22,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class OPConsultService {
-    public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Tuberculosis, Treatment Plan","Tuberculosis, Next Followup Visit","Tuberculosis, Plan for next visit","Tuberculosis, Patient Category","Current Followup Visit After",
-            "Tuberculosis, Plan for next visit","Malaria, Parents Name","Malaria, Death Date", "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Childhood Illness, Referred out",
-            "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Nutrition, Bal Vita Provided by FCHV","Bal Vita Provided by FCHV","ART, Condoms given","HIVTC, Marital Status","Malaria, Contact number",
-            "HIVTC, Transferred out", "HIVTC, Regimen when transferred out", "HIVTC, Date of transferred out", "HIVTC, Transferred out to", "HIVTC, Chief Complaint"));
 
     private final FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder;
     private final OPConsultDao opConsultDao;
+    private final ConsultationDao consultationDao;
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
@@ -39,12 +34,13 @@ public class OPConsultService {
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder,
                             OPConsultDao opConsultDao,
-                            PatientService patientService,
+                            ConsultationDao consultationDao, PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
                             DiagnosticReportService diagnosticReportService,
                             ConsultationService consultationService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
+        this.consultationDao = consultationDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
@@ -58,7 +54,7 @@ public class OPConsultService {
 
         Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(patient, visitType, fromDate, toDate);
-        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = getEncounterPhysicalExaminationMap(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(patient, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
@@ -107,31 +103,5 @@ public class OPConsultService {
             encounterProcedureMap.put(o.getEncounter(), o);
         }
         return encounterProcedureMap;
-    }
-
-    private Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Patient patient, String visitType, Date fromDate, Date toDate) {
-        List<Obs> physicalExaminations = opConsultDao.getPhysicalExamination(patient, visitType, fromDate, toDate);
-        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = new HashMap<>();
-        for (Obs physicalExamination : physicalExaminations) {
-            Encounter encounter = physicalExamination.getEncounter();
-            List<Obs> groupMembers = new ArrayList<>();
-            getGroupMembersOfObs(physicalExamination, groupMembers);
-            if (!encounterPhysicalExaminationMap.containsKey(encounter)) {
-                encounterPhysicalExaminationMap.put(encounter, new ArrayList<>());
-            }
-            encounterPhysicalExaminationMap.get(encounter).addAll(groupMembers);
-        }
-        return encounterPhysicalExaminationMap;
-    }
-
-    private void getGroupMembersOfObs(Obs physicalExamination, List<Obs> groupMembers) {
-        if (physicalExamination.getGroupMembers().size() > 0) {
-            for (Obs groupMember : physicalExamination.getGroupMembers()) {
-                if (conceptNames.contains(groupMember.getConcept().getDisplayString())) continue;
-                getGroupMembersOfObs(groupMember, groupMembers);
-            }
-        } else {
-            groupMembers.add(physicalExamination);
-        }
     }
 }

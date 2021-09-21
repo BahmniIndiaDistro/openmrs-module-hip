@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Arrays;
 
 @Repository
 public class ConsultationDaoImpl implements ConsultationDao {
     private final ObsService obsService;
-    public static final String OPD = "OPD";
     public static final String CONSULTATION = "Consultation";
     public static final String CHIEF_COMPLAINT = "Chief Complaint";
 
@@ -32,7 +32,7 @@ public class ConsultationDaoImpl implements ConsultationDao {
             if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
                     && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
                     && o.getEncounter().getVisit().getStartDatetime().before(toDate)
-                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), OPD)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), visit)
                     && Objects.equals(o.getConcept().getName().getName(), CHIEF_COMPLAINT)
                     && o.getValueCoded() != null
                     && o.getConcept().getName().getLocalePreferred()
@@ -42,5 +42,28 @@ public class ConsultationDaoImpl implements ConsultationDao {
             }
         }
         return chiefComplaintObsMap;
+    }
+
+    @Override
+    public List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate) {
+        final String[] formNames = new String[]{"Discharge Summary","Death Note", "Delivery Note", "Opioid Substitution Therapy - Intake", "Opportunistic Infection",
+                "Safe Abortion", "ECG Notes", "Operative Notes", "USG Notes", "Procedure Notes", "Triage Reference", "History and Examination", "Visit Diagnoses"};
+        List<Obs> patientObs = obsService.getObservationsByPerson(patient);
+        List<Obs> physicalExaminationObsMap = new ArrayList<>();
+        for(Obs o :patientObs){
+            if(Objects.equals(o.getEncounter().getEncounterType().getName(), CONSULTATION)
+                    && o.getEncounter().getVisit().getStartDatetime().after(fromDate)
+                    && o.getEncounter().getVisit().getStartDatetime().before(toDate)
+                    && Objects.equals(o.getEncounter().getVisit().getVisitType().getName(), visit)
+                    && o.getValueCoded() == null
+                    && o.getConcept().getName().getLocalePreferred()
+                    && o.getObsGroup() == null
+                    && !Arrays.asList(formNames).contains(o.getConcept().getName().getName())
+            )
+            {
+                physicalExaminationObsMap.add(o);
+            }
+        }
+        return physicalExaminationObsMap;
     }
 }

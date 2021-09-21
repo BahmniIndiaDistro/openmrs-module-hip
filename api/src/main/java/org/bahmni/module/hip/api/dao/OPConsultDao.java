@@ -13,7 +13,6 @@ import java.util.Map;
 public interface OPConsultDao {
     Map<Encounter, List<Condition>> getMedicalHistoryConditions(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getMedicalHistoryDiagnosis(Patient patient, String visit, Date fromDate, Date toDate);
-    List<Obs> getPhysicalExamination(Patient patient, String visit, Date fromDate, Date toDate);
     List<Obs> getProcedures(Patient patient, String visit, Date fromDate, Date toDate);
     List<Order> getOrders(Patient patient, String visit, Date fromDate, Date toDate);
 }
