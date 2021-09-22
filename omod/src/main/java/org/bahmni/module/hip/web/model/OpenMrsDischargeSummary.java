@@ -81,9 +81,8 @@ public class OpenMrsDischargeSummary {
         }
 
         for(Map.Entry<Encounter, List<OpenMrsCondition>> encounterListEntry : encounterChiefComplaintsMap.entrySet()){
-            List<OpenMrsCondition> chiefComplaintList = new ArrayList<>();
             List<OpenMrsCondition> medicalHistoryList = new ArrayList<>();
-            chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, encounterListEntry.getKey());
+            List<OpenMrsCondition> chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, encounterListEntry.getKey());
             if(encounterMedicalHistoryMap.get(encounterListEntry.getKey()) != null) {
                 medicalHistoryList = getEncounterConditions(encounterMedicalHistoryMap, encounterListEntry.getKey());
                 encounterMedicalHistoryMap.remove(encounterListEntry.getKey());

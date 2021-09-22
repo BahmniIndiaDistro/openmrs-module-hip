@@ -1,6 +1,5 @@
 package org.bahmni.module.hip.web.service;
 
-import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.DischargeSummaryDao;
 import org.bahmni.module.hip.web.model.*;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -28,16 +27,14 @@ public class DischargeSummaryService {
     private final DischargeSummaryDao dischargeSummaryDao;
     private final FhirBundledDischargeSummaryBuilder fhirBundledDischargeSummaryBuilder;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
-    private final ConsultationDao consultationDao;
     private final ConsultationService consultationService;
 
     @Autowired
-    public DischargeSummaryService(PatientService patientService, DischargeSummaryDao dischargeSummaryDao, FhirBundledDischargeSummaryBuilder fhirBundledDischargeSummaryBuilder, OpenMRSDrugOrderClient openMRSDrugOrderClient, ConsultationDao consultationDao, ConsultationService consultationService) {
+    public DischargeSummaryService(PatientService patientService, DischargeSummaryDao dischargeSummaryDao, FhirBundledDischargeSummaryBuilder fhirBundledDischargeSummaryBuilder, OpenMRSDrugOrderClient openMRSDrugOrderClient, ConsultationService consultationService) {
         this.patientService = patientService;
         this.dischargeSummaryDao = dischargeSummaryDao;
         this.fhirBundledDischargeSummaryBuilder = fhirBundledDischargeSummaryBuilder;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
-        this.consultationDao = consultationDao;
         this.consultationService = consultationService;
     }
 
