@@ -25,7 +25,6 @@ public class OPConsultService {
 
     private final FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder;
     private final OPConsultDao opConsultDao;
-    private final ConsultationDao consultationDao;
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final DiagnosticReportService diagnosticReportService;
@@ -34,13 +33,12 @@ public class OPConsultService {
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder,
                             OPConsultDao opConsultDao,
-                            ConsultationDao consultationDao, PatientService patientService,
+                            PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
                             DiagnosticReportService diagnosticReportService,
                             ConsultationService consultationService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
-        this.consultationDao = consultationDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.diagnosticReportService = diagnosticReportService;
