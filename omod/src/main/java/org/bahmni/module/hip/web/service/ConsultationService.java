@@ -18,21 +18,24 @@ import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Service
 public class ConsultationService {
 
     private final ConsultationDao consultationDao;
     private final OPConsultDao opConsultDao;
+    private final DiagnosticReportService diagnosticReportService;
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Tuberculosis, Treatment Plan","Tuberculosis, Next Followup Visit","Tuberculosis, Plan for next visit","Tuberculosis, Patient Category","Current Followup Visit After",
             "Tuberculosis, Plan for next visit","Malaria, Parents Name","Malaria, Death Date", "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Childhood Illness, Referred out",
             "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Nutrition, Bal Vita Provided by FCHV","Bal Vita Provided by FCHV","ART, Condoms given","HIVTC, Marital Status","Malaria, Contact number",
             "HIVTC, Transferred out", "HIVTC, Regimen when transferred out", "HIVTC, Date of transferred out", "HIVTC, Transferred out to", "HIVTC, Chief Complaint"));
 
     @Autowired
-    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao) {
+    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao, DiagnosticReportService diagnosticReportService) {
         this.consultationDao = consultationDao;
         this.opConsultDao = opConsultDao;
+        this.diagnosticReportService = diagnosticReportService;
     }
 
     public Map<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Patient patient, String visitType, Date fromDate, Date toDate) {
@@ -83,6 +86,21 @@ public class ConsultationService {
             encounterPhysicalExaminationMap.get(encounter).addAll(groupMembers);
         }
         return encounterPhysicalExaminationMap;
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(String visitType, Date fromDate, Date toDate, Patient patient) {
+        final int patientDocumentEncounterType = 9;
+        Map<Encounter, List<Obs>> encounterDiagnosticReportsMap = diagnosticReportService.getAllObservationsForVisits(fromDate, toDate, patient, visitType);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = new HashMap<>();
+        for (Encounter e : encounterDiagnosticReportsMap.keySet()) {
+            List<Obs> patientDocuments = e.getAllObs().stream().
+                    filter(o -> (o.getEncounter().getEncounterType().getEncounterTypeId() == patientDocumentEncounterType && o.getValueText() == null))
+                    .collect(Collectors.toList());
+            if (patientDocuments.size() > 0) {
+                encounterPatientDocumentsMap.put(e, patientDocuments);
+            }
+        }
+        return encounterPatientDocumentsMap;
     }
 
     private void getGroupMembersOfObs(Obs physicalExamination, List<Obs> groupMembers) {

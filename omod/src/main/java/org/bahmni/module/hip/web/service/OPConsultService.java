@@ -1,5 +1,4 @@
 package org.bahmni.module.hip.web.service;
-import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -27,7 +26,6 @@ public class OPConsultService {
     private final OPConsultDao opConsultDao;
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
-    private final DiagnosticReportService diagnosticReportService;
     private final ConsultationService consultationService;
 
     @Autowired
@@ -35,13 +33,11 @@ public class OPConsultService {
                             OPConsultDao opConsultDao,
                             PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
-                            DiagnosticReportService diagnosticReportService,
                             ConsultationService consultationService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
-        this.diagnosticReportService = diagnosticReportService;
         this.consultationService = consultationService;
     }
 
@@ -56,7 +52,7 @@ public class OPConsultService {
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
-        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
         Map<Encounter, List<Order>> encounterOrdersMap = getEncounterOrdersMap(visitType, fromDate, toDate, patient);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
@@ -77,21 +73,6 @@ public class OPConsultService {
             encounterOrdersMap.get(order.getEncounter()).add(order);
         }
         return encounterOrdersMap;
-    }
-
-    private Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(String visitType, Date fromDate, Date toDate, Patient patient) {
-        final int patientDocumentEncounterType = 9;
-        Map<Encounter, List<Obs>> encounterDiagnosticReportsMap = diagnosticReportService.getAllObservationsForVisits(fromDate, toDate, patient, visitType);
-        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = new HashMap<>();
-        for (Encounter e : encounterDiagnosticReportsMap.keySet()) {
-            List<Obs> patientDocuments = e.getAllObs().stream().
-                    filter(o -> (o.getEncounter().getEncounterType().getEncounterTypeId() == patientDocumentEncounterType && o.getValueText() == null))
-                    .collect(Collectors.toList());
-            if (patientDocuments.size() > 0) {
-                encounterPatientDocumentsMap.put(e, patientDocuments);
-            }
-        }
-        return encounterPatientDocumentsMap;
     }
 
     private Map<Encounter, Obs> getEncounterProcedureMap(Patient patient, String visitType, Date fromDate, Date toDate) {
