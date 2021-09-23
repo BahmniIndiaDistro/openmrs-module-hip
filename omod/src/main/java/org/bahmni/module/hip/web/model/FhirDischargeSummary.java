@@ -3,15 +3,16 @@ package org.bahmni.module.hip.web.model;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
-import org.hl7.fhir.r4.model.Condition;
 import org.openmrs.EncounterProvider;
 
 import java.util.Date;
@@ -33,6 +34,7 @@ public class FhirDischargeSummary {
     private final List<Medication> medications;
     private final List<Condition> medicalHistory;
     private final Reference patientReference;
+    private final List<Observation> observations;
     private final List<CarePlan> carePlan;
 
     public FhirDischargeSummary(Integer encounterID,
@@ -45,7 +47,8 @@ public class FhirDischargeSummary {
                                 List<Medication> medications,
                                 List<Condition> medicalHistory,
                                 Patient patient,
-                                List<CarePlan> carePlan){
+                                List<CarePlan> carePlan,
+                                List<Observation> observations){
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
@@ -57,6 +60,7 @@ public class FhirDischargeSummary {
         this.patient = patient;
         this.patientReference = patientReference;
         this.carePlan = carePlan;
+        this.observations = observations;
     }
     public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper){
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDischargeSummary.getPatient());
@@ -65,7 +69,7 @@ public class FhirDischargeSummary {
         Date encounterDatetime = openMrsDischargeSummary.getEncounter().getEncounterDatetime();
         Integer encounterId = openMrsDischargeSummary.getEncounter().getId();
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDischargeSummary.getEncounter().getEncounterProviders());
-        List<CarePlan> carePlans = openMrsDischargeSummary.getObservations().stream().
+        List<CarePlan> carePlans = openMrsDischargeSummary.getCarePlanObs().stream().
                 map(fhirResourceMapper::mapToCarePlan).collect(Collectors.toList());
         List<Condition> chiefComplaints = openMrsDischargeSummary.getChiefComplaints().stream().
                 map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
@@ -75,8 +79,10 @@ public class FhirDischargeSummary {
                 filter(medication -> !Objects.isNull(medication)).collect(Collectors.toList());
         List<Condition> fhirMedicalHistoryList = openMrsDischargeSummary.getMedicalHistory().stream().
                 map(fhirResourceMapper::mapToCondition).collect(Collectors.toList());
+        List<Observation> physicalExaminations = openMrsDischargeSummary.getPhysicalExaminationObs().stream().
+                map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans);
+        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations);
     }
 
     public Bundle bundleDischargeSummary(String webUrl){
@@ -91,6 +97,7 @@ public class FhirDischargeSummary {
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, carePlan, false);
+        FHIRUtils.addToBundleEntry(bundle, observations, false);
         return bundle;
     }
 
@@ -146,6 +153,17 @@ public class FhirDischargeSummary {
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(medicalHistoryCompositionSection::addEntry);
+        }
+
+        if (observations.size() > 0) {
+            Composition.SectionComponent physicalExaminationsCompositionSection = composition.addSection();
+            physicalExaminationsCompositionSection
+                    .setTitle("Physical examination")
+                    .setCode(FHIRUtils.getPhysicalExaminationType());
+            observations
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(physicalExaminationsCompositionSection::addEntry);
         }
 
         return composition;
