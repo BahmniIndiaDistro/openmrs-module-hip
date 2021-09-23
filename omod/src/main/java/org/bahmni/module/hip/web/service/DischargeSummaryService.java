@@ -42,7 +42,7 @@ public class DischargeSummaryService {
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        Map<Encounter, List<Obs>> encounterDischargeSummaryMap = getEncounterDischargeSummaryMap(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterDischargeSummaryMap = getEncounterCarePlanMap(patient, visitType, fromDate, toDate);
         DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(patientUuid, dateRange, visitType));
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
         Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(patient, visitType, fromDate, toDate);
@@ -52,7 +52,7 @@ public class DischargeSummaryService {
         return openMrsDischargeSummaryList.stream().map(fhirBundledDischargeSummaryBuilder::fhirBundleResponseFor).collect(Collectors.toList());
     }
 
-    private Map<Encounter, List<Obs>> getEncounterDischargeSummaryMap(Patient patient, String visitType, Date fromDate, Date toDate) {
+    private Map<Encounter, List<Obs>> getEncounterCarePlanMap(Patient patient, String visitType, Date fromDate, Date toDate) {
         List<Obs> carePlanObs = dischargeSummaryDao.getCarePlan(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterCarePlanMap = new HashMap<>();
         for(Obs obs : carePlanObs){
