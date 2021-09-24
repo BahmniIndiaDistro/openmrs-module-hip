@@ -92,6 +92,46 @@ public class FHIRResourceMapper {
         }
     }
 
+    public Procedure mapToProcedure(Obs obs) {
+        Procedure procedure = new Procedure();
+        procedure.setId(obs.getUuid());
+        procedure = obs.getGroupMembers().size() > 0 ? mapGroupMembersToProcedure(obs.getGroupMembers(), procedure)
+                                                     : mapObsToProcedure(obs, procedure);
+        return procedure;
+    }
+
+    public Procedure mapGroupMembersToProcedure(Set<Obs> obsGroupMembers, Procedure procedure){
+        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
+        StringBuilder title = new StringBuilder();
+        StringBuilder description = new StringBuilder("");
+        CodeableConcept concept = new CodeableConcept();
+        for(Obs o : obsGroupMembers){
+            if(Objects.equals(o.getConcept().getName().getName(), "Procedure Notes, Procedure")){
+                title.append(o.getValueCoded().getDisplayString());
+            } else {
+                description.append(description.toString().equals("") ? "" : ", ");
+                if(o.getValueCoded() != null){
+                    description.append(o.getValueCoded().getName().getName());
+                }else if(o.getValueText() != null){
+                    description.append(o.getValueText());
+                } else if(o.getValueNumeric() != null){
+                    description.append(o.getValueNumeric());
+                }
+            }
+        }
+        concept.setText(title + ", " + description);
+        procedure.setCode(concept);
+        return procedure;
+    }
+
+    public Procedure mapObsToProcedure(Obs obs, Procedure procedure){
+        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
+        CodeableConcept concept = new CodeableConcept();
+        concept.setText(obs.getValueCoded().getDisplayString());
+        procedure.setCode(concept);
+        return procedure;
+    }
+
     public CarePlan mapToCarePlan(Obs obs){
         List<Obs> groupMembers = new ArrayList<>();
         getGroupMembersOfObs(obs, groupMembers);
@@ -194,16 +234,6 @@ public class FHIRResourceMapper {
         serviceRequest.setCode(concept);
         serviceRequest.setId(order.getUuid());
         return serviceRequest;
-    }
-
-    public Procedure mapToProcedure(Obs obs) {
-        Procedure procedure = new Procedure();
-        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
-        CodeableConcept concept = new CodeableConcept();
-        concept.setText(obs.getValueCoded().getDisplayString());
-        procedure.setCode(concept);
-        procedure.setId(obs.getUuid());
-        return procedure;
     }
 
     private String getTypeOfTheObsDocument(String valueText) {
