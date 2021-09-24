@@ -1,5 +1,7 @@
 package org.bahmni.module.hip.web.service;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bahmni.module.hip.api.dao.DischargeSummaryDao;
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.bahmni.module.hip.web.model.DateRange;
@@ -8,6 +10,7 @@ import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.OpenMrsDischargeSummary;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,7 @@ public class DischargeSummaryService {
     private final FhirBundledDischargeSummaryBuilder fhirBundledDischargeSummaryBuilder;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final ConsultationService consultationService;
+    private Log log = LogFactory.getLog(this.getClass());
 
     @Autowired
     public DischargeSummaryService(PatientService patientService, DischargeSummaryDao dischargeSummaryDao, FhirBundledDischargeSummaryBuilder fhirBundledDischargeSummaryBuilder, OpenMRSDrugOrderClient openMRSDrugOrderClient, ConsultationService consultationService) {
@@ -50,8 +54,9 @@ public class DischargeSummaryService {
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visitType, fromDate, toDate, patient);
 
-        List<OpenMrsDischargeSummary> openMrsDischargeSummaryList = OpenMrsDischargeSummary.getOpenMrsDischargeSummaryList(encounterDischargeSummaryMap, encounteredDrugOrdersMap, encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounterPatientDocumentsMap, encounterProcedureMap, patient);
+        List<OpenMrsDischargeSummary> openMrsDischargeSummaryList = OpenMrsDischargeSummary.getOpenMrsDischargeSummaryList(encounterDischargeSummaryMap, encounteredDrugOrdersMap, encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounterPatientDocumentsMap, encounterProcedureMap, encounterOrdersMap, patient);
         return openMrsDischargeSummaryList.stream().map(fhirBundledDischargeSummaryBuilder::fhirBundleResponseFor).collect(Collectors.toList());
     }
 

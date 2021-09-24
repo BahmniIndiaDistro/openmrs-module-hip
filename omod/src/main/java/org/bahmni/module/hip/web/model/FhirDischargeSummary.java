@@ -15,6 +15,7 @@ import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.ServiceRequest;
 import org.openmrs.EncounterProvider;
 
 import java.util.Date;
@@ -40,6 +41,7 @@ public class FhirDischargeSummary {
     private final List<CarePlan> carePlan;
     private final List<DocumentReference> patientDocuments;
     private final Procedure procedures;
+    private final List<ServiceRequest> serviceRequest;
 
     public FhirDischargeSummary(Integer encounterID,
                                 Encounter encounter,
@@ -54,7 +56,8 @@ public class FhirDischargeSummary {
                                 List<CarePlan> carePlan,
                                 List<Observation> observations,
                                 List<DocumentReference> patientDocuments,
-                                Procedure procedures){
+                                Procedure procedures,
+                                List<ServiceRequest> serviceRequest){
         this.encounterTimestamp = encounterTimestamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
@@ -69,6 +72,7 @@ public class FhirDischargeSummary {
         this.observations = observations;
         this.patientDocuments = patientDocuments;
         this.procedures = procedures;
+        this.serviceRequest = serviceRequest;
     }
     public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper){
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDischargeSummary.getPatient());
@@ -93,8 +97,10 @@ public class FhirDischargeSummary {
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
         Procedure procedures = openMrsDischargeSummary.getProcedure() != null ?
                 fhirResourceMapper.mapToProcedure(openMrsDischargeSummary.getProcedure()) : null;
+        List<ServiceRequest> serviceRequest = openMrsDischargeSummary.getOrders().stream().
+                map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations, patientDocuments, procedures);
+        return new FhirDischargeSummary(encounterId, encounter, encounterDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations, patientDocuments, procedures, serviceRequest);
     }
 
     public Bundle bundleDischargeSummary(String webUrl){
@@ -112,6 +118,7 @@ public class FhirDischargeSummary {
         FHIRUtils.addToBundleEntry(bundle, observations, false);
         if (procedures != null) FHIRUtils.addToBundleEntry(bundle, procedures, false);
         FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
+        FHIRUtils.addToBundleEntry(bundle, serviceRequest, false);
         return bundle;
     }
 
@@ -198,6 +205,16 @@ public class FhirDischargeSummary {
                     .setCode(FHIRUtils.getProcedureType());
 
             procedureCompositionSection.addEntry(FHIRUtils.getReferenceToResource(procedures));
+        }
+
+        if (serviceRequest.size() > 0) {
+            Composition.SectionComponent serviceRequestCompositionSection = composition.addSection();
+            serviceRequestCompositionSection
+                    .setTitle("Order")
+                    .setCode(FHIRUtils.getOrdersType());
+            serviceRequest.stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(serviceRequestCompositionSection::addEntry);
         }
 
         return composition;

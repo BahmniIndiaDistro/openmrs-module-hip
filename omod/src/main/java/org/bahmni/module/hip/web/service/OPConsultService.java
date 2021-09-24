@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,7 +52,7 @@ public class OPConsultService {
         Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
         Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(patient, visitType, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visitType, fromDate, toDate, patient);
-        Map<Encounter, List<Order>> encounterOrdersMap = getEncounterOrdersMap(visitType, fromDate, toDate, patient);
+        Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visitType, fromDate, toDate, patient);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
                 encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
@@ -61,18 +60,6 @@ public class OPConsultService {
 
         return openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
-    }
-
-    private Map<Encounter, List<Order>> getEncounterOrdersMap(String visitType, Date fromDate, Date toDate, Patient patient) {
-        List<Order> orders = opConsultDao.getOrders(patient, visitType, fromDate, toDate);
-        Map<Encounter, List<Order>> encounterOrdersMap = new HashMap<>();
-        for(Order order : orders){
-            if (!encounterOrdersMap.containsKey(order.getEncounter())) {
-                encounterOrdersMap.put(order.getEncounter(), new ArrayList<>());
-            }
-            encounterOrdersMap.get(order.getEncounter()).add(order);
-        }
-        return encounterOrdersMap;
     }
 
     private Map<Encounter, Obs> getEncounterProcedureMap(Patient patient, String visitType, Date fromDate, Date toDate) {

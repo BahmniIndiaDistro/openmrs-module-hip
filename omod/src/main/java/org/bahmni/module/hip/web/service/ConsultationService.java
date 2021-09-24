@@ -5,6 +5,7 @@ import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.module.emrapi.conditionslist.Condition;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +102,18 @@ public class ConsultationService {
             }
         }
         return encounterPatientDocumentsMap;
+    }
+
+    public Map<Encounter, List<Order>> getEncounterOrdersMap(String visitType, Date fromDate, Date toDate, Patient patient) {
+        List<Order> orders = consultationDao.getOrders(patient, visitType, fromDate, toDate);
+        Map<Encounter, List<Order>> encounterOrdersMap = new HashMap<>();
+        for(Order order : orders){
+            if (!encounterOrdersMap.containsKey(order.getEncounter())) {
+                encounterOrdersMap.put(order.getEncounter(), new ArrayList<>());
+            }
+            encounterOrdersMap.get(order.getEncounter()).add(order);
+        }
+        return encounterOrdersMap;
     }
 
     private void getGroupMembersOfObs(Obs physicalExamination, List<Obs> groupMembers) {
