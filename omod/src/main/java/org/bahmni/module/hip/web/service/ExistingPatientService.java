@@ -221,4 +221,18 @@ public class ExistingPatientService {
         }
         return false;
     }
+
+    public boolean isIdVoided(String uuid,String identifierType){
+        Patient patient = patientService.getPatientByUuid(uuid);
+        Set<PatientIdentifier> patientIdentifiers = patient.getIdentifiers();
+        try {
+            for (PatientIdentifier patientIdentifier:patientIdentifiers) {
+                if(patientIdentifier.getIdentifierType().getName().equals(identifierType)){
+                    return patientIdentifier.getVoided();
+                }
+            }
+        } catch (NullPointerException ignored) {
+        }
+        return false;
+    }
 }

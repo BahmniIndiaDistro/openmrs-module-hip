@@ -85,4 +85,13 @@ public class PatientController {
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .body(isHealthIdVoided);
     }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/IdentifierStatus")
+    @ResponseBody
+    public ResponseEntity<?> getIdentifierStatus(@RequestParam String patientUuid, @RequestParam String identifierType) {
+        boolean isHealthIdVoided = existingPatientService.isIdVoided(patientUuid,identifierType);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(isHealthIdVoided);
+    }
 }
