@@ -71,4 +71,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="update-pit-uuid-202206161334" author="clinic-config">
+        <sql>
+            update patient_identifier_type set uuid = '7dfc1a64-e42f-11e5-8c3e-08002715d519' where name = 'Patient Identifier';
+            update global_property set property_value = '7dfc1a64-e42f-11e5-8c3e-08002715d519' where property = 'bahmni.primaryIdentifierType';
+        </sql>
+    </changeSet>
 </databaseChangeLog>
