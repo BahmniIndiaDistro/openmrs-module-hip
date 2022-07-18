@@ -137,7 +137,7 @@ public class ConsultationService {
             if (!encounterMedicalHistoryMap.containsKey(obs.getEncounter())){
                 encounterMedicalHistoryMap.put(obs.getEncounter(), new ArrayList<>());
             }
-            encounterMedicalHistoryMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), obs.getValueCoded().getDisplayString(), obs.getDateCreated()));
+            encounterMedicalHistoryMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), obs.getValueText() != null ? obs.getValueText() : obs.getValueCoded().getDisplayString(), obs.getDateCreated()));
         }
         return encounterMedicalHistoryMap;
     }
