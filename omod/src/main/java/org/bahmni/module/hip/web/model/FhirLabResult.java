@@ -72,7 +72,7 @@ public class FhirLabResult {
 
         for(Map.Entry<Obs, List<LabOrderResult>> report : labresult.getLabOrderResults().entrySet()) {
             DiagnosticReport reports = new DiagnosticReport();
-            LabOrderResult firstresult = report.getValue().size() != 0 ? report.getValue().get(0) : null;
+            LabOrderResult firstresult = (report.getValue() != null && report.getValue().size() >= 0) ? report.getValue().get(0) : null;
             String testName = report.getKey().getObsGroup().getConcept().getName().getName();
             reports.setCode(new CodeableConcept().setText(testName).addCoding(new Coding().setDisplay(testName)));
             try {
