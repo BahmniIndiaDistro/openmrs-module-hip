@@ -1,5 +1,8 @@
 package org.bahmni.module.hip.web.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bahmni.module.hip.web.controller.HipControllerAdvice;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Attachment;
@@ -32,6 +35,7 @@ import static org.bahmni.module.hip.web.service.Constants.PATIENT_DOCUMENTS_PATH
 
 public class FhirLabResult {
 
+    private static Logger logger = LogManager.getLogger(FhirLabResult.class);
     private final Patient patient;
     private final Encounter encounter;
     private final Date visitTime;
@@ -72,7 +76,7 @@ public class FhirLabResult {
 
         for(Map.Entry<Obs, List<LabOrderResult>> report : labresult.getLabOrderResults().entrySet()) {
             DiagnosticReport reports = new DiagnosticReport();
-            LabOrderResult firstresult = (report.getValue() != null && report.getValue().size() >= 0) ? report.getValue().get(0) : null;
+            LabOrderResult firstresult = (report.getValue() != null && report.getValue().size() != 0) ? report.getValue().get(0) : new LabOrderResult();
             String testName = report.getKey().getObsGroup().getConcept().getName().getName();
             reports.setCode(new CodeableConcept().setText(testName).addCoding(new Coding().setDisplay(testName)));
             try {
@@ -81,14 +85,14 @@ public class FhirLabResult {
                 e.printStackTrace();
             }
 
-            reports.setId(firstresult != null ? firstresult.getOrderUuid() : UUID.randomUUID().toString());
+            reports.setId(firstresult.getOrderUuid() != null ? firstresult.getOrderUuid() : UUID.randomUUID().toString());
             reports.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
             reports.setSubject(FHIRUtils.getReferenceToResource(patient));
             reports.setResultsInterpreter(practitioners.stream().map(FHIRUtils::getReferenceToResource).collect(Collectors.toList()));
 
             List<Observation> results = new ArrayList<>();
 
-            report.getValue().stream().forEach(result -> FhirLabResult.mapToObsFromLabResult(result, patient, reports, results));
+            if(report.getValue() != null) report.getValue().stream().forEach(result -> FhirLabResult.mapToObsFromLabResult(result, patient, reports, results));
             reportList.add(reports);
 
         }
