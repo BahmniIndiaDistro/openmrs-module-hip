@@ -1,5 +1,7 @@
 package org.bahmni.module.hip.api.dao.impl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.hibernate.Query;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class EncounterDaoImpl implements EncounterDao {
 
     private SessionFactory sessionFactory;
+    private static Logger logger = LogManager.getLogger(EncounterDaoImpl.class);
 
     @Autowired
     public EncounterDaoImpl(SessionFactory sessionFactory) {
@@ -154,6 +157,7 @@ public class EncounterDaoImpl implements EncounterDao {
         for (Encounter encounter : encounters) {
             if(conceptName == null)
                 observations.addAll(encounter.getAllObs());
+            logger.warn("Observations: "+observations.toString());
             observations.addAll(encounter.getAllObs().stream()
                                 .filter(o -> Objects.equals(o.getConcept().getName().getName(), conceptName))
                                 .collect(Collectors.toList()));
