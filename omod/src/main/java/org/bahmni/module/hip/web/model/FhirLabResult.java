@@ -1,5 +1,8 @@
 package org.bahmni.module.hip.web.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bahmni.module.hip.web.controller.HipControllerAdvice;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Bundle;
@@ -31,6 +34,8 @@ public class FhirLabResult {
     private final DiagnosticReport report;
     private final List<Observation> results;
     private final List<Practitioner> practitioners;
+    private static Logger logger = LogManager.getLogger(HipControllerAdvice.class);
+
 
     public FhirLabResult(Patient patient, String panelName, Encounter encounter, Date encounterTime, DiagnosticReport report, List<Observation> results, List<Practitioner> practitioners) {
         this.patient = patient;
@@ -71,7 +76,7 @@ public class FhirLabResult {
         reports.setResultsInterpreter(practitioners.stream().map(FHIRUtils::getReferenceToResource).collect(Collectors.toList()));
 
         List<Observation> results = new ArrayList<>();
-
+        logger.warn("res" + labresult.getLabOrderResults());
         labresult.getLabOrderResults().stream().forEach( result -> FhirLabResult.mapToObsFromLabResult(result, patient, reports, results) );
 
         FhirLabResult fhirLabResult = new FhirLabResult(fhirResourceMapper.mapToPatient( labresult.getPatient() ), labresult.getLabOrderResults().get(0).getPanelName(),

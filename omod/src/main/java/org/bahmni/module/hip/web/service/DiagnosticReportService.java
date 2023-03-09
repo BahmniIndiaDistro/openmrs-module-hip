@@ -1,8 +1,11 @@
 package org.bahmni.module.hip.web.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bahmni.module.bahmnicore.dao.OrderDao;
 import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.bahmni.module.hip.api.dao.HipVisitDao;
+import org.bahmni.module.hip.web.controller.HipControllerAdvice;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.model.OpenMrsDiagnosticReport;
@@ -42,6 +45,8 @@ public class DiagnosticReportService {
     private static final String RADIOLOGY_TYPE = "RADIOLOGY";
     private static final String PATIENT_DOCUMENT_TYPE = "Patient Document";
     private static final String DOCUMENT_TYPE = "Document";
+    private static Logger logger = LogManager.getLogger(HipControllerAdvice.class);
+
 
 
     private LabOrderResultsService labOrderResultsService;
@@ -64,6 +69,7 @@ public class DiagnosticReportService {
         this.orderDao = orderDao;
 
     }
+
 
     public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitType, Date visitStartDate) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
@@ -127,10 +133,10 @@ public class DiagnosticReportService {
 
         List<Visit> visits, visitsWithOrdersForVisitType ;
 
-        visits = orderDao.getVisitsWithAllOrders(patient, ORDER_TYPE, null, null );
+        visits = orderDao.getVisitsWithAllOrders(patient, ORDER_TYPE, false, null );
         visitsWithOrdersForVisitType = visits.stream().filter( visit -> visitsForVisitType.contains(visit.getVisitId()) ).collect(Collectors.toList());;
         List<Order> orders = orderDao.getAllOrdersForVisits(new OrderType(3), visitsWithOrdersForVisitType);
-
+        logger.warn("visits " + visits);
 
         LabOrderResults results = labOrderResultsService.getAll(patient, visits, Integer.MAX_VALUE);
         Map<String, List<LabOrderResult>> groupedByOrderUUID = results.getResults().stream().collect(Collectors.groupingBy(LabOrderResult::getOrderUuid));
@@ -141,8 +147,10 @@ public class DiagnosticReportService {
                             .stream()
                             .filter(order -> order.getUuid().equals(entry.getKey()))
                             .findFirst();
-                    if (orderForUuid.isPresent())
-                    return new OpenMrsLabResults(orderForUuid.get().getEncounter(), orderForUuid.get().getPatient(), entry.getValue());
+                    if (orderForUuid.isPresent()) {
+                        logger.warn(orderForUuid.get().getEncounter().toString() +  " " + entry.getValue());
+                        return new OpenMrsLabResults(orderForUuid.get().getEncounter(), orderForUuid.get().getPatient(), entry.getValue());
+                    }
                     else return null;
                 } ).filter(Objects::nonNull).collect(Collectors.toList());
 
