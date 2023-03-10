@@ -86,7 +86,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
         return new PatientCareContext(VISIT_TYPE,
                 "Visit on ".concat(dateFormat.format(visit.getStartDatetime()))
                         .concat(" with ").concat(visit.getCreator().getPersonName().getFullName()),
-                visit.getUuid());
+                VISIT_TYPE.concat(":").concat(visit.getUuid()));
     }
 
     private PatientCareContext getPatientCareContext(PatientProgram program) {

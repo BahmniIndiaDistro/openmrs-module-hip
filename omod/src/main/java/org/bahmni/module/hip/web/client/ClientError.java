@@ -29,14 +29,11 @@ public class ClientError {
     public static ClientError noPatientIdProvided() {
         return new ClientError(ErrorCode.NO_PATIENT_ID_SUPPLIED.getValue(), "No Patient ID supplied");
     }
-    public static ClientError noVisitTypeProvided(){
-        return new ClientError(ErrorCode.NO_VISIT_TYPE_SUPPLIED.getValue(),"No Visit type is supplied");
+    public static ClientError noVisitUuidProvided(){
+        return new ClientError(ErrorCode.NO_VISIT_TYPE_SUPPLIED.getValue(),"No Visit Uuid is supplied");
     }
-    public static ClientError noVisitStartDateProvided(){
-        return new ClientError(ErrorCode.NO_VISIT_START_DATE_SUPPLIED.getValue(),"No Visit start date is supplied");
-    }
-    public static ClientError invalidVisitType(){
-        return new ClientError(ErrorCode.INVALID_VISIT_TYPE.getValue(),"Visit Type is invalid");
+    public static ClientError invalidVisitUuid(){
+        return new ClientError(ErrorCode.INVALID_VISIT_TYPE.getValue(),"Visit Uuid is invalid");
     }
     public static ClientError noProgramNameProvided(){
         return new ClientError(ErrorCode.NO_PROGRAM_NAME_SUPPLIED.getValue(),"No program name supplied");

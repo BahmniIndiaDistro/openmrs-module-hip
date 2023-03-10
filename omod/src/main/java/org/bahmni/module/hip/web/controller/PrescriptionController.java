@@ -16,15 +16,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
 import static org.bahmni.module.hip.web.utils.DateUtils.parseDate;
-import static org.bahmni.module.hip.web.utils.DateUtils.parseDateTime;
 
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/prescriptions")
 @RestController
@@ -45,22 +41,16 @@ public class PrescriptionController extends BaseRestController {
             @RequestParam String patientId,
             @RequestParam String fromDate,
             @RequestParam String toDate,
-            @RequestParam String visitType,
-            @RequestParam String visitStartDate
-    ) throws ParseException, IOException {
+            @RequestParam String visitUuid) throws IOException, ParseException {
         if (patientId == null || patientId.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
-        if (visitType == null || visitType.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
-        if (visitStartDate == null || visitStartDate.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
-        if (!validationService.isValidVisit(visitType))
-            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+        if (visitUuid == null || visitUuid.isEmpty())
+            return ResponseEntity.badRequest().body(ClientError.noVisitUuidProvided());
+        if (!validationService.isValidVisit(visitUuid))
+            return ResponseEntity.badRequest().body(ClientError.invalidVisitUuid());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
-        List<PrescriptionBundle> prescriptionBundle = new ArrayList<>();
-        if(isDateBetweenDateRange(visitStartDate,fromDate,toDate))
-            prescriptionBundle = prescriptionService.getPrescriptions(patientId, visitType, parseDateTime(visitStartDate));
+        List<PrescriptionBundle> prescriptionBundle = prescriptionService.getPrescriptions(patientId, visitUuid, fromDate, toDate);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(mapper.writeValueAsString(new BundledPrescriptionResponse(prescriptionBundle)));
