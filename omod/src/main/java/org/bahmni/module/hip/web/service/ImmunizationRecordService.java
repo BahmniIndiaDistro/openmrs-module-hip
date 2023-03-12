@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,20 +37,22 @@ public class ImmunizationRecordService {
                                      OrganizationContextService organizationContextService,
                                      FHIRResourceMapper fhirResourceMapper,
                                      ConceptTranslator conceptTranslator,
-                                     EncounterTranslator<Encounter> encounterTranslator) {
+                                     EncounterTranslator<Encounter> encounterTranslator,
+                                     ImmunizationObsTemplateConfig immunizationObsTemplateConfig) {
         this.visitService = visitService;
         this.conceptService = conceptService;
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.conceptTranslator = conceptTranslator;
         this.encounterTranslator = encounterTranslator;
-        this.immunizationObsTemplateConfig = loadImmunizationObsTemplateConfig();
+        this.immunizationObsTemplateConfig = immunizationObsTemplateConfig;
     }
 
     public List<ImmunizationRecordBundle> getImmunizationRecordsForVisit(String patientUuid, String visitUuid, Date startDate, Date endDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
         if (!visit.getPatient().getUuid().equals(patientUuid.trim())) {
-            //should log. throw error?
+            log.warn("Identified visit is not for the requested patient. " +
+                    "This should never happen. This may mean a invalid linkage in the care context");
             return Collections.emptyList();
         }
         if (!isImmunizationObsTemplateConfigured()) {
@@ -85,21 +86,5 @@ public class ImmunizationRecordService {
     private boolean isImmunizationObsTemplateConfigured() {
         return !StringUtils.isEmpty(immunizationObsTemplateConfig.getRootConcept());
     }
-
-    private ImmunizationObsTemplateConfig loadImmunizationObsTemplateConfig() {
-        ImmunizationObsTemplateConfig config = new ImmunizationObsTemplateConfig();
-        Properties properties = new Properties();
-        properties.put("immunization.concept.vaccineCode", "984AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.occurrenceDateTime", "1410AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.manufacturer", "1419AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.doseNumber", "1418AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.lotNumber", "1420AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.expirationDate", "165907AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        properties.put("immunization.concept.root", "1421AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        //config.loadFromProperties(properties);
-        config.loadFromFile();
-        return config;
-    }
-
 
 }

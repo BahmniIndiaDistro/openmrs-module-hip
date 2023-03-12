@@ -12,10 +12,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -33,10 +36,10 @@ public class ImmunizationRecordController extends BaseRestController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/visit", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
-    ResponseEntity<?> getImmunizationsForVisit(@RequestParam String patientId,
+    ResponseEntity<?> getImmunizationsForVisit(@RequestParam String patientUuid,
                                                @RequestParam String visitUuid,
                                                @RequestParam(required = false) String fromDate,
-                                               @RequestParam(required = false) String toDate) throws ParseException, IOException {
+                                               @RequestParam(required = false) String toDate) throws IOException {
         if (visitUuid == null || visitUuid.isEmpty()) {
             return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
         }
@@ -50,14 +53,14 @@ public class ImmunizationRecordController extends BaseRestController {
         }
 
         if (!StringUtils.isEmpty(toDate)) {
-            toEncounterDate = validDate(fromDate);
+            toEncounterDate = validDate(toDate);
             if (toEncounterDate == null) {
                 return ResponseEntity.badRequest().body(ClientError.invalidEndDate());
             }
         }
 
         List<ImmunizationRecordBundle> immunizationRecordsForVisit
-                = immunizationRecordService.getImmunizationRecordsForVisit(patientId, visitUuid, fromEncounterDate, toEncounterDate);
+                = immunizationRecordService.getImmunizationRecordsForVisit(patientUuid, visitUuid, fromEncounterDate, toEncounterDate);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
