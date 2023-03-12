@@ -195,6 +195,13 @@ public class FHIRUtils {
         return ref;
     }
 
+    public static Reference getReferenceToResource(Resource res, String type) {
+        Reference ref = new Reference();
+        ref.setResource(res);
+        ref.setType(type);
+        return ref;
+    }
+
     public static String getDisplay(Practitioner author) {
         String prefixAsSingleString = author.getNameFirstRep().getPrefixAsSingleString();
         if ("".equals(prefixAsSingleString)) {

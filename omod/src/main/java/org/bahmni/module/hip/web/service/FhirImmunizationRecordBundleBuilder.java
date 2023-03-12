@@ -1,9 +1,16 @@
 package org.bahmni.module.hip.web.service;
 
+import org.bahmni.module.hip.web.model.CareContext;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.bahmni.module.hip.web.model.OrganizationContext;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.PositiveIntType;
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Reference;
 import org.openmrs.*;
 import org.openmrs.Encounter;
 import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
@@ -48,23 +55,24 @@ public class FhirImmunizationRecordBundleBuilder {
     private ImmunizationRecordBundle buildImmunizationBundle(Obs obs, Encounter encounter) {
         Immunization incident = immunizationFrom(obs);
         Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
-        incident.setPatient(FHIRUtils.getReferenceToResource(patient));
+        Reference patientRef = FHIRUtils.getReferenceToResource(patient);
+        incident.setPatient(patientRef);
 
         String bundleId = String.format("IR-%d-%d", obs.getEncounter().getId(), obs.getId());
         Bundle bundle = FHIRUtils.createBundle(obs.getObsDatetime(), bundleId, orgContext.webUrl());
 
         Composition document = compositionFrom(encounter.getEncounterDatetime(), UUID.randomUUID().toString());
+        document.setSubject(patientRef);
+        //document.setAuthor(); /* TODO: this is a mandatory field. Should be set to an organization resource */
         FHIRUtils.addToBundleEntry(bundle, document, false);
         Composition.SectionComponent section = document.addSection();
         section.setTitle("# Immunization Record");
         section.setCode(FHIRUtils.getImmunizationRecordType());
-        section.addEntry(FHIRUtils.getReferenceToResource(incident));
+        section.addEntry(FHIRUtils.getReferenceToResource(incident, "Immunization"));
 
         FHIRUtils.addToBundleEntry(bundle, patient, false); //add patient
         org.hl7.fhir.r4.model.Encounter immunizationEncounter = encounterTranslator.toFhirResource(encounter);
-        //FHIRUtils.addToBundleEntry(bundle, fhirResourceMapper.mapToEncounter(encounter), false);
         FHIRUtils.addToBundleEntry(bundle, immunizationEncounter, false);
-        //immunization.setEncounter(this.visitReferenceTranslator.toFhirResource(openmrsImmunization.getEncounter().getVisit()));
         incident.setEncounter(FHIRUtils.getReferenceToResource(immunizationEncounter));
         FHIRUtils.addToBundleEntry(bundle, incident, false);
         List<Practitioner> practitioners = practitionersFrom(encounter.getEncounterProviders());
@@ -72,7 +80,8 @@ public class FhirImmunizationRecordBundleBuilder {
         incident.setPerformer(Collections.singletonList(
                 new Immunization.ImmunizationPerformerComponent(FHIRUtils.getReferenceToResource(practitioners.get(0)))
         ));
-        return new ImmunizationRecordBundle(bundle);
+        CareContext careContext = CareContext.builder().careContextReference(encounter.getVisit().getUuid()).careContextType("Visit").build();
+        return new ImmunizationRecordBundle(careContext, bundle);
 
     }
 
@@ -137,30 +146,10 @@ public class FhirImmunizationRecordBundleBuilder {
     }
 
 
-//    private Map<String, Obs> getObsMembersMap(Obs openmrsImmunization) {
-//        if (openmrsImmunization != null && openmrsImmunization.isObsGrouping() && openmrsImmunization.hasGroupMembers()) {
-//            openmrsImmunization.getGroupMembers().stream().
-//
-//            Map<Concept, String> concepts = (Map) ImmunizationTranslatorImpl.IMMUNIZATION_CONCEPTS.stream().collect(Collectors.toMap(this::concept, (refTerm) -> {
-//                return refTerm;
-//            }));
-//            return (Map)obs.getGroupMembers().stream().filter((o) -> {
-//                return concepts.containsKey(o.getConcept());
-//            }).collect(Collectors.toMap((o) -> {
-//                return (String)concepts.get(o.getConcept());
-//            }, (o) -> {
-//                return o;
-//            }));
-//            return new HashMap<>();
-//        } else {
-//            return Collections.emptyMap();
-//        }
-//    }
-
     private Composition compositionFrom(Date encounterDatetime, String documentId) {
         Composition document = new Composition();
         document.setId(documentId);
-        document.setDate(encounterDatetime);
+        document.setDate(encounterDatetime); //or should it be now?
         document.setIdentifier(FHIRUtils.getIdentifier(document.getId(), orgContext.webUrl(), "document"));
         document.setStatus(Composition.CompositionStatus.FINAL);
         document.setType(FHIRUtils.getImmunizationRecordType());

@@ -60,10 +60,9 @@ public class ImmunizationRecordService {
             return Collections.emptyList();
         }
 
+        //this can potentially be cached, the concept maps are going to be same usually
         Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap =
-                immunizationObsTemplateConfig.getImmunizationAttributeConfigs().entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> identifyConcept(e)));
+                getImmunizationAttributeConcepts();
 
         FhirImmunizationRecordBundleBuilder immunizationTransformer =
                 new FhirImmunizationRecordBundleBuilder(fhirResourceMapper,
@@ -78,7 +77,14 @@ public class ImmunizationRecordService {
                 .collect(Collectors.toList());
     }
 
+    private Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
+        return immunizationObsTemplateConfig.getImmunizationAttributeConfigs().entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> identifyConcept(e)));
+    }
+
     private Concept identifyConcept(Map.Entry<ImmunizationObsTemplateConfig.ImmunizationAttribute, String> entry) {
+        //TODO: We need to figure out how we identify concepts. Right now its by UUID, while coding or name would be easier
         return conceptService.getConceptByUuid(entry.getValue());
     }
 

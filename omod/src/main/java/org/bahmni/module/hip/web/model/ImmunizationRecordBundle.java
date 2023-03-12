@@ -10,7 +10,8 @@ public class ImmunizationRecordBundle {
     @JsonSerialize(using = FhirBundleSerializer.class)
     private Bundle bundle;
 
-    public ImmunizationRecordBundle(Bundle bundle) {
+    public ImmunizationRecordBundle(CareContext careContext, Bundle bundle) {
+        this.careContext = careContext;
         this.bundle = bundle;
     }
 
