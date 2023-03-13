@@ -1,9 +1,9 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.bahmni.module.hip.utils.DateUtil;
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.bahmni.module.hip.web.service.ImmunizationRecordService;
+import org.bahmni.module.hip.web.service.ValidationService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -27,11 +27,13 @@ import java.util.List;
 @RestController
 public class ImmunizationRecordController extends BaseRestController {
     private ImmunizationRecordService immunizationRecordService;
+    private ValidationService validationService;
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    public ImmunizationRecordController(ImmunizationRecordService immunizationRecordService) {
+    public ImmunizationRecordController(ImmunizationRecordService immunizationRecordService, ValidationService validationService) {
         this.immunizationRecordService = immunizationRecordService;
+        this.validationService = validationService;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/visit", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -46,14 +48,14 @@ public class ImmunizationRecordController extends BaseRestController {
 
         Date fromEncounterDate = null, toEncounterDate = null;
         if (!StringUtils.isEmpty(fromDate)) {
-            fromEncounterDate = validDate(fromDate);
+            fromEncounterDate = validationService.validDate(fromDate);
             if (fromEncounterDate == null) {
                 return ResponseEntity.badRequest().body(ClientError.invalidStartDate());
             }
         }
 
         if (!StringUtils.isEmpty(toDate)) {
-            toEncounterDate = validDate(toDate);
+            toEncounterDate = validationService.validDate(toDate);
             if (toEncounterDate == null) {
                 return ResponseEntity.badRequest().body(ClientError.invalidEndDate());
             }
@@ -65,14 +67,5 @@ public class ImmunizationRecordController extends BaseRestController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(mapper.writeValueAsString(immunizationRecordsForVisit));
-    }
-
-    private Date validDate(String value) {
-        try {
-            return DateUtil.parseDate(value);
-        } catch (RuntimeException re) {
-           //log
-        }
-        return null;
     }
 }
