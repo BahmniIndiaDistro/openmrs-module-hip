@@ -85,6 +85,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getImmunizationRecordType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("41000179103");
+        coding.setDisplay("Immunization record");
+        return type;
+    }
+
     public static CodeableConcept getPatientDocumentType() {
         CodeableConcept type = new CodeableConcept();
         Coding coding = type.addCoding();
@@ -186,6 +195,13 @@ public class FHIRUtils {
         return ref;
     }
 
+    public static Reference getReferenceToResource(Resource res, String type) {
+        Reference ref = new Reference();
+        ref.setResource(res);
+        ref.setType(type);
+        return ref;
+    }
+
     public static String getDisplay(Practitioner author) {
         String prefixAsSingleString = author.getNameFirstRep().getPrefixAsSingleString();
         if ("".equals(prefixAsSingleString)) {
@@ -211,6 +227,18 @@ public class FHIRUtils {
         } else {
             return "";
         }
+    }
+
+    public static CodeableConcept getCodeableConcept(String code, String codeSystem, String display, String text) {
+        CodeableConcept concept = new CodeableConcept();
+        Coding coding = concept.addCoding();
+        coding.setSystem(codeSystem);
+        coding.setCode(code);
+        coding.setDisplay(display);
+        if (!Utils.isBlank(text)) {
+            concept.setText(text);
+        }
+        return concept;
     }
 
 }
