@@ -90,9 +90,11 @@ public class CareContextRepositoryImpl implements CareContextRepository {
     }
 
     private PatientCareContext getPatientCareContext(PatientProgram program) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
         return new PatientCareContext(PROGRAM,
-                program.getProgram().getName(),
-                getProgramEnrollementId(program.getPatientProgramId()).get(0));
+                program.getProgram().getName().concat(" program started on ").concat(dateFormat.format(program.getDateEnrolled())
+                        .concat(" with ").concat(program.getCreator().getDisplayString()),
+                PROGRAM.concat(":").concat(getProgramEnrollementId(program.getPatientProgramId()).get(0));
     }
 
     private List<Integer> getEpisodeIds() {
