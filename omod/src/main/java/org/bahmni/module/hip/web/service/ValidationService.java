@@ -1,6 +1,5 @@
 package org.bahmni.module.hip.web.service;
 
-import org.bahmni.module.hip.utils.DateUtil;
 import org.openmrs.Patient;
 import org.openmrs.Program;
 import org.openmrs.VisitType;
@@ -11,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 @Service
 @Qualifier("validationService")
@@ -60,15 +58,5 @@ public class ValidationService {
 
         }
         return patient != null;
-    }
-
-    public Date validDate(String dateString){
-        try {
-            return DateUtil.parseDate(dateString);
-        }
-        catch (RuntimeException re) {
-            //log
-        }
-        return null;
     }
 }
