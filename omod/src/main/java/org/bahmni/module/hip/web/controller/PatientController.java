@@ -93,12 +93,25 @@ public class PatientController {
                     .body(isHealthIdVoided);
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/checkHealthId/{patientUuid}")
-    @ResponseBody
-    public ResponseEntity<?> checkIfHealthIdExists (@PathVariable String patientUuid) {
-        boolean isHealthIdExists =  existingPatientService.checkIfHealthIdExists(patientUuid);
+    @RequestMapping(method = RequestMethod.GET, value = "/existingPatientWithUuid/{patientUuid}")
+    public @ResponseBody
+    ResponseEntity<?> getExistingPatientWithUuid(@PathVariable String patientUuid) throws IOException {
+        ExistingPatient existingPatient = existingPatientService.getExistingPatientWithUuid(patientUuid);
+        if (existingPatient == null) {
+            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
+                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(isHealthIdExists);
+                .body(existingPatient);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/checkHealthNumber/{patientUuid}")
+    @ResponseBody
+    public ResponseEntity<?> checkHealthNumber(@PathVariable String patientUuid) {
+        boolean isHealthNumberExists = existingPatientService.isHealthNumberExists(patientUuid);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(isHealthNumberExists);
     }
 }
