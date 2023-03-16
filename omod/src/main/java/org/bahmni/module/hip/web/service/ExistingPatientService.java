@@ -235,7 +235,7 @@ public class ExistingPatientService {
         return false;
     }
 
-    public boolean isHealthNumberExists(String patientUuid){
+    public boolean isHealthNumberPresent(String patientUuid){
         Patient patient = patientService.getPatientByUuid(patientUuid);
         Set<PatientIdentifier> patientIdentifiers = patient.getIdentifiers();
         try {

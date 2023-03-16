@@ -109,9 +109,9 @@ public class PatientController {
     @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/checkHealthNumber/{patientUuid}")
     @ResponseBody
     public ResponseEntity<?> checkHealthNumber(@PathVariable String patientUuid) {
-        boolean isHealthNumberExists = existingPatientService.isHealthNumberExists(patientUuid);
+        boolean isHealthNumberPresent = existingPatientService.isHealthNumberPresent(patientUuid);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(isHealthNumberExists);
+                .body(isHealthNumberPresent);
     }
 }
