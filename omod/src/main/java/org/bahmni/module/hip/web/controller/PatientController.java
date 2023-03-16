@@ -1,9 +1,6 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.client.model.Error;
-import org.bahmni.module.hip.web.client.model.ErrorCode;
-import org.bahmni.module.hip.web.client.model.ErrorRepresentation;
 import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.model.Location;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
@@ -24,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.CookieValue;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -50,13 +48,12 @@ public class PatientController {
         Set<Patient> matchingPatients = existingPatientService.getMatchingPatients(locationUuid,phoneNumber,patientName,
                 Integer.parseInt(patientYearOfBirth), patientGender);
         if (matchingPatients.size() == 0) {
-            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
-                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+            return ResponseEntity.ok().body(new HashMap<String, Object>(){{ put("validPatient",false); put("patientUuid", null);}});
         }
         List<ExistingPatient> existingPatients = existingPatientService.getMatchingPatientDetails(matchingPatients);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(existingPatients);
+                .body(new HashMap<String, Object>(){{ put("validPatient",true); put("patientUuid", existingPatients);}});
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/{healthId}")
@@ -66,11 +63,11 @@ public class PatientController {
         if (patientUuid != null) {
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .body(patientUuid);
+                    .body(new HashMap<String, Object>(){{ put("validPatient",true); put("patientUuid", patientUuid);}});
         }
         else {
             return ResponseEntity.ok()
-                    .body(new ErrorRepresentation(new Error(ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+                    .body(new HashMap<String, Object>(){{ put("validPatient",false); put("patientUuid", null);}});
         }
     }
 
