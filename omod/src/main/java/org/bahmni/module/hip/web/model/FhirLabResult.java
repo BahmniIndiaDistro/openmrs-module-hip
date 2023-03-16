@@ -39,7 +39,7 @@ public class FhirLabResult {
     private final List<Observation> results;
     private final List<Practitioner> practitioners;
 
-    public FhirLabResult(Patient patient, String panelName, Encounter encounter, Date visitTime, List<DiagnosticReport> report, List<Observation> results, List<Practitioner> practitioners) {
+    public FhirLabResult(Patient patient, Encounter encounter, Date visitTime, List<DiagnosticReport> report, List<Observation> results, List<Practitioner> practitioners) {
         this.patient = patient;
         this.encounter = encounter;
         this.visitTime = visitTime;
@@ -67,56 +67,63 @@ public class FhirLabResult {
     public static FhirLabResult fromOpenMrsLabResults(OpenMrsLabResults labresult, FHIRResourceMapper fhirResourceMapper) {
         List<DiagnosticReport> reportList = new ArrayList<>();
         List<Practitioner> practitioners = labresult.getEncounterProviders().stream().map(fhirResourceMapper::mapToPractitioner).collect(Collectors.toList());
-
         Patient patient = fhirResourceMapper.mapToPatient(labresult.getPatient());
+        List<Observation> results = new ArrayList<>();
 
-        for(Map.Entry<Obs, List<LabOrderResult>> report : labresult.getLabOrderResults().entrySet()) {
-            DiagnosticReport reports = new DiagnosticReport();
-            LabOrderResult firstresult = (report.getValue() != null && report.getValue().size() != 0) ? report.getValue().get(0) : new LabOrderResult();
-            String testName = report.getKey().getObsGroup().getConcept().getName().getName();
-            reports.setCode(new CodeableConcept().setText(testName).addCoding(new Coding().setDisplay(testName)));
-            try {
-                reports.setPresentedForm(getAttachments(report.getKey(),testName));
-            } catch (IOException e) {
-                e.printStackTrace();
+        if(labresult.getObservation() != null) {
+            for (Obs obs : labresult.getObservation()) {
+                String testName = obs.getObsGroup().getConcept().getName().getName();
+                DiagnosticReport reports = map(UUID.randomUUID().toString(), obs,testName, patient,practitioners);
+                reportList.add(reports);
             }
-
-            reports.setId(firstresult.getOrderUuid() != null ? firstresult.getOrderUuid() : UUID.randomUUID().toString());
-            reports.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
-            reports.setSubject(FHIRUtils.getReferenceToResource(patient));
-            reports.setResultsInterpreter(practitioners.stream().map(FHIRUtils::getReferenceToResource).collect(Collectors.toList()));
-
-            List<Observation> results = new ArrayList<>();
-
-            if(report.getValue() != null) report.getValue().stream().forEach(result -> FhirLabResult.mapToObsFromLabResult(result, patient, reports, results));
-            reportList.add(reports);
+        }
+        if(labresult.getLabResults() != null) {
+            for(Map.Entry<LabOrderResult, Obs> labOrderResultObsMap: labresult.getLabResults().entrySet()){
+                    LabOrderResult labResult = labOrderResultObsMap.getKey();
+                    DiagnosticReport reports = map(labResult.getOrderUuid(),labOrderResultObsMap.getValue(),labResult.getTestName(),patient,practitioners);
+                    FhirLabResult.mapToObsFromLabResult(labResult, patient, reports, results);
+                    reportList.add(reports);
+            }
 
         }
 
-        FhirLabResult fhirLabResult = new FhirLabResult(fhirResourceMapper.mapToPatient( labresult.getPatient()), null,
-                fhirResourceMapper.mapToEncounter( labresult.getEncounter() ),
-                labresult.getEncounter().getVisit().getStartDatetime(), reportList, new ArrayList<>(), practitioners);
+        FhirLabResult fhirLabResult = new FhirLabResult(fhirResourceMapper.mapToPatient(labresult.getPatient()),
+                fhirResourceMapper.mapToEncounter(labresult.getEncounter()),
+                labresult.getEncounter().getEncounterDatetime(), reportList, results, practitioners);
 
         return fhirLabResult;
     }
 
+    private static DiagnosticReport map(String orderUuid, Obs obs, String testName, Patient patient,List<Practitioner> practitioners ){
+        DiagnosticReport reports = new DiagnosticReport();
+        reports.setCode(new CodeableConcept().setText(testName).addCoding(new Coding().setDisplay(testName)));
+            try {
+                reports.setPresentedForm(getAttachments(obs, testName));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        reports.setId(orderUuid);
+        reports.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
+        reports.setSubject(FHIRUtils.getReferenceToResource(patient));
+        reports.setResultsInterpreter(practitioners.stream().map(FHIRUtils::getReferenceToResource).collect(Collectors.toList()));
+        return reports;
+    }
+
     private static void mapToObsFromLabResult(LabOrderResult result, Patient patient, DiagnosticReport report, List<Observation> observations) {
-
-        Observation obs = new Observation();
-
-        obs.setId(result.getTestUuid());
-        obs.setCode(new CodeableConcept().setText( result.getTestName( )));
-        try {
-            float f = result.getResult()!=null? Float.parseFloat(result.getResult()): (float) 0;
-            obs.setValue(new Quantity().setValue(f).setUnit(result.getTestUnitOfMeasurement()));
-        } catch (NumberFormatException | NullPointerException ex) {
-            obs.setValue(new StringType().setValue(result.getResult()));
+        if(result.getResult() != null) {
+            Observation obs = new Observation();
+            obs.setId(result.getTestUuid());
+            obs.setCode(new CodeableConcept().setText(result.getTestName()));
+            try {
+                float f = result.getResult() != null ? Float.parseFloat(result.getResult()) : (float) 0;
+                obs.setValue(new Quantity().setValue(f).setUnit(result.getTestUnitOfMeasurement()));
+            } catch (NumberFormatException | NullPointerException ex) {
+                obs.setValue(new StringType().setValue(result.getResult()));
+            }
+            obs.setStatus(Observation.ObservationStatus.FINAL);
+            report.addResult(FHIRUtils.getReferenceToResource(obs));
+            observations.add(obs);
         }
-        obs.setStatus(Observation.ObservationStatus.FINAL);
-
-        report.addResult(FHIRUtils.getReferenceToResource(obs));
-
-        observations.add(obs);
     }
 
     private Composition compositionFrom(String webURL) {
@@ -158,12 +165,14 @@ public class FhirLabResult {
     private static List<Attachment> getAttachments(Obs obs,String testNmae) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
 
-        Attachment attachment = new Attachment();
-        attachment.setContentType(FHIRUtils.getTypeOfTheObsDocument(obs.getValueText()));
-        byte[] fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + obs.getValueText()).toPath());
-        attachment.setData(fileContent);
-        attachment.setTitle("LAB REPORT : " + testNmae);
-        attachments.add(attachment);
+        if(obs != null) {
+            Attachment attachment = new Attachment();
+            attachment.setContentType(FHIRUtils.getTypeOfTheObsDocument(obs.getValueText()));
+            byte[] fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + obs.getValueText()).toPath());
+            attachment.setData(fileContent);
+            attachment.setTitle("LAB REPORT : " + testNmae);
+            attachments.add(attachment);
+        }
 
         return attachments;
     }
