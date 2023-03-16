@@ -41,7 +41,7 @@ public class ImmunizationRecordController extends BaseRestController {
                                                @RequestParam(required = false) String fromDate,
                                                @RequestParam(required = false) String toDate) throws IOException {
         if (visitUuid == null || visitUuid.isEmpty()) {
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
+            return ResponseEntity.badRequest().body(ClientError.noVisitUuidProvided());
         }
 
         Date fromEncounterDate = null, toEncounterDate = null;

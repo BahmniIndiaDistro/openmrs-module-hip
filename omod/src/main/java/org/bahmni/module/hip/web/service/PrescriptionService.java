@@ -11,13 +11,16 @@ import org.bahmni.module.hip.web.model.OpenMrsPrescription;
 import org.openmrs.Patient;
 import org.openmrs.Visit;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
 
 @Service
 public class PrescriptionService {
@@ -25,33 +28,33 @@ public class PrescriptionService {
 
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder;
-    private final PatientService patientService;
-    private final HipVisitDao hipVisitDao;
+    private final VisitService visitService;
 
     @Autowired
-    public PrescriptionService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder, PatientService patientService, HipVisitDao hipVisitDao) {
+    public PrescriptionService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder, PatientService patientService, HipVisitDao hipVisitDao, VisitService visitService) {
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.fhirBundledPrescriptionBuilder = fhirBundledPrescriptionBuilder;
-        this.patientService = patientService;
-        this.hipVisitDao = hipVisitDao;
+        this.visitService = visitService;
     }
 
 
-    public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitType, Date visitStartDate) {
-        Patient patient = patientService.getPatientByUuid(patientUuid);
-        Visit visit = hipVisitDao.getPatientVisit(patient,visitType,visitStartDate);
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
+    public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitUuid, String fromDate, String ToDate) throws ParseException {
+        Visit visit = visitService.getVisitByUuid(visitUuid);
+        if (isDateBetweenDateRange(visit.getStartDatetime(), fromDate, ToDate)) {
+            DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
 
-        if (drugOrders.isEmpty())
-            return new ArrayList<>();
+            if (drugOrders.isEmpty())
+                return new ArrayList<>();
 
-        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
-                .from(drugOrders.groupByEncounter());
+            List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
+                    .from(drugOrders.groupByEncounter());
 
-        return openMrsPrescriptions
-                .stream()
-                .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
-                .collect(Collectors.toList());
+            return openMrsPrescriptions
+                    .stream()
+                    .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
     }
 
     public List<PrescriptionBundle> getPrescriptionsForProgram(String patientIdUuid, DateRange dateRange, String programName, String programEnrolmentId) {

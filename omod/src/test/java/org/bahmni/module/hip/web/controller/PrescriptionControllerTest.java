@@ -49,13 +49,12 @@ public class PrescriptionControllerTest {
 
     @Test
     public void shouldReturn200OForValidVisit() throws Exception {
-        when(validationService.isValidVisit("IPD")).thenReturn(true);
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(prescriptionService.getPrescriptions(anyString(),anyString(),any()))
+        when(prescriptionService.getPrescriptions(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/prescriptions/visit", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
-                .param("visitStartDate", "2020-01-01 12:00:00")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
@@ -64,13 +63,12 @@ public class PrescriptionControllerTest {
     }
     @Test
     public void shouldReturn400OnInvalidVisitType() throws Exception {
-        when(validationService.isValidVisit("OP")).thenReturn(false);
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(false);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(prescriptionService.getPrescriptions(anyString(),anyString(),any()))
+        when(prescriptionService.getPrescriptions(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/prescriptions/visit", RestConstants.VERSION_1))
-                .param("visitType", "OP")
-                .param("visitStartDate", "2020-01-01")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
@@ -80,13 +78,12 @@ public class PrescriptionControllerTest {
 
     @Test
     public void shouldReturn400OnInvalidPatientId() throws Exception {
-        when(validationService.isValidVisit("IPD")).thenReturn(true);
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
-        when(prescriptionService.getPrescriptions(anyString(),anyString(),any()))
+        when(prescriptionService.getPrescriptions(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
         mockMvc.perform(get(String.format("/rest/%s/hip/prescriptions/visit", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
-                .param("visitStartDate", "2020-01-01")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
@@ -97,7 +94,7 @@ public class PrescriptionControllerTest {
     @Test
     public void shouldReturn500ForMissingFieldForVisit() throws Exception {
         MvcResult mvcResult = mockMvc.perform(get(String.format("/rest/%s/hip/prescriptions/visit", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
+                .param("visitUuid", "0a1b2c3d")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
                 .accept(MediaType.APPLICATION_JSON))

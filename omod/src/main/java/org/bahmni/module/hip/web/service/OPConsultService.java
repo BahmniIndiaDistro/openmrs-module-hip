@@ -12,13 +12,19 @@ import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.Visit;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
+
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
 
 @Service
 public class OPConsultService {
@@ -28,7 +34,7 @@ public class OPConsultService {
     private final PatientService patientService;
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final ConsultationService consultationService;
-    private final HipVisitDao hipVisitDao;
+    private final VisitService visitService;
 
 
     @Autowired
@@ -36,37 +42,41 @@ public class OPConsultService {
                             OPConsultDao opConsultDao,
                             PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
-                            ConsultationService consultationService, HipVisitDao hipVisitDao) {
+                            ConsultationService consultationService, HipVisitDao hipVisitDao, VisitService visitService) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.consultationService = consultationService;
-        this.hipVisitDao = hipVisitDao;
+        this.visitService = visitService;
     }
 
-    public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, String visitType, Date visitStartDate) {
-        Patient patient = patientService.getPatientByUuid(patientUuid);
-        Visit visit = hipVisitDao.getPatientVisit(patient,visitType,visitStartDate);
+    public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, String visitUuid, String fromDate, String ToDate) throws ParseException {
+        Visit visit = visitService.getVisitByUuid(visitUuid);
 
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
-        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
-        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit);
-        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap( visit);
-        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit);
-        Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(visit);
-        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit);
-        Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit);
+        if (isDateBetweenDateRange(visit.getStartDatetime(), fromDate, ToDate)) {
+            Patient patient = patientService.getPatientByUuid(patientUuid);
+            DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
+            Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
+            Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit);
+            Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit);
+            Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit);
+            Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(visit);
+            Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit);
+            Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit);
 
-        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
-                encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
-                encounterPatientDocumentsMap, encounterOrdersMap, patient);
+            List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
+                    encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
+                    encounterPatientDocumentsMap, encounterOrdersMap, patient);
 
-        return openMrsOPConsultList.stream().
-                map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
+            return openMrsOPConsultList.stream().
+                    map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
+        }
+
+        return new ArrayList<>();
     }
 
-    public List<OPConsultBundle> getOpConsultsForProgram(String patientUuid, DateRange dateRange, String programName,String programEnrollmentId) {
+        public List<OPConsultBundle> getOpConsultsForProgram(String patientUuid, DateRange dateRange, String programName,String programEnrollmentId) {
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
