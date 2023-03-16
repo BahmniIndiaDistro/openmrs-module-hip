@@ -17,24 +17,24 @@ import java.util.stream.Collectors;
 @Getter
 public class OpenMrsLabResults {
     private Encounter encounter;
-    private Map<Obs, List<LabOrderResult>>  labOrderResults;
     private Patient patient;
     private final Set<EncounterProvider> encounterProviders;
+    private Map<LabOrderResult, Obs> labResults;
+    private List<Obs> observation;
 
 
-    public OpenMrsLabResults(@NotEmpty Encounter encounter, Patient patient, Map<Obs, List<LabOrderResult>> labOrderResults) {
+
+    public OpenMrsLabResults(@NotEmpty Encounter encounter, Patient patient, List<Obs> observation) {
         this.encounter = encounter;
         this.patient = patient;
-        this.labOrderResults = labOrderResults;
+        this.observation = observation;
         this.encounterProviders = encounter.getEncounterProviders();
     }
 
-
-    public static List<OpenMrsLabResults> from(Map<Order, List<LabOrderResult>> labOrderResultsMap, Map<Obs, List<LabOrderResult>> labReportDocuments) {
-        return labOrderResultsMap
-                .entrySet()
-                .stream()
-                .map(entry -> new OpenMrsLabResults(entry.getKey().getEncounter(), entry.getKey().getPatient(),labReportDocuments))
-                .collect(Collectors.toList());
+    public OpenMrsLabResults(@NotEmpty Encounter encounter, Patient patient, Map<LabOrderResult, Obs> labResults) {
+        this.encounter = encounter;
+        this.patient = patient;
+        this.labResults = labResults;
+        this.encounterProviders = encounter.getEncounterProviders();
     }
 }

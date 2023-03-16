@@ -36,6 +36,7 @@ public enum Config {
     CHIEF_COMPLAINT_CODED("Chief Complaint Coded"),
     SIGN_SYMPTOM_DURATION("Sign/symptom duration"),
     CHIEF_COMPLAINT_DURATION("Chief Complaint Duration"),
+    LAB_ORDER_TYPE_ID("3"),
 
     //Physical_Examination_Ignoring_Form_List
     Forms_To_Ignore_In_Physical_Examination("Discharge Summary, Death Note, Delivery Note, Opioid Substitution Therapy - Intake, Opportunistic Infection, " +

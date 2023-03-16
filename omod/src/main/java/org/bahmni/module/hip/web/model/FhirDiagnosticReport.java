@@ -1,6 +1,9 @@
 package org.bahmni.module.hip.web.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bahmni.module.hip.Config;
+import org.bahmni.module.hip.api.dao.impl.DiagnosticReportDaoImpl;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Bundle;
@@ -48,6 +51,7 @@ public class FhirDiagnosticReport {
         this.patientReference = patientReference;
         this.obs = obs;
     }
+    private static Logger logger = LogManager.getLogger(FhirDiagnosticReport.class);
 
 
     public Bundle bundleDiagnosticReport(String webUrl) {
@@ -76,6 +80,7 @@ public class FhirDiagnosticReport {
                 .filter(obs -> (!obs.getConcept().getName().getName().equals(Config.DOCUMENT_TYPE.getValue()))).collect(Collectors.toList());
         List<Observation> observations = observationNotDocumentType.stream()
                 .map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
+        logger.warn("obs" + observations);
         List<DiagnosticReport> diagnosticReports = observationNotDocumentType.stream()
                 .map(fhirResourceMapper::mapToDiagnosticReport).collect(Collectors.toList());
         List<DiagnosticReport> diagnosticReportList = diagnosticReports.stream()
@@ -83,6 +88,7 @@ public class FhirDiagnosticReport {
                     diagnosticReport.setResultsInterpreter(practitioners.stream().map(FHIRUtils::getReferenceToResource)
                             .collect(Collectors.toList()));
                     diagnosticReport.setSubject(FHIRUtils.getReferenceToResource(patient));
+                    logger.warn(observations);
                     diagnosticReport.setResult(observations.stream().map(FHIRUtils::getReferenceToResource)
                             .collect(Collectors.toList()));
                 }).collect(Collectors.toList());

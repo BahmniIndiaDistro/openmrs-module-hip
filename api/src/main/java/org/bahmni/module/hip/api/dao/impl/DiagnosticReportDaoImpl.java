@@ -1,27 +1,16 @@
 package org.bahmni.module.hip.api.dao.impl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.DiagnosticReportDao;
-import org.hibernate.Query;
 import org.hibernate.SessionFactory;
-import org.openmrs.Concept;
-import org.openmrs.Encounter;
-import org.openmrs.Obs;
-import org.openmrs.Person;
-import org.openmrs.Visit;
-import org.openmrs.api.ConceptService;
-import org.openmrs.api.EncounterService;
-import org.openmrs.api.ObsService;
-import org.openmrs.api.PatientService;
-import org.openmrs.api.PersonService;
+import org.openmrs.*;
+import org.openmrs.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -35,6 +24,7 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
     private ConceptService conceptService;
     private EncounterService encounterService;
     private PatientService patientService;
+    private static Logger logger = LogManager.getLogger(DiagnosticReportDaoImpl.class);
 
 
     @Autowired
@@ -51,7 +41,8 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
     }
 
 
-    private List<Obs> getAllObsForDiagnosticReports(String patientUUID, Boolean linkedWithOrder) {
+    @Override
+    public List<Obs> getAllObsForDiagnosticReports(String patientUUID, Boolean linkedWithOrder) {
         Person person = personService.getPersonByUuid(patientUUID);
         Concept concept = conceptService.getConcept(Config.LAB_REPORT.getValue());
         List<Obs> obs = obsService.getObservationsByPersonAndConcept(person,concept);
@@ -89,6 +80,7 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
                 }
             }
         }
+        logger.warn("Unordered" + labReportsMap);
         return labReportsMap;
     }
 
@@ -110,6 +102,7 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
                 }
             }
         }
+        logger.warn("ordered" + documentObs);
         return documentObs;
     }
 }
