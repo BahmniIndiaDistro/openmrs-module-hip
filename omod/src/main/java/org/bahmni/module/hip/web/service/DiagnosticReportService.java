@@ -181,7 +181,7 @@ public class DiagnosticReportService {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        return null;
+        return new ArrayList<>();
     }
 
         public List<DiagnosticReportBundle> getLabResultsForPrograms(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId)
