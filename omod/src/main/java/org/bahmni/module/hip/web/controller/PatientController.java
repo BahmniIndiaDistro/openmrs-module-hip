@@ -1,6 +1,7 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
+import org.bahmni.module.hip.web.client.model.ValidPatient;
 import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.model.Location;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.CookieValue;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -47,13 +47,10 @@ public class PatientController {
         String locationUuid = new ObjectMapper().readValue(location,Location.class).getUuid();
         Set<Patient> matchingPatients = existingPatientService.getMatchingPatients(locationUuid,phoneNumber,patientName,
                 Integer.parseInt(patientYearOfBirth), patientGender);
-        if (matchingPatients.size() == 0) {
-            return ResponseEntity.ok().body(new HashMap<String, Object>(){{ put("validPatient",false); put("patientUuid", null);}});
-        }
         List<ExistingPatient> existingPatients = existingPatientService.getMatchingPatientDetails(matchingPatients);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(new HashMap<String, Object>(){{ put("validPatient",true); put("patientUuid", existingPatients);}});
+                .body(existingPatients);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/existingPatients/{healthId}")
@@ -63,11 +60,11 @@ public class PatientController {
         if (patientUuid != null) {
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .body(new HashMap<String, Object>(){{ put("validPatient",true); put("patientUuid", patientUuid);}});
+                    .body( new ValidPatient(true, patientUuid));
         }
         else {
             return ResponseEntity.ok()
-                    .body(new HashMap<String, Object>(){{ put("validPatient",false); put("patientUuid", null);}});
+                    .body(new ValidPatient(false, null));
         }
     }
 

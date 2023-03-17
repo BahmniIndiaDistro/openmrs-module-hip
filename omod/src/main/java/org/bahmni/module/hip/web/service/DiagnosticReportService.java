@@ -15,12 +15,14 @@ import org.openmrs.Patient;
 import org.openmrs.Visit;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.VisitService;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResults;
 import org.openmrs.module.bahmniemrapi.laborder.service.LabOrderResultsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,14 +30,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
+
 @Service
 public class DiagnosticReportService {
     private final FhirBundledDiagnosticReportBuilder fhirBundledDiagnosticReportBuilder;
     private final PatientService patientService;
     private final EncounterService encounterService;
     private final EncounterDao encounterDao;
-    private HipVisitDao hipVisitDao;
-    private OrderDao orderDao;
+    private final VisitService visitService;
+    private final HipVisitDao hipVisitDao;
+    private final OrderDao orderDao;
     private final DiagnosticReportDao diagnosticReportDao;
 
 
@@ -48,29 +53,34 @@ public class DiagnosticReportService {
                                    EncounterService encounterService,
                                    LabOrderResultsService labOrderResultsService,
                                    EncounterDao encounterDao,
-                                   HipVisitDao hipVisitDao,
+                                   VisitService visitService, HipVisitDao hipVisitDao,
                                    OrderDao orderDao,
                                    DiagnosticReportDao diagnosticReportDao) {
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
         this.encounterService = encounterService;
         this.encounterDao = encounterDao;
+        this.visitService = visitService;
         this.hipVisitDao = hipVisitDao;
         this.labOrderResultsService = labOrderResultsService;
         this.orderDao = orderDao;
         this.diagnosticReportDao = diagnosticReportDao;
     }
 
-    public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitType, Date visitStartDate) {
-        Patient patient = patientService.getPatientByUuid(patientUuid);
-        Visit visit = hipVisitDao.getPatientVisit(patient,visitType,visitStartDate);
-        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(visit);
-        List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
+    public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitUuid, String fromDate, String ToDate) throws ParseException {
+        Visit visit = visitService.getVisitByUuid(visitUuid);
 
-        return openMrsDiagnosticReports
-                .stream()
-                .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
-                .collect(Collectors.toList());
+        if(isDateBetweenDateRange(visit.getStartDatetime(),fromDate,ToDate)) {
+            HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(visit);
+            List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
+
+            return openMrsDiagnosticReports
+                    .stream()
+                    .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
+                    .collect(Collectors.toList());
+
+        }
+        return new ArrayList<>();
     }
 
     public HashMap<Encounter, List<Obs>> getAllObservationsForVisits(Visit visit) {
@@ -159,17 +169,22 @@ public class DiagnosticReportService {
         return bundles;
     }
 
-    public List<DiagnosticReportBundle> getLabResultsForVisits(String patientUuid, String visittype, Date visitStartDate)
-    {
+    public List<DiagnosticReportBundle> getLabResultsForVisits(String patientUuid, String visitUuid, String fromDate, String ToDate) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        Visit visit = hipVisitDao.getPatientVisit(patient,visittype,visitStartDate);
-        List<Visit> visits = new ArrayList<>();
-
-        visits.add(visit);
-        return getLabResults(patient, visits);
+        Visit visit = visitService.getVisitByUuid(visitUuid);
+        try {
+            if (isDateBetweenDateRange(visit.getStartDatetime(), fromDate, ToDate)) {
+                List<Visit> visits = new ArrayList<>();
+                visits.add(visit);
+                return getLabResults(patient, visits);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
     }
 
-    public List<DiagnosticReportBundle> getLabResultsForPrograms(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId)
+        public List<DiagnosticReportBundle> getLabResultsForPrograms(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId)
     {
         List<Integer> visitsForProgram =  hipVisitDao.GetVisitIdsForProgramForLabResults(patientUuid, programName, programEnrollmentId, dateRange.getFrom(), dateRange.getTo() );
         Patient patient = patientService.getPatientByUuid(patientUuid);

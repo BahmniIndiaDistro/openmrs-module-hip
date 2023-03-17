@@ -15,10 +15,12 @@ import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import static org.bahmni.module.hip.api.dao.Constants.PROGRAM;
@@ -79,9 +81,12 @@ public class CareContextRepositoryImpl implements CareContextRepository {
     }
 
     private PatientCareContext getPatientCareContext(Visit visit) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         return new PatientCareContext(VISIT_TYPE,
-                visit.getVisitType().getName().concat(" / ").concat(visit.getStartDatetime().toString()),
-                visit.getCreator().getPersonName().getFullName());
+                "Visit on ".concat(dateFormat.format(visit.getStartDatetime()))
+                        .concat(" with ").concat(visit.getCreator().getPersonName().getFullName()),
+                VISIT_TYPE.concat(":").concat(visit.getUuid()));
     }
 
     private PatientCareContext getPatientCareContext(PatientProgram program) {

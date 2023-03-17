@@ -49,14 +49,13 @@ public class OPConsultControllerTest {
 
     @Test
     public void shouldReturn200ForVisits() throws Exception {
-        when(validationService.isValidVisit("IPD")).thenReturn(true);
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),any()))
+        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
 
         mockMvc.perform(get(String.format("/rest/%s/hip/opConsults/visit", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
-                .param("visitStartDate", "2020-01-01 12:00:00")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
@@ -65,15 +64,14 @@ public class OPConsultControllerTest {
     }
 
     @Test
-    public void shouldReturn400OnInvalidVisitType() throws Exception {
-        when(validationService.isValidVisit("OP")).thenReturn(false);
+    public void shouldReturn400OnInvalidVisit() throws Exception {
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(false);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
-        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),any()))
+        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
 
         mockMvc.perform(get(String.format("/rest/%s/hip/opConsults/visit", RestConstants.VERSION_1))
-                .param("visitType", "OP")
-                .param("visitStartDate", "2020-01-01")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745bd")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")
@@ -83,14 +81,13 @@ public class OPConsultControllerTest {
 
     @Test
     public void shouldReturn400OnInvalidPatientId() throws Exception {
-        when(validationService.isValidVisit("IPD")).thenReturn(true);
+        when(validationService.isValidVisit("0a1b2c3d")).thenReturn(true);
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745")).thenReturn(false);
-        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),any()))
+        when(opConsultService.getOpConsultsForVisit(anyString(), anyString(),anyString(),anyString()))
                 .thenReturn(EMPTY_LIST);
 
         mockMvc.perform(get(String.format("/rest/%s/hip/opConsults/visit", RestConstants.VERSION_1))
-                .param("visitType", "IPD")
-                .param("visitStartDate", "2020-01-01")
+                .param("visitUuid", "0a1b2c3d")
                 .param("patientId", "0f90531a-285c-438b-b265-bb3abb4745")
                 .param("fromDate", "2020-01-01")
                 .param("toDate", "2020-01-31")

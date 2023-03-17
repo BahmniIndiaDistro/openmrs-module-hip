@@ -2,12 +2,10 @@ package org.bahmni.module.hip.web.service;
 
 import org.junit.Test;
 import org.openmrs.Patient;
-import org.openmrs.VisitType;
+import org.openmrs.Visit;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.VisitService;
-
-import java.util.Collections;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -21,9 +19,9 @@ public class ValidationServiceTest {
     private final ValidationService validationService = new ValidationService(visitService,patientService, programWorkflowService, existingPatientService);
     @Test
     public void shouldReturnTrueForValidVisitType() {
-        String visitType = "OPD";
-        when(visitService.getAllVisitTypes()).thenReturn(Collections.singletonList(new VisitType("OPD", "OPD")));
-        boolean actual = validationService.isValidVisit(visitType);
+        String visitUuid = "0a1b2c3d";
+        when(visitService.getVisitByUuid("0a1b2c3d")).thenReturn(new Visit());
+        boolean actual = validationService.isValidVisit(visitUuid);
 
         assertTrue(actual);
     }

@@ -40,9 +40,9 @@ public class BundledMedicationRequestController extends BaseRestController {
         if (patientId == null || patientId.isEmpty())
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
         if (visitType == null || visitType.isEmpty())
-            return ResponseEntity.badRequest().body(ClientError.noVisitTypeProvided());
+            return ResponseEntity.badRequest().body(ClientError.noVisitUuidProvided());
         if (!validationService.isValidVisit(visitType))
-            return ResponseEntity.badRequest().body(ClientError.invalidVisitType());
+            return ResponseEntity.badRequest().body(ClientError.invalidVisitUuid());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
         Bundle bundle = bundledMedicationRequestService.bundleMedicationRequestsFor(patientId, visitType);
