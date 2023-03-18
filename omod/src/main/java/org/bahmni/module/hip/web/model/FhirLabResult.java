@@ -23,9 +23,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,20 +50,26 @@ public class FhirLabResult {
         this.practitioners = practitioners;
     }
 
-    public Bundle bundleLabResults (String webUrl, FHIRResourceMapper fhirResourceMapper) {
-        String bundleID = String.format("LR-%s", encounter.getId());
-
-        Bundle bundle = FHIRUtils.createBundle(visitTime, bundleID, webUrl);
-
-        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
-
+    public Bundle bundleLabResults (OrganizationContext organizationContext, FHIRResourceMapper fhirResourceMapper) {
+        //There maybe several diagnosticReport associated with an encounter
+        String bundleId = createReportId();
+        Bundle bundle = FHIRUtils.createBundle(visitTime, bundleId, organizationContext.getWebUrl());
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(organizationContext), false);
+        FHIRUtils.addToBundleEntry(bundle, organizationContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
+        //Any reasons of packing multiple DiagnosticReport together?
         FHIRUtils.addToBundleEntry(bundle, report, false);
         FHIRUtils.addToBundleEntry(bundle, results, false);
         return bundle;
+    }
 
+    private String createReportId() {
+        if (report != null && !report.isEmpty()) {
+            return String.format("DR-%s-%s", encounter.getId(), report.get(0).getId());
+        }
+        return String.format("DR-%s-%d-%d", encounter.getId(), System.currentTimeMillis(), (new Random().nextInt()));
     }
 
     public static FhirLabResult fromOpenMrsLabResults(OpenMrsLabResults labresult, FHIRResourceMapper fhirResourceMapper) {
@@ -119,17 +127,15 @@ public class FhirLabResult {
         observations.add(obs);
     }
 
-    private Composition compositionFrom(String webURL) {
-        Composition composition = initializeComposition(visitTime, webURL);
+    private Composition compositionFrom(OrganizationContext orgContext) {
+        Composition composition = initializeComposition(visitTime, orgContext.getWebUrl());
         Composition.SectionComponent compositionSection = composition.addSection();
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
 
-        practitioners
-                .forEach(practitioner -> composition
-                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
-                .setSubject(patientReference);
+                .setSubject(patientReference)
+                .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
         compositionSection
                 .setTitle("Diagnostic Report")
@@ -145,7 +151,6 @@ public class FhirLabResult {
 
     private Composition initializeComposition(Date visitTimestamp, String webURL) {
         Composition composition = new Composition();
-
         composition.setId(UUID.randomUUID().toString());
         composition.setDate(visitTimestamp);
         composition.setIdentifier(FHIRUtils.getIdentifier(composition.getId(), webURL, "document"));

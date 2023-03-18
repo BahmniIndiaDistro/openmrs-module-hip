@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.openmrs.Concept;
 import org.openmrs.Encounter;
+import org.openmrs.Location;
 import org.openmrs.Visit;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.VisitService;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,6 +52,10 @@ public class ImmunizationRecordService {
 
     public List<ImmunizationRecordBundle> getImmunizationRecordsForVisit(String patientUuid, String visitUuid, Date startDate, Date endDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
+        Optional<Location> location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.ORGANIZATION_LOCATION_TAG);
+        if (!location.isPresent()) {
+            location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.VISIT_LOCATION_TAG);
+        }
         if (!visit.getPatient().getUuid().equals(patientUuid.trim())) {
             log.warn("Identified visit is not for the requested patient. " +
                     "This should never happen. This may mean a invalid linkage in the care context");
@@ -67,7 +73,7 @@ public class ImmunizationRecordService {
         FhirImmunizationRecordBundleBuilder immunizationTransformer =
                 new FhirImmunizationRecordBundleBuilder(fhirResourceMapper,
                         conceptTranslator, encounterTranslator,
-                        organizationContextService.buildContext(),
+                        organizationContextService.buildContext(location),
                         immunizationAttributeConceptMap);
 
         return visit.getEncounters().stream()
@@ -76,6 +82,15 @@ public class ImmunizationRecordService {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
+
+    private Optional<Location> identifyLocationByTag(Location location, String tagName) {
+        if (location == null) {
+            return Optional.empty();
+        }
+        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().filter(tag -> tag.getName().equalsIgnoreCase(tagName)).count() != 0;
+        return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
+    }
+
 
     private Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
         return immunizationObsTemplateConfig.getImmunizationAttributeConfigs().entrySet()

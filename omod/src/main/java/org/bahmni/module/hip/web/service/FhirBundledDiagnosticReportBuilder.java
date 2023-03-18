@@ -11,6 +11,9 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 @Service
 public class FhirBundledDiagnosticReportBuilder {
     private final CareContextService careContextService;
@@ -25,11 +28,11 @@ public class FhirBundledDiagnosticReportBuilder {
     }
 
     public DiagnosticReportBundle fhirBundleResponseFor(OpenMrsDiagnosticReport openMrsDiagnosticReport) {
-        OrganizationContext organizationContext = organizationContextService.buildContext();
+        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsDiagnosticReport.getEncounter().getVisit().getLocation()));
 
         Bundle diagnosticReportBundle = FhirDiagnosticReport
                 .fromOpenMrsDiagnosticReport(openMrsDiagnosticReport, fhirResourceMapper)
-                .bundleDiagnosticReport(organizationContext.webUrl());
+                .bundleDiagnosticReport(organizationContext.getWebUrl());
 
         CareContext careContext = careContextService.careContextFor(
                 openMrsDiagnosticReport.getEncounter(),
@@ -42,10 +45,10 @@ public class FhirBundledDiagnosticReportBuilder {
     }
 
     public DiagnosticReportBundle fhirBundleResponseFor(OpenMrsLabResults results) {
-        OrganizationContext organizationContext = organizationContextService.buildContext();
+        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(results.getEncounter().getVisit().getLocation()));
 
         Bundle diagnosticReportBundle = FhirLabResult.fromOpenMrsLabResults(results, fhirResourceMapper)
-                .bundleLabResults(organizationContext.webUrl(), fhirResourceMapper);
+                .bundleLabResults(organizationContext, fhirResourceMapper);
 
         CareContext careContext = careContextService.careContextFor(
                 results.getEncounter(),

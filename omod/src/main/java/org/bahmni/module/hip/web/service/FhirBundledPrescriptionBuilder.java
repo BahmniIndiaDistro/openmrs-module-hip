@@ -9,6 +9,8 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class FhirBundledPrescriptionBuilder {
     private final CareContextService careContextService;
@@ -24,11 +26,11 @@ public class FhirBundledPrescriptionBuilder {
 
     PrescriptionBundle fhirBundleResponseFor(OpenMrsPrescription openMrsPrescription) {
 
-        OrganizationContext organizationContext = organizationContextService.buildContext();
+        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsPrescription.getEncounter().getVisit().getLocation()));
 
         Bundle prescriptionBundle = FhirPrescription
                 .from(openMrsPrescription, fhirResourceMapper)
-                .bundle(organizationContext.webUrl());
+                .bundle(organizationContext);
 
         CareContext careContext = careContextService.careContextFor(
                 openMrsPrescription.getEncounter(),

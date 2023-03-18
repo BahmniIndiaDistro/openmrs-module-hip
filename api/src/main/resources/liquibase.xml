@@ -130,4 +130,69 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ABDM-HIP-202303161634" author="Angshu">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM location_tag where name='Organization';
+            </sqlCheck>
+        </preConditions>
+        <comment>Add Login Organization Location Tag if not already added.</comment>
+        <sql>
+            INSERT INTO location_tag (name, description, creator, date_created, uuid) VALUES
+                ('Organization','Tag for indicating a location as Organization',1,now(),'86810af4-df57-4d69-932e-d81ad4114477');
+        </sql>
+    </changeSet>
+    <changeSet id="ABDM-HIP-202303161648" author="Angshu">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM location_attribute_type where name="ABDM HFR ID";
+            </sqlCheck>
+        </preConditions>
+        <comment>Adding location attribute type for ABDM Health Facility ID (HFR ID) </comment>
+        <sql>
+            INSERT INTO location_attribute_type (name, description, datatype, preferred_handler, min_occurs, creator, date_created, retired, uuid)
+            VALUES ("ABDM HFR ID","Health Facility Registry Id for the organization",
+                    "org.openmrs.customdatatype.datatype.FreeTextDatatype", null, 0, 1, now(), 0, "7b51ccd1-705d-4b12-9657-fc6894dd5c70");
+        </sql>
+    </changeSet>
+    <changeSet id="ABDM-HIP-202303161652" author="Angshu">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM location_attribute_type where name="Website";
+            </sqlCheck>
+        </preConditions>
+        <comment>Adding location attribute type for Organization website</comment>
+        <sql>
+            INSERT INTO location_attribute_type (name, description, datatype, preferred_handler, min_occurs, creator, date_created, retired, uuid)
+            VALUES ("Website","Website url",
+                    "org.openmrs.customdatatype.datatype.FreeTextDatatype", null, 0, 1, now(), 0, "502d37c4-2fe7-43b8-be5d-144c770135ef");
+        </sql>
+    </changeSet>
+    <changeSet id="ABDM-HIP-202303161958" author="Angshu">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM location_attribute_type where name="Email";
+            </sqlCheck>
+        </preConditions>
+        <comment>Adding location attribute type for contact email</comment>
+        <sql>
+            INSERT INTO location_attribute_type (name, description, datatype, preferred_handler, min_occurs, creator, date_created, retired, uuid)
+            VALUES ("Email","contact Email id",
+                    "org.openmrs.customdatatype.datatype.FreeTextDatatype", null, 0, 1, now(), 0, "134461d5-d1b4-451d-8433-549666a9e38f");
+        </sql>
+    </changeSet>
+    <changeSet id="ABDM-HIP-202303162000" author="Angshu">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM location_attribute_type where name="Phone Number";
+            </sqlCheck>
+        </preConditions>
+        <comment>Adding location attribute type for contact phone number</comment>
+        <sql>
+            INSERT INTO location_attribute_type (name, description, datatype, preferred_handler, min_occurs, creator, date_created, retired, uuid)
+            VALUES ("Phone Number","contact phone number",
+                    "org.openmrs.customdatatype.datatype.FreeTextDatatype", null, 0, 1, now(), 0, "4f056572-7490-4fdf-ad2e-d679b986f79b");
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

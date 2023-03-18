@@ -5,6 +5,8 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class FhirBundledDischargeSummaryBuilder {
     private final CareContextService careContextService;
@@ -19,11 +21,11 @@ public class FhirBundledDischargeSummaryBuilder {
     }
 
     public DischargeSummaryBundle fhirBundleResponseFor (OpenMrsDischargeSummary openMrsDischargeSummary) {
-
-        OrganizationContext organizationContext = organizationContextService.buildContext();
+        OrganizationContext organizationContext = organizationContextService.buildContext(
+                Optional.ofNullable(openMrsDischargeSummary.getEncounter().getVisit().getLocation()));
 
         Bundle dischargeSummaryBundle = FhirDischargeSummary.fromOpenMrsDischargeSummary(openMrsDischargeSummary, fhirResourceMapper).
-                bundleDischargeSummary(organizationContext.webUrl());
+                bundleDischargeSummary(organizationContext);
 
         CareContext careContext = careContextService.careContextFor(
                 openMrsDischargeSummary.getEncounter(),
