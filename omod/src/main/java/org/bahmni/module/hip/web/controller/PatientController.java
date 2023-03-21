@@ -91,10 +91,6 @@ public class PatientController {
     public @ResponseBody
     ResponseEntity<?> getExistingPatientWithUuid(@PathVariable String patientUuid) throws IOException {
         ExistingPatient existingPatient = existingPatientService.getExistingPatientWithUuid(patientUuid);
-        if (existingPatient == null) {
-            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
-                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
-        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(existingPatient);
