@@ -235,18 +235,32 @@ public class ExistingPatientService {
         return false;
     }
 
-    public boolean checkIfHealthIdExists(String patientUuid) {
+    public boolean isHealthNumberPresent(String patientUuid){
         Patient patient = patientService.getPatientByUuid(patientUuid);
         Set<PatientIdentifier> patientIdentifiers = patient.getIdentifiers();
         try {
             for (PatientIdentifier patientIdentifier:patientIdentifiers) {
-                if(patientIdentifier.getIdentifierType().getName().equals(Config.ABHA_ADDRESS.getValue()) && !patientIdentifier.getVoided()) {
+                if(patientIdentifier.getIdentifierType().getName().equals(Config.ABHA_NUMBER.getValue()) && !patientIdentifier.getVoided()){
                     return true;
                 }
             }
         } catch (NullPointerException ignored) {
         }
         return false;
+    }
+
+    public ExistingPatient getExistingPatientWithUuid(String patientUuid) {
+        Patient patient = patientService.getPatientByUuid(patientUuid);
+        if (patient != null && !isHealthIdVoided(patientUuid)) {
+            return new ExistingPatient(
+                    patient.getGivenName() + " " + patient.getMiddleName() + " " + patient.getFamilyName(),
+                    patient.getBirthdate().toString(),
+                    getAddress(patient),
+                    patient.getGender(),
+                    patient.getUuid(),
+                    getPhoneNumber(patient));
+        }
+        return null;
     }
 
     private PatientSearchParameters getPatientSearchParameters(String locationUuid,String patientName) {
