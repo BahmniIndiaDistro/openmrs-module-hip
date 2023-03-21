@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.bahmni.module.hip.web.TestConfiguration;
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.client.model.Error;
-import org.bahmni.module.hip.web.client.model.ErrorCode;
-import org.bahmni.module.hip.web.client.model.ErrorRepresentation;
+import org.bahmni.module.hip.web.client.model.ValidPatient;
 import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
 import org.bahmni.module.hip.web.service.ValidationService;
@@ -31,7 +29,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.HashMap;
 
+import static java.util.Collections.EMPTY_LIST;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -101,8 +101,7 @@ public class PatientControllerTest extends TestCase {
                 .andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        String value = objectMapper.writeValueAsString(new ErrorRepresentation
-                (new Error(ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+        String value = objectMapper.writeValueAsString(EMPTY_LIST);
         assertEquals(value,
                 mvcResult.getResponse().getContentAsString());
     }
@@ -124,8 +123,7 @@ public class PatientControllerTest extends TestCase {
                 .andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        String value = objectMapper.writeValueAsString(new ErrorRepresentation
-                (new Error(ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+        String value = objectMapper.writeValueAsString(new ValidPatient(false, null));
         assertEquals(value,
                 mvcResult.getResponse().getContentAsString());
     }

@@ -1,9 +1,7 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.client.model.Error;
-import org.bahmni.module.hip.web.client.model.ErrorCode;
-import org.bahmni.module.hip.web.client.model.ErrorRepresentation;
+import org.bahmni.module.hip.web.client.model.ValidPatient;
 import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.model.Location;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
@@ -49,10 +47,6 @@ public class PatientController {
         String locationUuid = new ObjectMapper().readValue(location,Location.class).getUuid();
         Set<Patient> matchingPatients = existingPatientService.getMatchingPatients(locationUuid,phoneNumber,patientName,
                 Integer.parseInt(patientYearOfBirth), patientGender);
-        if (matchingPatients.size() == 0) {
-            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
-                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
-        }
         List<ExistingPatient> existingPatients = existingPatientService.getMatchingPatientDetails(matchingPatients);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -66,11 +60,11 @@ public class PatientController {
         if (patientUuid != null) {
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .body(patientUuid);
+                    .body( new ValidPatient(true, patientUuid));
         }
         else {
             return ResponseEntity.ok()
-                    .body(new ErrorRepresentation(new Error(ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
+                    .body(new ValidPatient(false, null));
         }
     }
 
@@ -97,10 +91,6 @@ public class PatientController {
     public @ResponseBody
     ResponseEntity<?> getExistingPatientWithUuid(@PathVariable String patientUuid) throws IOException {
         ExistingPatient existingPatient = existingPatientService.getExistingPatientWithUuid(patientUuid);
-        if (existingPatient == null) {
-            return ResponseEntity.ok().body(new ErrorRepresentation(new Error(
-                    ErrorCode.PATIENT_ID_NOT_FOUND, "No patient found")));
-        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(existingPatient);
