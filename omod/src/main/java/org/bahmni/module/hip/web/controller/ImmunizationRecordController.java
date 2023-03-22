@@ -2,6 +2,7 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.utils.DateUtil;
 import org.bahmni.module.hip.web.client.ClientError;
+import org.bahmni.module.hip.web.model.BundledImmunizationResponse;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.bahmni.module.hip.web.service.ImmunizationRecordService;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -36,7 +37,7 @@ public class ImmunizationRecordController extends BaseRestController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/visit", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
-    ResponseEntity<?> getImmunizationsForVisit(@RequestParam String patientUuid,
+    ResponseEntity<?> getImmunizationsForVisit(@RequestParam String patientId,
                                                @RequestParam String visitUuid,
                                                @RequestParam(required = false) String fromDate,
                                                @RequestParam(required = false) String toDate) throws IOException {
@@ -60,11 +61,11 @@ public class ImmunizationRecordController extends BaseRestController {
         }
 
         List<ImmunizationRecordBundle> immunizationRecordsForVisit
-                = immunizationRecordService.getImmunizationRecordsForVisit(patientUuid, visitUuid, fromEncounterDate, toEncounterDate);
+                = immunizationRecordService.getImmunizationRecordsForVisit(patientId, visitUuid, fromEncounterDate, toEncounterDate);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(mapper.writeValueAsString(immunizationRecordsForVisit));
+                .body(mapper.writeValueAsString(new BundledImmunizationResponse(immunizationRecordsForVisit)));
     }
 
     private Date validDate(String value) {
