@@ -195,4 +195,34 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ABDM-HIP-202303221330" author="Soorya">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM concept_name where name="Prescription Record";
+            </sqlCheck>
+        </preConditions>
+        <comment>Add concept Prescription Record and map to Patient Document concept</comment>
+        <sql>
+            SET @cuuid = uuid();
+            select concept_datatype_id into @datatype_id from concept_datatype where name = 'N/A';
+            select concept_class_id into @class_id from concept_class where name = 'Misc';
+
+
+            INSERT INTO concept (datatype_id, class_id, is_set, creator, date_created, changed_by, date_changed, uuid)
+            values (@datatype_id, @class_id , 0, 1, now(), 1, now(), @cuuid);
+
+            select concept_id into @concept_id from concept where uuid = @cuuid;
+
+            INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, uuid)
+            values (@concept_id, 'Prescription Record', 'en', 0, 1, now(), 'SHORT', uuid());
+
+            INSERT INTO concept_name (concept_id, name, locale, locale_preferred, creator, date_created, concept_name_type, uuid)
+            values (@concept_id, 'Prescription Record', 'en', 1, 1, now(), 'FULLY_SPECIFIED', uuid());
+
+            select concept_id into @conceptset_id from concept_name where name = 'Patient Document' and concept_name_type = 'FULLY_SPECIFIED';
+
+            INSERT INTO concept_set (concept_id, concept_set, sort_weight, creator, date_created, uuid)
+            values (@concept_id, @conceptset_id, 1, 1, now(), uuid());
+        </sql>
+    </changeSet>
 </databaseChangeLog>
