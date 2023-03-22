@@ -11,8 +11,10 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.PositiveIntType;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
-import org.openmrs.*;
+import org.openmrs.Concept;
 import org.openmrs.Encounter;
+import org.openmrs.EncounterProvider;
+import org.openmrs.Obs;
 import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.openmrs.module.fhir2.api.translators.impl.FhirTranslatorUtils;
@@ -30,14 +32,14 @@ public class FhirImmunizationRecordBundleBuilder {
     private final FHIRResourceMapper fhirResourceMapper;
     private final EncounterTranslator<Encounter> encounterTranslator;
     private final OrganizationContext orgContext;
-    private final Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap;
+    private final Map<AbdmConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap;
     private final ConceptTranslator conceptTranslator;
 
     public FhirImmunizationRecordBundleBuilder(FHIRResourceMapper fhirResourceMapper,
                                                ConceptTranslator conceptTranslator,
                                                EncounterTranslator<Encounter> encounterTranslator,
                                                OrganizationContext orgContext,
-                                               Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap) {
+                                               Map<AbdmConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap) {
         this.fhirResourceMapper = fhirResourceMapper;
         this.encounterTranslator = encounterTranslator;
         this.orgContext = orgContext;
@@ -54,7 +56,7 @@ public class FhirImmunizationRecordBundleBuilder {
     }
 
     private boolean isApplicable(Concept rootConcept) {
-        Concept obsRootConcept = immunizationAttributeConceptMap.get(ImmunizationObsTemplateConfig.ImmunizationAttribute.ROOT_CONCEPT);
+        Concept obsRootConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.ROOT_CONCEPT);
         return obsRootConcept != null && obsRootConcept.getUuid().equals(rootConcept.getUuid());
     }
 
@@ -105,39 +107,39 @@ public class FhirImmunizationRecordBundleBuilder {
             openmrsImmunization.getGroupMembers().forEach(member -> {
                 Concept memberConcept = member.getConcept();
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.VACCINE_CODE)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.VACCINE_CODE)) {
                     immunization.setVaccineCode(conceptTranslator.toFhirResource(member.getValueCoded()));
                 }
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
                     Date valueDatetime = member.getValueDatetime();
                     if (valueDatetime != null) {
                         immunization.setOccurrence(new DateTimeType(valueDatetime));
                     }
                 }
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.DOSE_NUMBER)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.DOSE_NUMBER)) {
                     Double valueNumeric = member.getValueNumeric();
                     if (valueNumeric != null) {
                         immunization.addProtocolApplied(new Immunization.ImmunizationProtocolAppliedComponent(new PositiveIntType(valueNumeric.intValue())));
                     }
                 }
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.MANUFACTURER)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.MANUFACTURER)) {
                     String manufacturer = member.getValueText();
                     if (manufacturer != null) {
                         immunization.setManufacturer((new Reference()).setDisplay(manufacturer));
                     }
                 }
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.LOT_NUMBER)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.LOT_NUMBER)) {
                     String lotNumber = member.getValueAsString(Locale.ENGLISH);
                     if (lotNumber != null) {
                         immunization.setLotNumber(lotNumber);
                     }
                 }
 
-                if (conceptMatchesForAttribute(memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute.EXPIRATION_DATE)) {
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.EXPIRATION_DATE)) {
                     Date valueDatetime = member.getValueDatetime();
                     if (valueDatetime != null) {
                         immunization.setExpirationDate(valueDatetime);
@@ -151,7 +153,7 @@ public class FhirImmunizationRecordBundleBuilder {
         return immunization;
     }
 
-    private boolean conceptMatchesForAttribute(Concept memberConcept, ImmunizationObsTemplateConfig.ImmunizationAttribute immunizationAttribute) {
+    private boolean conceptMatchesForAttribute(Concept memberConcept, AbdmConfig.ImmunizationAttribute immunizationAttribute) {
         Concept mappedConcept = immunizationAttributeConceptMap.get(immunizationAttribute);
         return mappedConcept != null && memberConcept.getUuid().equals(mappedConcept.getUuid());
     }
