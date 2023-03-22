@@ -17,12 +17,14 @@ import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.ServiceRequest;
 
 import org.openmrs.EncounterProvider;
-import java.util.List;
-import java.util.Date;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.Set;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class FhirOPConsult {
@@ -70,10 +72,10 @@ public class FhirOPConsult {
         this.serviceRequest = serviceRequest;
     }
 
-    public Bundle bundleOPConsult(String webUrl) {
-        String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleID, webUrl);
-        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
+    public Bundle bundleOPConsult(OrganizationContext orgContext) {
+        String bundleId = String.format("OPR-%d", encounterID);
+        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleId, orgContext.getWebUrl());
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
@@ -120,15 +122,12 @@ public class FhirOPConsult {
                 patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments, serviceRequest);
     }
 
-    private Composition compositionFrom(String webURL) {
-        Composition composition = initializeComposition(visitTimeStamp, webURL);
+    private Composition compositionFrom(OrganizationContext orgContext) {
+        Composition composition = initializeComposition(visitTimeStamp, orgContext.getWebUrl());
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
-                .setSubject(patientReference);
-
-        practitioners
-                .forEach(practitioner -> composition
-                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
+                .setSubject(patientReference)
+                .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
         if (patientDocuments.size() > 0) {
             Composition.SectionComponent patientDocumentsCompositionSection = composition.addSection();

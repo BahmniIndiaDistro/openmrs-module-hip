@@ -2,28 +2,29 @@ package org.bahmni.module.hip.web.model;
 
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Practitioner;
-import org.hl7.fhir.r4.model.Condition;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.CarePlan;
-import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.Condition;
+import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.ServiceRequest;
 import org.openmrs.EncounterProvider;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.ArrayList;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FhirDischargeSummary {
@@ -108,10 +109,10 @@ public class FhirDischargeSummary {
         return new FhirDischargeSummary(encounterId, encounter, visitDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations, patientDocuments, procedures, serviceRequest);
     }
 
-    public Bundle bundleDischargeSummary(String webUrl){
-        String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(visitTimestamp, bundleID, webUrl);
-        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
+    public Bundle bundleDischargeSummary(OrganizationContext orgContext) {
+        String bundleID = String.format("DS-%d", encounterID);
+        Bundle bundle = FHIRUtils.createBundle(visitTimestamp, bundleID, orgContext.getWebUrl());
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
@@ -127,11 +128,12 @@ public class FhirDischargeSummary {
         return bundle;
     }
 
-    private Composition compositionFrom(String webURL) {
-        Composition composition = initializeComposition(visitTimestamp, webURL);
+    private Composition compositionFrom(OrganizationContext orgContext) {
+        Composition composition = initializeComposition(visitTimestamp, orgContext.getWebUrl());
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
-                .setSubject(patientReference);
+                .setSubject(patientReference)
+                .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
         practitioners
                 .forEach(practitioner -> composition
@@ -148,7 +150,7 @@ public class FhirDischargeSummary {
                     .forEach(physicalExaminationsCompositionSection::addEntry);
         }
 
-        if(medicationRequests.size() > 0){
+        if (medicationRequests.size() > 0) {
             Composition.SectionComponent medicationRequestsCompositionSection = composition.addSection();
             medicationRequestsCompositionSection
                     .setTitle("Medication request")

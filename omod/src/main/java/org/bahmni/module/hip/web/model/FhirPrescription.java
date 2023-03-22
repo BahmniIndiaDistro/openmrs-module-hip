@@ -8,12 +8,12 @@ import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
 import org.openmrs.EncounterProvider;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -60,11 +60,10 @@ public class FhirPrescription {
         return new FhirPrescription(encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, medications, medicationRequests);
     }
 
-    public Bundle bundle(String webUrl){
+    public Bundle bundle(OrganizationContext orgContext) {
         String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleID, webUrl);
-
-        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
+        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleID, orgContext.getWebUrl());
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
@@ -73,8 +72,8 @@ public class FhirPrescription {
         return bundle;
     }
 
-    private Composition compositionFrom(String webURL){
-        Composition composition = initializeComposition(visitTimeStamp, webURL);
+    private Composition compositionFrom(OrganizationContext orgContext) {
+        Composition composition = initializeComposition(visitTimeStamp, orgContext.getWebUrl());
         Composition.SectionComponent compositionSection = composition.addSection();
 
         practitioners
@@ -83,7 +82,8 @@ public class FhirPrescription {
 
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
-                .setSubject(patientReference);
+                .setSubject(patientReference)
+                .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
         compositionSection
                 .setTitle("OPD Prescription")
