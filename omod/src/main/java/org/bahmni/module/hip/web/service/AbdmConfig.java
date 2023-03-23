@@ -85,7 +85,7 @@ public class AbdmConfig {
         return allConfigurationKeys;
     }
 
-    public String getConceptMapResoluer() {
+    public String getConceptMapResolver() {
         String resolution = (String) properties.get(CONCEPT_MAP_RESOLUTION_KEY);
         return resolution != null ? resolution : "UUID";
     }
