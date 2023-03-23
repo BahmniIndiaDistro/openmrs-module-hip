@@ -135,10 +135,6 @@ public class FhirDischargeSummary {
                 .setSubject(patientReference)
                 .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
-        practitioners
-                .forEach(practitioner -> composition
-                        .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));
-
         if (carePlan.size() > 0) {
             Composition.SectionComponent physicalExaminationsCompositionSection = composition.addSection();
             physicalExaminationsCompositionSection
