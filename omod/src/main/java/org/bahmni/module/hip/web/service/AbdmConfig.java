@@ -1,6 +1,7 @@
 package org.bahmni.module.hip.web.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.openmrs.Concept;
 import org.openmrs.api.context.Context;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.stereotype.Component;
@@ -12,8 +13,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 @Slf4j
 @Component
@@ -27,6 +32,7 @@ public class AbdmConfig {
         VACCINE_CODE("abdm.conceptMap.immunization.vaccineCode"),
         OCCURRENCE_DATE("abdm.conceptMap.immunization.occurrenceDateTime"),
         MANUFACTURER("abdm.conceptMap.immunization.manufacturer"),
+        BRAND_NAME("abdm.conceptMap.immunization.brandName"),
         DOSE_NUMBER("abdm.conceptMap.immunization.doseNumber"),
         LOT_NUMBER("abdm.conceptMap.immunization.lotNumber"),
         EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
@@ -43,9 +49,9 @@ public class AbdmConfig {
         }
     }
 
-    private List<String> allConfigurationKeys = new ArrayList<>();
+    private final List<String> allConfigurationKeys = new ArrayList<>();
 
-    private Properties properties = new Properties();
+    private final Properties properties = new Properties();
 
     private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
 
@@ -65,16 +71,18 @@ public class AbdmConfig {
         return immunizationAttributesMap.get(ImmunizationAttribute.ROOT_CONCEPT);
     }
 
-    public String getPrescriptionDocumentConceptMap() {
-        return CONCEPT_MAP_PRESCRIPTION_DOCUMENT;
+    public Concept getPrescriptionDocumentConcept() {
+        String key = (String) properties.get(CONCEPT_MAP_PRESCRIPTION_DOCUMENT);
+        if (StringUtils.isEmpty(key)) {
+            log.info(String.format("Property [%s] is not set. System may not be able to send unstructured prescription document", CONCEPT_MAP_PRESCRIPTION_DOCUMENT));
+            return null;
+        }
+        return Context.getConceptService().getConceptByUuid(key);
     }
 
 
-    public Map<String, String> getConfiguredConceptsMap() {
-        return properties.entrySet()
-                .stream()
-                .filter(entry -> entry.getKey().toString().startsWith("abdm.conceptMap."))
-                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+    public List<String> getAllConfigurationKeys() {
+        return allConfigurationKeys;
     }
 
     public String getConceptMapResoluer() {
@@ -98,7 +106,7 @@ public class AbdmConfig {
     private void postConstruct() {
         Path configFilePath = Paths.get(OpenmrsUtil.getApplicationDataDirectory(), ABDM_PROPERTIES_FILE_NAME);
         if (!Files.exists(configFilePath)) {
-            log.info(String.format("ABDM config file does not exist: %s. Trying to read from Global Properties", configFilePath));
+            log.info(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
             readFromGlobalProperties();
             return;
         }
@@ -112,7 +120,7 @@ public class AbdmConfig {
     }
 
     private void readFromGlobalProperties() {
-        allConfigurationKeys.stream().forEach(key -> {
+        allConfigurationKeys.forEach(key -> {
             String value = Context.getAdministrationService().getGlobalProperty(key);
             if (!StringUtils.isEmpty(value)) {
                 properties.put(key, value);
@@ -120,5 +128,6 @@ public class AbdmConfig {
                 log.warn("ABDM: No property set for " + key);
             }
         });
+        updateImmunizationAttributeMap(this);
     }
 }

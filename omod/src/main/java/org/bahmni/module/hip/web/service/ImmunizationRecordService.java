@@ -28,11 +28,11 @@ public class ImmunizationRecordService {
 
     private final AbdmConfig abdmConfig;
     private final VisitService visitService;
-    private ConceptService conceptService;
-    private OrganizationContextService organizationContextService;
-    private FHIRResourceMapper fhirResourceMapper;
-    private ConceptTranslator conceptTranslator;
-    private EncounterTranslator<Encounter> encounterTranslator;
+    private final ConceptService conceptService;
+    private final OrganizationContextService organizationContextService;
+    private final FHIRResourceMapper fhirResourceMapper;
+    private final ConceptTranslator conceptTranslator;
+    private final EncounterTranslator<Encounter> encounterTranslator;
 
     @Autowired
     public ImmunizationRecordService(VisitService visitService, ConceptService conceptService,
@@ -87,7 +87,7 @@ public class ImmunizationRecordService {
         if (location == null) {
             return Optional.empty();
         }
-        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().filter(tag -> tag.getName().equalsIgnoreCase(tagName)).count() != 0;
+        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
         return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
     }
 
@@ -95,7 +95,7 @@ public class ImmunizationRecordService {
     private Map<AbdmConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
         return abdmConfig.getImmunizationAttributeConfigs().entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> identifyConcept(e)));
+                .collect(Collectors.toMap(Map.Entry::getKey, this::identifyConcept));
     }
 
     private Concept identifyConcept(Map.Entry<AbdmConfig.ImmunizationAttribute, String> entry) {

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class HipControllerAdvice extends BaseRestController {
 
-    private static Logger logger = LogManager.getLogger(HipControllerAdvice.class);
+    private static final Logger logger = LogManager.getLogger(HipControllerAdvice.class);
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(RequestParameterMissingException.class)

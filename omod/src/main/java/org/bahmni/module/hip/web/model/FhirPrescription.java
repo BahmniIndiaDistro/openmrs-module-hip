@@ -4,7 +4,15 @@ import lombok.Getter;
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Binary;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Composition;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.Reference;
 import org.openmrs.Concept;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
@@ -30,7 +38,7 @@ public class FhirPrescription {
     private final Reference patientReference;
     private final List<Medication> medications;
     private final List<MedicationRequest> medicationRequests;
-    private List<Binary> documentObs;
+    private final List<Binary> documentObs;
 
     private FhirPrescription(Date visitTimeStamp, Integer encounterID, Encounter encounter,
                              List<Practitioner> practitioners, Patient patient,
@@ -63,7 +71,7 @@ public class FhirPrescription {
                     .getAllFlattenedObs(false)
                     .stream()
                     .filter(obs -> obs.getConcept().getUuid().equals(prescriptionDocumentConcept.getUuid()))
-                    .map(obs -> getPrescriptionDocument(obs))
+                    .map(FhirPrescription::getPrescriptionDocument)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
@@ -72,7 +80,7 @@ public class FhirPrescription {
     }
 
     private static Binary getPrescriptionDocument(Obs obs) {
-        byte[] fileContent = new byte[0];
+        byte[] fileContent;
         try {
             fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + obs.getValueComplex()).toPath());
         } catch (IOException e) {

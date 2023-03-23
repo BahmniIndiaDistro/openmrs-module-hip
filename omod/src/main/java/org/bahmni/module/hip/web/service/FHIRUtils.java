@@ -30,6 +30,8 @@ import static org.bahmni.module.hip.web.service.Constants.PDF;
 import static org.bahmni.module.hip.web.service.Constants.PNG;
 
 public class FHIRUtils {
+    public static final String VALUESET_URL_ORG_TYPE_HL7 = "http://hl7.org/fhir/ValueSet/organization-type";
+    public static final String CODE_SYSTEM_URL_ORG_TYPE = "http://terminology.hl7.org/CodeSystem/organization-type";
     private static Map<String, Enumerations.AdministrativeGender> genderMap = new HashMap<String, Enumerations.AdministrativeGender>() {{
         put("M", Enumerations.AdministrativeGender.MALE);
         put("F", Enumerations.AdministrativeGender.FEMALE);
