@@ -3,14 +3,11 @@ package org.bahmni.module.hip.web.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bahmni.module.hip.api.dao.HipVisitDao;
-import org.bahmni.module.hip.web.model.PrescriptionBundle;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.OpenMrsPrescription;
-import org.openmrs.Patient;
+import org.bahmni.module.hip.web.model.PrescriptionBundle;
 import org.openmrs.Visit;
-import org.openmrs.api.PatientService;
 import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,17 +21,22 @@ import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
 
 @Service
 public class PrescriptionService {
-    private static Logger logger = LogManager.getLogger(PrescriptionService.class);
+    private static final Logger logger = LogManager.getLogger(PrescriptionService.class);
 
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder;
     private final VisitService visitService;
+    private final AbdmConfig abdmConfig;
 
     @Autowired
-    public PrescriptionService(OpenMRSDrugOrderClient openMRSDrugOrderClient, FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder, PatientService patientService, HipVisitDao hipVisitDao, VisitService visitService) {
+    public PrescriptionService(OpenMRSDrugOrderClient openMRSDrugOrderClient,
+                               FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder,
+                               VisitService visitService,
+                               AbdmConfig abdmConfig) {
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.fhirBundledPrescriptionBuilder = fhirBundledPrescriptionBuilder;
         this.visitService = visitService;
+        this.abdmConfig = abdmConfig;
     }
 
 
@@ -51,7 +53,7 @@ public class PrescriptionService {
 
             return openMrsPrescriptions
                     .stream()
-                    .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
+                    .map(omrsPrescription -> fhirBundledPrescriptionBuilder.fhirBundleResponseFor(omrsPrescription, abdmConfig.getPrescriptionDocumentConcept()))
                     .collect(Collectors.toList());
         }
         return new ArrayList<>();
@@ -68,7 +70,8 @@ public class PrescriptionService {
 
         return openMrsPrescriptions
                 .stream()
-                .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
+                .map(omrsPrescription -> fhirBundledPrescriptionBuilder.fhirBundleResponseFor(omrsPrescription, abdmConfig.getPrescriptionDocumentConcept()))
                 .collect(Collectors.toList());
     }
+
 }

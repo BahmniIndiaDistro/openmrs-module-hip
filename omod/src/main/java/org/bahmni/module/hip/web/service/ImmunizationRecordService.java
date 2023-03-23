@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 @Service
 public class ImmunizationRecordService {
 
-    private final ImmunizationObsTemplateConfig immunizationObsTemplateConfig;
+    private final AbdmConfig abdmConfig;
     private final VisitService visitService;
-    private ConceptService conceptService;
-    private OrganizationContextService organizationContextService;
-    private FHIRResourceMapper fhirResourceMapper;
-    private ConceptTranslator conceptTranslator;
-    private EncounterTranslator<Encounter> encounterTranslator;
+    private final ConceptService conceptService;
+    private final OrganizationContextService organizationContextService;
+    private final FHIRResourceMapper fhirResourceMapper;
+    private final ConceptTranslator conceptTranslator;
+    private final EncounterTranslator<Encounter> encounterTranslator;
 
     @Autowired
     public ImmunizationRecordService(VisitService visitService, ConceptService conceptService,
@@ -40,14 +40,14 @@ public class ImmunizationRecordService {
                                      FHIRResourceMapper fhirResourceMapper,
                                      ConceptTranslator conceptTranslator,
                                      EncounterTranslator<Encounter> encounterTranslator,
-                                     ImmunizationObsTemplateConfig immunizationObsTemplateConfig) {
+                                     AbdmConfig abdmConfig) {
         this.visitService = visitService;
         this.conceptService = conceptService;
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.conceptTranslator = conceptTranslator;
         this.encounterTranslator = encounterTranslator;
-        this.immunizationObsTemplateConfig = immunizationObsTemplateConfig;
+        this.abdmConfig = abdmConfig;
     }
 
     public List<ImmunizationRecordBundle> getImmunizationRecordsForVisit(String patientUuid, String visitUuid, Date startDate, Date endDate) {
@@ -67,7 +67,7 @@ public class ImmunizationRecordService {
         }
 
         //this can potentially be cached, the concept maps are going to be same usually
-        Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap =
+        Map<AbdmConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap =
                 getImmunizationAttributeConcepts();
 
         FhirImmunizationRecordBundleBuilder immunizationTransformer =
@@ -87,25 +87,25 @@ public class ImmunizationRecordService {
         if (location == null) {
             return Optional.empty();
         }
-        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().filter(tag -> tag.getName().equalsIgnoreCase(tagName)).count() != 0;
+        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
         return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
     }
 
 
-    private Map<ImmunizationObsTemplateConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
-        return immunizationObsTemplateConfig.getImmunizationAttributeConfigs().entrySet()
+    private Map<AbdmConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
+        return abdmConfig.getImmunizationAttributeConfigs().entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> identifyConcept(e)));
+                .collect(Collectors.toMap(Map.Entry::getKey, this::identifyConcept));
     }
 
-    private Concept identifyConcept(Map.Entry<ImmunizationObsTemplateConfig.ImmunizationAttribute, String> entry) {
+    private Concept identifyConcept(Map.Entry<AbdmConfig.ImmunizationAttribute, String> entry) {
         //TODO: We need to figure out how we identify concepts. Right now its by UUID, while coding or name would be easier
         return conceptService.getConceptByUuid(entry.getValue());
     }
 
 
     private boolean isImmunizationObsTemplateConfigured() {
-        return !StringUtils.isEmpty(immunizationObsTemplateConfig.getRootConcept());
+        return !StringUtils.isEmpty(abdmConfig.getImmunizationObsRootConcept());
     }
 
 }
