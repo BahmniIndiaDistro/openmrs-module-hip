@@ -2,8 +2,11 @@ package org.bahmni.module.hip.web.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openmrs.Concept;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -27,6 +30,7 @@ public class AbdmConfig {
     private static final String ABDM_PROPERTIES_FILE_NAME = "abdm_config.properties";
     private static final String CONCEPT_MAP_RESOLUTION_KEY = "abdm.conceptResolution";
     private static final String CONCEPT_MAP_PRESCRIPTION_DOCUMENT = "abdm.conceptMap.prescription.document";
+    private final AdministrationService adminService;
 
     public enum ImmunizationAttribute {
         VACCINE_CODE("abdm.conceptMap.immunization.vaccineCode"),
@@ -55,7 +59,9 @@ public class AbdmConfig {
 
     private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
 
-    public AbdmConfig() {
+    @Autowired
+    public AbdmConfig(@Qualifier("adminService") AdministrationService adminService) {
+        this.adminService = adminService;
         Arrays.stream(ImmunizationAttribute.values()).forEach(immunizationAttribute -> {
             immunizationAttributesMap.put(immunizationAttribute, "");
             allConfigurationKeys.add(immunizationAttribute.getConfigKey());
@@ -90,8 +96,8 @@ public class AbdmConfig {
         return resolution != null ? resolution : "UUID";
     }
 
-    public static AbdmConfig instanceFrom(Properties props) {
-        AbdmConfig instance = new AbdmConfig();
+    public static AbdmConfig instanceFrom(Properties props, AdministrationService adminService) {
+        AbdmConfig instance = new AbdmConfig(adminService);
         instance.properties.putAll(props);
         updateImmunizationAttributeMap(instance);
         return instance;
@@ -121,7 +127,7 @@ public class AbdmConfig {
 
     private void readFromGlobalProperties() {
         allConfigurationKeys.forEach(key -> {
-            String value = Context.getAdministrationService().getGlobalProperty(key);
+            String value = adminService.getGlobalProperty(key);
             if (!StringUtils.isEmpty(value)) {
                 properties.put(key, value);
             } else {
