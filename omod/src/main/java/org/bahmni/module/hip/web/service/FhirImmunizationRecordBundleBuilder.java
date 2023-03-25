@@ -62,7 +62,7 @@ public class FhirImmunizationRecordBundleBuilder {
     }
 
     private boolean isApplicable(Concept rootConcept) {
-        Concept obsRootConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.ROOT_CONCEPT);
+        Concept obsRootConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.TEMPLATE);
         return obsRootConcept != null && obsRootConcept.getUuid().equals(rootConcept.getUuid());
     }
 
