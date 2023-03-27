@@ -67,11 +67,12 @@ public class FhirPrescription {
         String bundleId = String.format("PR-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleId, orgContext.getWebUrl());
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
-        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
+        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         if (!documents.isEmpty()) {
             FHIRUtils.addToBundleEntry(bundle, documents, false);
         }

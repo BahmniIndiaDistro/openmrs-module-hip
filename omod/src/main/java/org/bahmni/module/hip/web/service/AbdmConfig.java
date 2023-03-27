@@ -65,7 +65,7 @@ public class AbdmConfig {
         PRESCIPTION("abdm.conceptMap.docType.prescription"),
         DISCHARGE_SUMMARY("abdm.conceptMap.docType.dischargeSummary"),
         PATIENT_FILE("abdm.conceptMap.docType.patientFile"),
-        REFERRAL("abdm.conceptMap.docType.reference"),
+        REFERRAL("abdm.conceptMap.docType.referral"),
         TEMPLATE("abdm.conceptMap.docType.template");
         private final String mapping;
 
