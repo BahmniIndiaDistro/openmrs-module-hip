@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -105,7 +104,7 @@ public class OmrsObsDocumentTransformer {
                 .setId(UUID.randomUUID().toString());
             return binary;
         } catch (IOException | RuntimeException ex) {
-            log.error("Could not load file associated with observation for prescription document", ex.getMessage());
+            log.error(String.format("Could not load file associated with observation for prescription document. %s", ex.getMessage()));
             return null;
         }
     }

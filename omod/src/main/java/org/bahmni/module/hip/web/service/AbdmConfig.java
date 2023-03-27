@@ -16,12 +16,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -40,6 +35,7 @@ public class AbdmConfig {
     private final Properties properties = new Properties();
 
     private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final Map<String, Concept> conceptCache = new HashMap<>();
 
     @Autowired
     public AbdmConfig(@Qualifier("adminService") AdministrationService adminService,
@@ -130,11 +126,20 @@ public class AbdmConfig {
     private Concept lookupConcept(String lookupKey) {
         String lookupValue = (String) properties.get(lookupKey);
         if (StringUtils.isEmpty(lookupValue)) {
-            log.info(String.format("Property [%s] is not set. System may not be able to send datat", lookupKey));
+            log.info(String.format("Property [%s] is not set. System may not be able to send data", lookupKey));
             return null;
         }
+        return retrieveConcept(lookupValue);
+    }
+
+    private Concept retrieveConcept(String lookupValue) {
         //should check with resolution (UUID now)
-        return conceptService.getConceptByUuid(lookupValue);
+        return Optional.ofNullable(conceptCache.get(lookupValue))
+                .orElseGet(() -> {
+                    Concept concept = conceptService.getConceptByUuid(lookupValue);
+                    conceptCache.put(lookupValue, concept);
+                    return concept;
+                });
     }
 
 
