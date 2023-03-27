@@ -2,7 +2,6 @@ package org.bahmni.module.hip.api.dao.impl;
 
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.DiagnosticReportDao;
-import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.openmrs.Concept;
 import org.openmrs.Encounter;
@@ -51,7 +50,8 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
     }
 
 
-    private List<Obs> getAllObsForDiagnosticReports(String patientUUID, Boolean linkedWithOrder) {
+    @Override
+    public List<Obs> getAllObsForDiagnosticReports(String patientUUID, Boolean linkedWithOrder) {
         Person person = personService.getPersonByUuid(patientUUID);
         Concept concept = conceptService.getConcept(Config.LAB_REPORT.getValue());
         List<Obs> obs = obsService.getObservationsByPersonAndConcept(person,concept);
@@ -90,26 +90,5 @@ public class DiagnosticReportDaoImpl implements DiagnosticReportDao {
             }
         }
         return labReportsMap;
-    }
-
-    @Override
-    public Map<Encounter,List<Obs>> getAllOrderedTestUploads(String patientUuid,Visit visit) {
-        Map<Encounter,List<Obs>> documentObs = new HashMap<>();
-        List<Obs> obsList = getAllObsForDiagnosticReports(patientUuid,true);
-        List<Encounter> encounters = encounterService.getEncountersByVisit(visit,false);
-
-        for (Obs obs : obsList) {
-            Encounter orderEncounter = obs.getOrder().getEncounter();
-            if(encounters.contains(orderEncounter)) {
-                if (documentObs.containsKey(orderEncounter)) {
-                    documentObs.get(orderEncounter).add(obs);
-                } else {
-                    documentObs.put(orderEncounter, new ArrayList<Obs>() {{
-                        add(obs);
-                    }});
-                }
-            }
-        }
-        return documentObs;
     }
 }

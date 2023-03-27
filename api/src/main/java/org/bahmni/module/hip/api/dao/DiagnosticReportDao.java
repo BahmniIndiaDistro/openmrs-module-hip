@@ -10,5 +10,5 @@ import java.util.Map;
 
 public interface DiagnosticReportDao {
     Map<Encounter,List<Obs>> getAllUnorderedUploadsForVisit(String patientUUID, Visit visit);
-    Map<Encounter,List<Obs>> getAllOrderedTestUploads(String patientUUID,Visit visit);
+    List<Obs> getAllObsForDiagnosticReports(String patientUUID, Boolean linkedWithOrder);
 }
