@@ -4,6 +4,8 @@ import org.bahmni.module.hip.web.model.CareContext;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Extension;
@@ -17,6 +19,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.openmrs.Concept;
+import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
@@ -30,6 +33,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -56,14 +61,37 @@ public class FhirImmunizationRecordBundleBuilder {
     public List<ImmunizationRecordBundle> build(Encounter encounter) {
         return encounter.getObsAtTopLevel(false)
                 .stream()
-                .filter(topLevelObs -> isApplicable(topLevelObs.getConcept()))
+                .filter(topLevelObs -> isApplicable(topLevelObs))
                 .map(obs -> buildImmunizationBundle(obs, encounter))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private boolean isApplicable(Concept rootConcept) {
-        Concept obsRootConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.TEMPLATE);
-        return obsRootConcept != null && obsRootConcept.getUuid().equals(rootConcept.getUuid());
+    private boolean isApplicable(Obs rootObs) {
+        Concept rootObsConcept = rootObs.getConcept();
+        Concept templateConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.TEMPLATE);
+        boolean isImmunizationIncident = templateConcept != null && templateConcept.getUuid().equals(rootObsConcept.getUuid());
+        if (!isImmunizationIncident) {
+            return false;
+        }
+        Concept statusConcept = immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.STATUS);
+        if (statusConcept != null) {
+            Optional<Obs> statusObs = rootObs.getGroupMembers().stream().filter(obs -> obs.getConcept().getUuid().equals(statusConcept.getUuid())).findFirst();
+            if (statusObs.isPresent()) {
+                return Optional.ofNullable(statusObs.get().getValueCoded())
+                        .map((obsValue) -> isYesTerm(obsValue))
+                        .orElse(false);
+            }
+        }
+        return true;
+    }
+
+    private boolean isYesTerm(Concept obsValue) {
+        return obsValue.getConceptMappings().stream().filter(cm -> {
+            ConceptReferenceTerm term = cm.getConceptReferenceTerm();
+            return ("SNOMED-CT".equals(term.getConceptSource().getName()) && term.getCode().equals("373066001"))
+                    || ("CIEL".equals(term.getConceptSource().getName()) && term.getCode().equals("1065"));
+        }).count() > 0;
     }
 
     private ImmunizationRecordBundle buildImmunizationBundle(Obs obs, Encounter encounter) {
@@ -118,6 +146,10 @@ public class FhirImmunizationRecordBundleBuilder {
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.VACCINE_CODE)) {
                     immunization.setVaccineCode(conceptTranslator.toFhirResource(member.getValueCoded()));
+                } else if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.VACCINE_NON_CODED)) {
+                    String nonCodedVaccineName = member.getValueText();
+                    immunization.setVaccineCode(new CodeableConcept().addCoding(
+                            new Coding().setDisplay(nonCodedVaccineName)).setText(nonCodedVaccineName));
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {

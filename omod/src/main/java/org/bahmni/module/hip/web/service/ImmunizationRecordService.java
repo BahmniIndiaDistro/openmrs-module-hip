@@ -12,7 +12,6 @@ import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 public class ImmunizationRecordService {
 
+    private static final String CIEL_CONEPT_IMMUNIZATION_RECEIVED = "163100AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     private final AbdmConfig abdmConfig;
     private final VisitService visitService;
     private final ConceptService conceptService;
@@ -69,6 +69,15 @@ public class ImmunizationRecordService {
         Map<AbdmConfig.ImmunizationAttribute, Concept> immunizationAttributeConceptMap =
                 getImmunizationAttributeConcepts();
 
+        Optional.ofNullable(immunizationAttributeConceptMap.get(AbdmConfig.ImmunizationAttribute.STATUS))
+                .orElseGet(() -> {
+                    Concept cielImmunizationReceivedConcept = conceptService.getConceptByUuid(CIEL_CONEPT_IMMUNIZATION_RECEIVED);
+                    if (cielImmunizationReceivedConcept != null) {
+                        immunizationAttributeConceptMap.put(AbdmConfig.ImmunizationAttribute.STATUS, cielImmunizationReceivedConcept);
+                    }
+                    return cielImmunizationReceivedConcept;
+                });
+
         FhirImmunizationRecordBundleBuilder immunizationTransformer =
                 new FhirImmunizationRecordBundleBuilder(fhirResourceMapper,
                         conceptTranslator, encounterTranslator,
@@ -94,20 +103,13 @@ public class ImmunizationRecordService {
     private Map<AbdmConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
         return abdmConfig.getImmunizationAttributeConfigs().entrySet()
                 .stream()
-                .collect(HashMap::new, (m, v)->m.put(v.getKey(), identifyConcept(v)), HashMap::putAll);
-    }
-
-    private Concept identifyConcept(Map.Entry<AbdmConfig.ImmunizationAttribute, String> entry) {
-        //TODO: We need to figure out how we identify concepts. Right now its by UUID, while coding or name would be easier
-        if (StringUtils.isEmpty(entry.getValue())) {
-            return null;
-        }
-        return conceptService.getConceptByUuid(entry.getValue());
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(),
+                        abdmConfig.getImmunizationAttributeConcept(v.getKey())), HashMap::putAll);
     }
 
 
     private boolean isImmunizationObsTemplateConfigured() {
-        return !StringUtils.isEmpty(abdmConfig.getImmunizationObsRootConcept());
+        return Optional.ofNullable(abdmConfig.getImmunizationObsRootConcept()).map((c) -> true).orElse(false);
     }
 
 }
