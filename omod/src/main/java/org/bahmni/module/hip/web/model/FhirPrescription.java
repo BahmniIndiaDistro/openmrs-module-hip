@@ -1,25 +1,13 @@
 package org.bahmni.module.hip.web.model;
 
 import lombok.Getter;
-import org.bahmni.module.hip.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
-import org.hl7.fhir.r4.model.Binary;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Composition;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Practitioner;
-import org.hl7.fhir.r4.model.Reference;
-import org.openmrs.Concept;
+import org.bahmni.module.hip.web.service.OmrsObsDocumentTransformer;
+import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
-import org.openmrs.Obs;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +17,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
+@Slf4j
 public class FhirPrescription {
     private final Date visitTimeStamp;
     private final Integer encounterID;
@@ -38,12 +27,12 @@ public class FhirPrescription {
     private final Reference patientReference;
     private final List<Medication> medications;
     private final List<MedicationRequest> medicationRequests;
-    private final List<Binary> documentObs;
+    private final List<Binary> documents;
 
     private FhirPrescription(Date visitTimeStamp, Integer encounterID, Encounter encounter,
                              List<Practitioner> practitioners, Patient patient,
                              Reference patientReference, List<Medication> medications,
-                             List<MedicationRequest> medicationRequests, List<Binary> documentObs) {
+                             List<MedicationRequest> medicationRequests, List<Binary> documents) {
         this.visitTimeStamp = visitTimeStamp;
         this.encounterID = encounterID;
         this.encounter = encounter;
@@ -52,11 +41,10 @@ public class FhirPrescription {
         this.patientReference = patientReference;
         this.medications = medications;
         this.medicationRequests = medicationRequests;
-        this.documentObs = documentObs;
+        this.documents = documents;
     }
 
-    public static FhirPrescription from(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper, Concept prescriptionDocumentConcept) {
-
+    public static FhirPrescription from(OpenMrsPrescription openMrsPrescription, FHIRResourceMapper fhirResourceMapper, OmrsObsDocumentTransformer documentTransformer) {
         Date encounterDatetime = openMrsPrescription.getEncounter().getVisit().getStartDatetime();
         Integer encounterId = openMrsPrescription.getEncounter().getId();
         Patient patient = fhirResourceMapper.mapToPatient(openMrsPrescription.getPatient());
@@ -65,47 +53,28 @@ public class FhirPrescription {
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsPrescription.getEncounterProviders());
         List<MedicationRequest> medicationRequests = medicationRequestsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
         List<Medication> medications = medicationsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
-        List<Binary> prescriptionDocs = (prescriptionDocumentConcept == null)
-                ? Collections.emptyList()
-                : openMrsPrescription.getEncounter()
-                    .getAllFlattenedObs(false)
+        List<Binary> prescriptionDocs = (openMrsPrescription.getDocObs() != null &&  !openMrsPrescription.getDocObs().isEmpty())
+                ? openMrsPrescription.getDocObs()
                     .stream()
-                    .filter(obs -> obs.getConcept().getUuid().equals(prescriptionDocumentConcept.getUuid()))
-                    .map(FhirPrescription::getPrescriptionDocument)
+                    .map(o -> documentTransformer.transForm(o, Binary.class))
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-
+                    .collect(Collectors.toList())
+                : Collections.emptyList();
         return new FhirPrescription(encounterDatetime, encounterId, encounter, practitioners, patient, patientReference, medications, medicationRequests, prescriptionDocs);
     }
 
-    private static Binary getPrescriptionDocument(Obs obs) {
-        byte[] fileContent;
-        try {
-            fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + obs.getValueComplex()).toPath());
-        } catch (IOException e) {
-            System.out.println(e);
-            return null;
-        }
-        Binary binary = new Binary();
-        binary
-           .setContentType(FHIRUtils.getTypeOfTheObsDocument(obs.getValueText()))
-           .setData(fileContent)
-           .setId(UUID.randomUUID().toString());
-        return binary;
-    }
-
     public Bundle bundle(OrganizationContext orgContext) {
-        String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleID, orgContext.getWebUrl());
+        String bundleId = String.format("PR-%d", encounterID);
+        Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleId, orgContext.getWebUrl());
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
-        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
-        if (!documentObs.isEmpty()) {
-            FHIRUtils.addToBundleEntry(bundle, documentObs, false);
+        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        if (!documents.isEmpty()) {
+            FHIRUtils.addToBundleEntry(bundle, documents, false);
         }
         return bundle;
     }
@@ -131,10 +100,11 @@ public class FhirPrescription {
                 .stream()
                 .map(FHIRUtils::getReferenceToResource)
                 .forEach(compositionSection::addEntry);
-        documentObs
+        documents
                 .stream()
+                .findFirst() //because ABDM allows only one binary per prescription doc
                 .map(FHIRUtils::getReferenceToResource)
-                .forEach(compositionSection::addEntry);
+                .ifPresent(compositionSection::addEntry);
 
         return composition;
     }
@@ -152,6 +122,9 @@ public class FhirPrescription {
     }
 
     private static List<MedicationRequest> medicationRequestsFor(FHIRResourceMapper fhirResourceMapper, DrugOrders drugOrders) {
+        if (drugOrders == null) {
+            return Collections.emptyList();
+        }
         return drugOrders
                 .stream()
                 .map(fhirResourceMapper::mapToMedicationRequest)
@@ -159,6 +132,9 @@ public class FhirPrescription {
     }
 
     private static List<Medication> medicationsFor(FHIRResourceMapper fhirResourceMapper, DrugOrders drugOrders) {
+        if (drugOrders == null) {
+            return Collections.emptyList();
+        }
         return drugOrders
                 .stream()
                 .map(fhirResourceMapper::mapToMedication)

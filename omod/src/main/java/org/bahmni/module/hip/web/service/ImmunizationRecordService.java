@@ -14,12 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -52,6 +47,10 @@ public class ImmunizationRecordService {
 
     public List<ImmunizationRecordBundle> getImmunizationRecordsForVisit(String patientUuid, String visitUuid, Date startDate, Date endDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
+        if (visit == null) {
+            log.warn(String.format("Could not identify visit by uuid [%s]", visitUuid));
+            return Collections.emptyList();
+        }
         Optional<Location> location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.ORGANIZATION_LOCATION_TAG);
         if (!location.isPresent()) {
             location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.VISIT_LOCATION_TAG);
@@ -95,11 +94,14 @@ public class ImmunizationRecordService {
     private Map<AbdmConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
         return abdmConfig.getImmunizationAttributeConfigs().entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, this::identifyConcept));
+                .collect(HashMap::new, (m, v)->m.put(v.getKey(), identifyConcept(v)), HashMap::putAll);
     }
 
     private Concept identifyConcept(Map.Entry<AbdmConfig.ImmunizationAttribute, String> entry) {
         //TODO: We need to figure out how we identify concepts. Right now its by UUID, while coding or name would be easier
+        if (StringUtils.isEmpty(entry.getValue())) {
+            return null;
+        }
         return conceptService.getConceptByUuid(entry.getValue());
     }
 

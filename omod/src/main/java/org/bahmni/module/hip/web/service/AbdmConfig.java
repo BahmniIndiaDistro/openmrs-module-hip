@@ -3,7 +3,7 @@ package org.bahmni.module.hip.web.service;
 import lombok.extern.slf4j.Slf4j;
 import org.openmrs.Concept;
 import org.openmrs.api.AdministrationService;
-import org.openmrs.api.context.Context;
+import org.openmrs.api.ConceptService;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,12 +16,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -29,8 +24,71 @@ public class AbdmConfig {
 
     private static final String ABDM_PROPERTIES_FILE_NAME = "abdm_config.properties";
     private static final String CONCEPT_MAP_RESOLUTION_KEY = "abdm.conceptResolution";
-    private static final String CONCEPT_MAP_PRESCRIPTION_DOCUMENT = "abdm.conceptMap.prescription.document";
     private final AdministrationService adminService;
+    private ConceptService conceptService;
+
+    private final List<String> allConfigurationKeys = new ArrayList<>();
+
+    /**
+     * Raw properties. No direct access
+     */
+    private final Properties properties = new Properties();
+
+    private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final Map<String, Concept> conceptCache = new HashMap<>();
+
+    @Autowired
+    public AbdmConfig(@Qualifier("adminService") AdministrationService adminService,
+                      ConceptService conceptService) {
+        this.adminService = adminService;
+        this.conceptService = conceptService;
+        Arrays.stream(ImmunizationAttribute.values()).forEach(immunizationAttribute -> {
+            immunizationAttributesMap.put(immunizationAttribute, "");
+            allConfigurationKeys.add(immunizationAttribute.getMapping());
+        });
+
+        Arrays.stream(DocumentKind.values()).forEach(documentKind -> {
+            allConfigurationKeys.add(documentKind.getMapping());
+        });
+
+        Arrays.stream(DocTemplateAttribute.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+        allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
+    }
+
+    public enum DocumentKind {
+        PRESCIPTION("abdm.conceptMap.docType.prescription"),
+        DISCHARGE_SUMMARY("abdm.conceptMap.docType.dischargeSummary"),
+        PATIENT_FILE("abdm.conceptMap.docType.patientFile"),
+        REFERRAL("abdm.conceptMap.docType.referral"),
+        TEMPLATE("abdm.conceptMap.docType.template");
+        private final String mapping;
+
+        DocumentKind(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+
+    }
+    public enum DocTemplateAttribute {
+        DOC_TYPE("abdm.conceptMap.docTemplate.docType"),
+        ATTACHMENT("abdm.conceptMap.docTemplate.attachment"),
+        UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef");
+        private final String mapping;
+
+        DocTemplateAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+
+    }
 
     public enum ImmunizationAttribute {
         VACCINE_CODE("abdm.conceptMap.immunization.vaccineCode"),
@@ -40,33 +98,17 @@ public class AbdmConfig {
         DOSE_NUMBER("abdm.conceptMap.immunization.doseNumber"),
         LOT_NUMBER("abdm.conceptMap.immunization.lotNumber"),
         EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
-        ROOT_CONCEPT("abdm.conceptMap.immunization.root");
+        TEMPLATE("abdm.conceptMap.immunization.template");
 
-        private final String configKey;
+        private final String mapping;
 
-        ImmunizationAttribute(String configKey) {
-            this.configKey = configKey;
+        ImmunizationAttribute(String mapping) {
+            this.mapping = mapping;
         }
 
-        public String getConfigKey() {
-            return configKey;
+        public String getMapping() {
+            return mapping;
         }
-    }
-
-    private final List<String> allConfigurationKeys = new ArrayList<>();
-
-    private final Properties properties = new Properties();
-
-    private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
-
-    @Autowired
-    public AbdmConfig(@Qualifier("adminService") AdministrationService adminService) {
-        this.adminService = adminService;
-        Arrays.stream(ImmunizationAttribute.values()).forEach(immunizationAttribute -> {
-            immunizationAttributesMap.put(immunizationAttribute, "");
-            allConfigurationKeys.add(immunizationAttribute.getConfigKey());
-        });
-        allConfigurationKeys.addAll(Arrays.asList(CONCEPT_MAP_PRESCRIPTION_DOCUMENT, CONCEPT_MAP_RESOLUTION_KEY));
     }
 
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {
@@ -74,16 +116,39 @@ public class AbdmConfig {
     }
 
     public String getImmunizationObsRootConcept() {
-        return immunizationAttributesMap.get(ImmunizationAttribute.ROOT_CONCEPT);
+        return immunizationAttributesMap.get(ImmunizationAttribute.TEMPLATE);
     }
 
     public Concept getPrescriptionDocumentConcept() {
-        String key = (String) properties.get(CONCEPT_MAP_PRESCRIPTION_DOCUMENT);
-        if (StringUtils.isEmpty(key)) {
-            log.info(String.format("Property [%s] is not set. System may not be able to send unstructured prescription document", CONCEPT_MAP_PRESCRIPTION_DOCUMENT));
+        return lookupConcept(DocumentKind.PRESCIPTION.getMapping());
+    }
+
+    private Concept lookupConcept(String lookupKey) {
+        String lookupValue = (String) properties.get(lookupKey);
+        if (StringUtils.isEmpty(lookupValue)) {
+            log.info(String.format("Property [%s] is not set. System may not be able to send data", lookupKey));
             return null;
         }
-        return Context.getConceptService().getConceptByUuid(key);
+        return retrieveConcept(lookupValue);
+    }
+
+    private Concept retrieveConcept(String lookupValue) {
+        //should check with resolution (UUID now)
+        return Optional.ofNullable(conceptCache.get(lookupValue))
+                .orElseGet(() -> {
+                    Concept concept = conceptService.getConceptByUuid(lookupValue);
+                    conceptCache.put(lookupValue, concept);
+                    return concept;
+                });
+    }
+
+
+    public Concept getDocumentConcept(DocumentKind type) {
+        return lookupConcept(type.getMapping());
+    }
+
+    public Concept getDocTemplateAtributeConcept(DocTemplateAttribute docAttribute) {
+        return lookupConcept(docAttribute.getMapping());
     }
 
 
@@ -96,8 +161,8 @@ public class AbdmConfig {
         return resolution != null ? resolution : "UUID";
     }
 
-    public static AbdmConfig instanceFrom(Properties props, AdministrationService adminService) {
-        AbdmConfig instance = new AbdmConfig(adminService);
+    public static AbdmConfig instanceFrom(Properties props, AdministrationService adminService, ConceptService conceptService) {
+        AbdmConfig instance = new AbdmConfig(adminService, conceptService);
         instance.properties.putAll(props);
         updateImmunizationAttributeMap(instance);
         return instance;
@@ -105,7 +170,7 @@ public class AbdmConfig {
 
     private static void updateImmunizationAttributeMap(AbdmConfig conf) {
         Arrays.stream(ImmunizationAttribute.values()).forEach(conceptAttribute ->
-           conf.immunizationAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getConfigKey())));
+           conf.immunizationAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
     }
 
     @PostConstruct
@@ -116,7 +181,7 @@ public class AbdmConfig {
             readFromGlobalProperties();
             return;
         }
-        log.info(String.format("Reading  properties from : %s", configFilePath));
+        log.info(String.format("Reading  ABDM config properties from : %s", configFilePath));
         try (InputStream configFile = Files.newInputStream(configFilePath)) {
             properties.load(configFile);
             updateImmunizationAttributeMap(this);
