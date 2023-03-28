@@ -113,12 +113,13 @@ public class FhirDischargeSummary {
         String bundleID = String.format("DS-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(visitTimestamp, bundleID, orgContext.getWebUrl());
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
+        FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
-        FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, carePlan, false);
         FHIRUtils.addToBundleEntry(bundle, observations, false);

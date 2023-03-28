@@ -76,8 +76,9 @@ public class FhirOPConsult {
         String bundleId = String.format("OPR-%d", encounterID);
         Bundle bundle = FHIRUtils.createBundle(visitTimeStamp, bundleId, orgContext.getWebUrl());
         FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
-        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
+        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, encounter, false);
         FHIRUtils.addToBundleEntry(bundle, chiefComplaints, false);
         FHIRUtils.addToBundleEntry(bundle, medicalHistory, false);
