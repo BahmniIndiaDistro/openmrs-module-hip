@@ -158,10 +158,11 @@ public class DiagnosticReportService {
                         orders.remove(entry1);
                     }
                 });
-                return new OpenMrsLabResults(orderForUuid.get().getEncounter(), orderForUuid.get().getPatient(),
+                if(!labresult.isEmpty())
+                    return new OpenMrsLabResults(orderForUuid.get().getEncounter(), orderForUuid.get().getPatient(),
                         labresult);
             }
-            else return null;
+            return null;
         } ).filter(Objects::nonNull).collect(Collectors.toList());
 
 
