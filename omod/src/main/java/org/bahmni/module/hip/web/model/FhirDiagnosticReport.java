@@ -50,11 +50,12 @@ public class FhirDiagnosticReport {
     }
 
 
-    public Bundle bundleDiagnosticReport(String webUrl) {
+    public Bundle bundleDiagnosticReport(OrganizationContext orgContext) {
         String bundleID = String.format("PR-%d", encounterID);
-        Bundle bundle = FHIRUtils.createBundle(visitTimestamp, bundleID, webUrl);
+        Bundle bundle = FHIRUtils.createBundle(visitTimestamp, bundleID, orgContext.getWebUrl());
 
-        FHIRUtils.addToBundleEntry(bundle, compositionFrom(webUrl), false);
+        FHIRUtils.addToBundleEntry(bundle, compositionFrom(orgContext), false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
         FHIRUtils.addToBundleEntry(bundle, patient, false);
         FHIRUtils.addToBundleEntry(bundle, obs, false);
@@ -90,8 +91,8 @@ public class FhirDiagnosticReport {
                 patient, patientReference, observations);
     }
 
-    private Composition compositionFrom(String webURL) {
-        Composition composition = initializeComposition(visitTimestamp, webURL);
+    private Composition compositionFrom(OrganizationContext orgContext) {
+        Composition composition = initializeComposition(visitTimestamp, orgContext.getWebUrl());
         Composition.SectionComponent compositionSection = composition.addSection();
 
         practitioners
