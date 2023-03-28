@@ -123,6 +123,13 @@
 		<lang>es</lang>
 		<file>messages_es.properties</file>
 	</messages>
+	<globalProperty>
+		<property>bahmniHip.CM_SUFFIX</property>
+		<defaultValue>@sbx</defaultValue>
+		<description>
+			Consent suffix property
+		</description>
+	</globalProperty>
 	<!-- /Internationalization -->
 	
 </module>
