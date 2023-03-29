@@ -98,7 +98,9 @@ public class AbdmConfig {
         DOSE_NUMBER("abdm.conceptMap.immunization.doseNumber"),
         LOT_NUMBER("abdm.conceptMap.immunization.lotNumber"),
         EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
-        TEMPLATE("abdm.conceptMap.immunization.template");
+        TEMPLATE("abdm.conceptMap.immunization.template"),
+        STATUS("abdm.conceptMap.immunization.status"),
+        VACCINE_NON_CODED("abdm.conceptMap.immunization.vaccineNonCoded");
 
         private final String mapping;
 
@@ -115,8 +117,8 @@ public class AbdmConfig {
         return immunizationAttributesMap;
     }
 
-    public String getImmunizationObsRootConcept() {
-        return immunizationAttributesMap.get(ImmunizationAttribute.TEMPLATE);
+    public Concept getImmunizationObsRootConcept() {
+        return getImmunizationAttributeConcept(ImmunizationAttribute.TEMPLATE);
     }
 
     public Concept getPrescriptionDocumentConcept() {
@@ -149,6 +151,10 @@ public class AbdmConfig {
 
     public Concept getDocTemplateAtributeConcept(DocTemplateAttribute docAttribute) {
         return lookupConcept(docAttribute.getMapping());
+    }
+
+    public Concept getImmunizationAttributeConcept(ImmunizationAttribute type) {
+        return lookupConcept(type.getMapping());
     }
 
 
