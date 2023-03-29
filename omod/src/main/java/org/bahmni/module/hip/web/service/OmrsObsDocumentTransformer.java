@@ -51,9 +51,10 @@ public class OmrsObsDocumentTransformer {
             } else if (DocumentReference.class.equals(claz)) {
                 return (T) getDocumentRefFromTemplate(obs);
             }
-        } else {
-            return (T) getPrescriptionDocument(obs);
+        } else if (Binary.class.equals(claz)) {
+            return (T) getBinaryDocument(obs);
         }
+        log.warn(String.format("Can not transform document from obs [%d] for specified type [%s]", obs.getId(), claz.getName()));
         return null;
     }
 
@@ -67,7 +68,7 @@ public class OmrsObsDocumentTransformer {
         return obs.getGroupMembers().stream()
                 .filter(member -> member.getConcept().getUuid().equals(attachmentConcept.getUuid()))
                 .findFirst()
-                .map(this::getPrescriptionDocument)
+                .map(this::getBinaryDocument)
                 .orElse(null);
     }
 
@@ -89,7 +90,7 @@ public class OmrsObsDocumentTransformer {
         return documentConcept != null && obs.getConcept().getUuid().equals(documentConcept.getUuid());
     }
 
-    private Binary getPrescriptionDocument(Obs obs) {
+    private Binary getBinaryDocument(Obs obs) {
         try {
             Path filePath = Paths.get(Config.PATIENT_DOCUMENTS_PATH.getValue(), getFileLocation(obs));
             if (!Files.exists(filePath)) {

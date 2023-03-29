@@ -104,6 +104,23 @@ public class FHIRUtils {
         coding.setDisplay("Clinical consultation report");
         return type;
     }
+    public static CodeableConcept getMedicalRecordDocumentType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_LOINC_SYSTEM);
+        coding.setCode("11503-0");
+        coding.setDisplay("Medical records");
+        return type;
+    }
+
+    public static CodeableConcept getRecordArtifactType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("419891008");
+        coding.setDisplay("Record artifact");
+        return type;
+    }
 
     public static CodeableConcept getOPConsultType() {
         CodeableConcept type = new CodeableConcept();

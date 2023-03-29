@@ -41,7 +41,7 @@ class OrganizationContextService {
     }
 
     OrganizationContext buildContext(Optional<Location> org) {
-        Organization organization = org.isPresent() ? buildOrg(org.get()) : createOrganizationInstance();
+        Organization organization = org.map(this::buildOrg).orElseGet(this::createOrganizationInstance);
         return OrganizationContext.builder()
                 .organization(organization)
                 .webUrl(getOrganizationUrl(organization))
@@ -117,5 +117,22 @@ class OrganizationContextService {
         String hfrName = administrationService.getGlobalProperty(Config.PROP_HFR_NAME.getValue());
         String hfrSystem = administrationService.getGlobalProperty(Config.PROP_HFR_SYSTEM.getValue());
         return FHIRUtils.createOrgInstance(hfrId, hfrName, hfrSystem);
+    }
+
+    public static Optional<Location> findOrganization(Location location) {
+        Optional<Location> orgLocation = identifyLocationByTag(location, ORGANIZATION_LOCATION_TAG);
+        if (!orgLocation.isPresent()) {
+            return identifyLocationByTag(location, VISIT_LOCATION_TAG);
+        } else {
+            return orgLocation;
+        }
+    }
+
+    private static Optional<Location> identifyLocationByTag(Location location, String tagName) {
+        if (location == null) {
+            return Optional.empty();
+        }
+        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
+        return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
     }
 }
