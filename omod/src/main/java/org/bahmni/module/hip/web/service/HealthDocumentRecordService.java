@@ -1,6 +1,7 @@
 package org.bahmni.module.hip.web.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.HealthDocumentRecordBundle;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.openmrs.Concept;
@@ -14,13 +15,9 @@ import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,13 +76,26 @@ public class HealthDocumentRecordService {
         }
         Optional<Location> location = OrganizationContextService.findOrganization(visit.getLocation());
         OrganizationContext organizationContext = organizationContextService.buildContext(location);
-        return visit.getEncounters().stream()
+        Map<Encounter, List<Obs>> encounterObsDocList = visit.getEncounters().stream()
                 .filter(e -> fromEncounterDate == null || e.getEncounterDatetime().after(fromEncounterDate))
                 .map(encounter -> encounter.getObsAtTopLevel(false))
                 .flatMap(Collection::stream)
-                .filter(obs -> obs.getConcept().getUuid().equals(documentConcept.getUuid()))
-                .map(obs -> documentRecordBuilder.build(obs, organizationContext))
+                .filter(obs -> obs.getConcept().getUuid().equals(documentConcept.getUuid()) && !isExternalOriginDoc(obs))
+                .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
+        return encounterObsDocList.entrySet()
+                .stream().map(entry -> documentRecordBuilder.build(entry.getKey(), entry.getValue(), organizationContext))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    private boolean isExternalOriginDoc(Obs obs) {
+        if (obs.isObsGrouping()) {
+            Concept externalOriginDocConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.EXTERNAL_ORIGIN);
+            Optional<Obs> externalOriginObs = obs.getGroupMembers().stream().filter(o -> o.getConcept().getUuid().equals(externalOriginDocConcept.getUuid())).findFirst();
+            if (externalOriginObs.isPresent()) {
+                return !StringUtils.isEmpty(externalOriginObs.get().getValueText());
+            }
+        }
+        return false;
     }
 }

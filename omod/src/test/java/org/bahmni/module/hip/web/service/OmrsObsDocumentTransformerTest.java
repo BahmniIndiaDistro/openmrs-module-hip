@@ -7,6 +7,7 @@ import org.openmrs.Concept;
 import org.openmrs.Obs;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
+import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 
 import java.util.Properties;
 
@@ -39,11 +40,12 @@ public class OmrsObsDocumentTransformerTest {
     public void isSupportedDocument() {
         ConceptService conceptService = mock(ConceptService.class);
         AdministrationService administrationService = mock(AdministrationService.class);
+        ConceptTranslator conceptTranslator = mock(ConceptTranslator.class);
         Properties abdmProperties = new Properties();
         abdmProperties.put(AbdmConfig.DocumentKind.PRESCIPTION.getMapping(), PRESCRIPTION_DOC_TYPE_CONCEPT);
         abdmProperties.put(AbdmConfig.DocumentKind.TEMPLATE.getMapping(), "4daeef16-696b-4689-98a4-8b3f3401db80");
         AbdmConfig abdmConfig = AbdmConfig.instanceFrom(abdmProperties, administrationService, conceptService);
-        OmrsObsDocumentTransformer transformer = new OmrsObsDocumentTransformer(abdmConfig);
+        OmrsObsDocumentTransformer transformer = new OmrsObsDocumentTransformer(abdmConfig, conceptTranslator);
         Obs obs = new Obs();
         Concept concept = new Concept();
         concept.setUuid(PRESCRIPTION_DOC_TYPE_CONCEPT);

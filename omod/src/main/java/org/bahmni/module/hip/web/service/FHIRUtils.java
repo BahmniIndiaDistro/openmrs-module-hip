@@ -122,6 +122,15 @@ public class FHIRUtils {
         return type;
     }
 
+    public static CodeableConcept getPatientRecordType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("184216000");
+        coding.setDisplay("Record artifact");
+        return type;
+    }
+
     public static CodeableConcept getOPConsultType() {
         CodeableConcept type = new CodeableConcept();
         Coding coding = type.addCoding();

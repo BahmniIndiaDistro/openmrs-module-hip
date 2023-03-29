@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,5 +68,41 @@ public class FhirHealthDocumentRecordBuilder {
                     .setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(organizationContext.getOrganization(), "Organization")))
                     .setId(UUID.randomUUID().toString());
         return composition;
+    }
+
+    public HealthDocumentRecordBundle build(Encounter encounter, List<Obs> obsDocList, OrganizationContext orgContext) {
+        if (obsDocList.isEmpty()) return null;
+        List<DocumentReference> documentRefs = obsDocList.stream()
+                .map(docObs -> documentTransformer.transForm(docObs, DocumentReference.class))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (documentRefs.isEmpty()) return null;
+
+        org.hl7.fhir.r4.model.Encounter docEncounter = fhirResourceMapper.mapToEncounter(encounter);
+        Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
+        List<Practitioner> practitioners = encounter.getEncounterProviders()
+                .stream()
+                .map(fhirResourceMapper::mapToPractitioner)
+                .collect(Collectors.toList());
+        String bundleId = String.format("HDR-%d", encounter.getId());
+        Bundle bundle = FHIRUtils.createBundle(encounter.getEncounterDatetime(), bundleId, orgContext.getWebUrl());
+        Composition composition =
+                compositionFrom(encounter, orgContext)
+                        .setSubject(FHIRUtils.getReferenceToResource(patient))
+                        .setEncounter(FHIRUtils.getReferenceToResource(docEncounter));
+        FHIRUtils.addToBundleEntry(bundle, composition, false);
+        FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
+        FHIRUtils.addToBundleEntry(bundle, patient, false);
+        FHIRUtils.addToBundleEntry(bundle, docEncounter, false);
+        FHIRUtils.addToBundleEntry(bundle, practitioners, false);
+        Composition.SectionComponent recordSection = composition.addSection()
+                .setTitle("Record Artifact")
+                .setCode(FHIRUtils.getRecordArtifactType());
+        documentRefs.forEach(docRef -> {
+            FHIRUtils.addToBundleEntry(bundle, docRef, false);
+            recordSection.addEntry(FHIRUtils.getReferenceToResource(docRef));
+        });
+        CareContext careContext = CareContext.builder().careContextReference(encounter.getVisit().getUuid()).careContextType("Visit").build();
+        return new HealthDocumentRecordBundle(careContext, bundle);
     }
 }
