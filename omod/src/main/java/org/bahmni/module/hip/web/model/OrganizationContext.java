@@ -1,11 +1,10 @@
 package org.bahmni.module.hip.web.model;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hl7.fhir.r4.model.Organization;
-import org.openmrs.VisitType;
+import org.openmrs.Visit;
 
 @Builder
 public class OrganizationContext {
@@ -16,6 +15,6 @@ public class OrganizationContext {
 
     public Class careContextType() {
         //Hardcoded right now. Should also deal with programType, visit or visitType.
-        return VisitType.class;
+        return Visit.class;
     }
 }

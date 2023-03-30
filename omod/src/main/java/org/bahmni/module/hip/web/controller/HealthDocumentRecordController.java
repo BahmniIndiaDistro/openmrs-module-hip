@@ -1,10 +1,9 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.model.BundledImmunizationResponse;
-import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
-import org.bahmni.module.hip.web.service.ImmunizationRecordService;
-import org.bahmni.module.hip.web.utils.DateUtils;
+import org.bahmni.module.hip.web.model.BundledHealthDocumentRecordResponse;
+import org.bahmni.module.hip.web.model.HealthDocumentRecordBundle;
+import org.bahmni.module.hip.web.service.HealthDocumentRecordService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -23,49 +22,49 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import static org.bahmni.module.hip.web.utils.DateUtils.validDate;
 
-@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/immunizationRecord")
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/healthDocumentRecord")
 @RestController
-public class ImmunizationRecordController extends BaseRestController {
-    private ImmunizationRecordService immunizationRecordService;
+
+public class HealthDocumentRecordController extends BaseRestController {
     private final ObjectMapper mapper = new ObjectMapper();
+    private HealthDocumentRecordService healthDocumentRecordService;
 
     @Autowired
-    public ImmunizationRecordController(ImmunizationRecordService immunizationRecordService) {
-        this.immunizationRecordService = immunizationRecordService;
+    public HealthDocumentRecordController(HealthDocumentRecordService healthDocumentRecordService) {
+        this.healthDocumentRecordService = healthDocumentRecordService;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/visit", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
-    ResponseEntity<?> getImmunizationsForVisit(@RequestParam String patientId,
+    ResponseEntity<?> getHealthDocumentRecordsForVisit(@RequestParam String patientId,
                                                @RequestParam String visitUuid,
                                                @RequestParam(required = false) String fromDate,
                                                @RequestParam(required = false) String toDate) throws IOException {
-        if (visitUuid == null || visitUuid.isEmpty()) {
-            return ResponseEntity.badRequest().body(ClientError.noVisitUuidProvided());
-        }
 
         Date fromEncounterDate = null, toEncounterDate = null;
+
         if (!StringUtils.isEmpty(fromDate)) {
-            fromEncounterDate = DateUtils.validDate(fromDate);
+            fromEncounterDate = validDate(fromDate);
             if (fromEncounterDate == null) {
                 return ResponseEntity.badRequest().body(ClientError.invalidStartDate());
             }
         }
 
         if (!StringUtils.isEmpty(toDate)) {
-            toEncounterDate = DateUtils.validDate(toDate);
+            toEncounterDate = validDate(toDate);
             if (toEncounterDate == null) {
                 return ResponseEntity.badRequest().body(ClientError.invalidEndDate());
             }
         }
 
-        List<ImmunizationRecordBundle> immunizationRecordsForVisit
-                = immunizationRecordService.getImmunizationRecordsForVisit(patientId, visitUuid, fromEncounterDate, toEncounterDate);
-
+        List<HealthDocumentRecordBundle> documentBundlesForVisit =
+                this.healthDocumentRecordService.getDocumentsForVisit(visitUuid, patientId, fromEncounterDate, toEncounterDate);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(mapper.writeValueAsString(new BundledImmunizationResponse(immunizationRecordsForVisit)));
-    }
+                .body(mapper.writeValueAsString(new BundledHealthDocumentRecordResponse(documentBundlesForVisit)));
 
+
+    }
 }

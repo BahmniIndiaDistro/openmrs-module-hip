@@ -77,7 +77,8 @@ public class AbdmConfig {
     public enum DocTemplateAttribute {
         DOC_TYPE("abdm.conceptMap.docTemplate.docType"),
         ATTACHMENT("abdm.conceptMap.docTemplate.attachment"),
-        UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef");
+        UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef"),
+        EXTERNAL_ORIGIN("abdm.conceptMap.docTemplate.externalOrigin");
         private final String mapping;
 
         DocTemplateAttribute(String mapping) {
