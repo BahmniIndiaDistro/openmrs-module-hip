@@ -104,6 +104,32 @@ public class FHIRUtils {
         coding.setDisplay("Clinical consultation report");
         return type;
     }
+    public static CodeableConcept getMedicalRecordDocumentType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_LOINC_SYSTEM);
+        coding.setCode("11503-0");
+        coding.setDisplay("Medical records");
+        return type;
+    }
+
+    public static CodeableConcept getRecordArtifactType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("419891008");
+        coding.setDisplay("Record artifact");
+        return type;
+    }
+
+    public static CodeableConcept getPatientRecordType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("184216000");
+        coding.setDisplay("Record artifact");
+        return type;
+    }
 
     public static CodeableConcept getOPConsultType() {
         CodeableConcept type = new CodeableConcept();
@@ -243,4 +269,83 @@ public class FHIRUtils {
         return concept;
     }
 
+    public static CodeableConcept getWellnessRecordType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("1156871006");
+        coding.setDisplay("Wellness record");
+        return type;
+    }
+    public static CodeableConcept getVitalDocumentType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("1184593002");
+        coding.setDisplay("Vital sign");
+        return type;
+    }
+
+    public static CodeableConcept getBodyMeasurementType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("248326004");
+        coding.setDisplay("Body Measurement");
+        return type;
+    }
+
+    public static CodeableConcept getPhysicalActivityType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("68130003");
+        coding.setDisplay("Physical Activity");
+        return type;
+    }
+
+    public static CodeableConcept getGeneralAssessmentType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("310813001");
+        coding.setDisplay("General Assessment");
+        return type;
+    }
+
+    public static CodeableConcept getWomenHealthType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+//        coding.setCode("310813001");
+        coding.setDisplay("Women Health");
+        return type;
+    }
+
+    public static CodeableConcept getLifestyleType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("134436002");
+        coding.setDisplay("Lifestyle");
+        return type;
+    }
+
+	public static CodeableConcept getOtherObservationType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+//        coding.setCode("134436002");
+        coding.setDisplay("Other Observations");
+        return type;
+	}
+
+    public static CodeableConcept getDocumentReferenceType() {
+        CodeableConcept type = new CodeableConcept();
+        Coding coding = type.addCoding();
+        coding.setSystem(Constants.FHIR_SCT_SYSTEM);
+        coding.setCode("308910008");
+        coding.setDisplay("Document Reference");
+        return type;
+    }
 }

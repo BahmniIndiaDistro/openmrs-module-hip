@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -35,6 +36,7 @@ public class AbdmConfig {
     private final Properties properties = new Properties();
 
     private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final HashMap<WellnessAttribute, String> wellnessAttributeStringHashMap = new HashMap<>();
     private final Map<String, Concept> conceptCache = new HashMap<>();
 
     @Autowired
@@ -77,7 +79,8 @@ public class AbdmConfig {
     public enum DocTemplateAttribute {
         DOC_TYPE("abdm.conceptMap.docTemplate.docType"),
         ATTACHMENT("abdm.conceptMap.docTemplate.attachment"),
-        UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef");
+        UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef"),
+        EXTERNAL_ORIGIN("abdm.conceptMap.docTemplate.externalOrigin");
         private final String mapping;
 
         DocTemplateAttribute(String mapping) {
@@ -115,14 +118,13 @@ public class AbdmConfig {
 
     public enum WellnessAttribute {
         VITAL_SIGNS("abdm.conceptMap.wellness.vitalSigns"),
-        OCCURRENCE_DATE("abdm.conceptMap.immunization.occurrenceDateTime"),
-        MANUFACTURER("abdm.conceptMap.immunization.manufacturer"),
-        BRAND_NAME("abdm.conceptMap.immunization.brandName"),
-        DOSE_NUMBER("abdm.conceptMap.immunization.doseNumber"),
-        LOT_NUMBER("abdm.conceptMap.immunization.lotNumber"),
-        EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
-        STATUS("abdm.conceptMap.immunization.status"),
-        VACCINE_NON_CODED("abdm.conceptMap.immunization.vaccineNonCoded");
+        BODY_MEASUREMENT("abdm.conceptMap.wellness.bodyMeasurement"),
+        PHYSICAL_ACTIVITY("abdm.conceptMap.wellness.physicalActivity"),
+        GENERAL_ASSESSMENT("abdm.conceptMap.wellness.generalAssessment"),
+        WOMEN_HEALTH("abdm.conceptMap.wellness.womenHealth"),
+        LIFESTYLE("abdm.conceptMap.wellness.lifestyle"),
+        OTHER_OBSERVATIONS("abdm.conceptMap.wellness.otherObservations"),
+        DOCUMENT_REFERENCE("abdm.conceptMap.wellness.documentReference");
 
         private final String mapping;
 
@@ -139,6 +141,9 @@ public class AbdmConfig {
         return immunizationAttributesMap;
     }
 
+    public Map<WellnessAttribute, String> getWellnessAttributeConfigs() {
+        return wellnessAttributeStringHashMap;
+    }
     public Concept getImmunizationObsRootConcept() {
         return getImmunizationAttributeConcept(ImmunizationAttribute.TEMPLATE);
     }
@@ -166,7 +171,24 @@ public class AbdmConfig {
                 });
     }
 
+    private List<Concept> lookupConcepts(String lookupKey) {
+        String lookupValues = (String) properties.get(lookupKey);
+        if (StringUtils.isEmpty(lookupValues)) {
+            log.info(String.format("Property [%s] is not set. System may not be able to send data", lookupKey));
+            return null;
+        }
+        return retrieveConcepts(lookupValues);
+    }
 
+    private List<Concept> retrieveConcepts(String lookupValues) {
+        List<String> lookupValueList = Arrays.asList(lookupValues.split(","));
+        return lookupValueList.stream().map(lookupValue -> Optional.ofNullable(conceptCache.get(lookupValue))
+                .orElseGet(() -> {
+                    Concept concept = conceptService.getConceptByUuid(lookupValue);
+                    conceptCache.put(lookupValue, concept);
+                    return concept;
+                })).collect(Collectors.toList());
+    }
     public Concept getDocumentConcept(DocumentKind type) {
         return lookupConcept(type.getMapping());
     }
@@ -177,6 +199,9 @@ public class AbdmConfig {
 
     public Concept getImmunizationAttributeConcept(ImmunizationAttribute type) {
         return lookupConcept(type.getMapping());
+    }
+    public List<Concept> getWellnessAttributeConcept(WellnessAttribute type) {
+        return lookupConcepts(type.getMapping());
     }
 
 
@@ -199,13 +224,16 @@ public class AbdmConfig {
     private static void updateImmunizationAttributeMap(AbdmConfig conf) {
         Arrays.stream(ImmunizationAttribute.values()).forEach(conceptAttribute ->
            conf.immunizationAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
+        Arrays.stream(WellnessAttribute.values()).forEach(conceptAttribute ->
+                conf.wellnessAttributeStringHashMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
     }
 
     @PostConstruct
     private void postConstruct() {
+        log.warn("Inside postConstruct");
         Path configFilePath = Paths.get(OpenmrsUtil.getApplicationDataDirectory(), ABDM_PROPERTIES_FILE_NAME);
         if (!Files.exists(configFilePath)) {
-            log.info(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
+            log.warn(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
             readFromGlobalProperties();
             return;
         }
@@ -213,6 +241,7 @@ public class AbdmConfig {
         try (InputStream configFile = Files.newInputStream(configFilePath)) {
             properties.load(configFile);
             updateImmunizationAttributeMap(this);
+            log.warn(String.format("Wellness map", wellnessAttributeStringHashMap));
         } catch (IOException e) {
             log.error("Error Occurred while trying to read ABDM config file", e);
         }
