@@ -113,6 +113,28 @@ public class AbdmConfig {
         }
     }
 
+    public enum WellnessAttribute {
+        VITAL_SIGNS("abdm.conceptMap.wellness.vitalSigns"),
+        OCCURRENCE_DATE("abdm.conceptMap.immunization.occurrenceDateTime"),
+        MANUFACTURER("abdm.conceptMap.immunization.manufacturer"),
+        BRAND_NAME("abdm.conceptMap.immunization.brandName"),
+        DOSE_NUMBER("abdm.conceptMap.immunization.doseNumber"),
+        LOT_NUMBER("abdm.conceptMap.immunization.lotNumber"),
+        EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
+        STATUS("abdm.conceptMap.immunization.status"),
+        VACCINE_NON_CODED("abdm.conceptMap.immunization.vaccineNonCoded");
+
+        private final String mapping;
+
+        WellnessAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {
         return immunizationAttributesMap;
     }
