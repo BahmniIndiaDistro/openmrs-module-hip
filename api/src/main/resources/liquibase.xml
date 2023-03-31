@@ -24,7 +24,7 @@
         </preConditions>
         <comment>Adding ABHA Number Identifier type</comment>
         <sql>
-            insert into patient_identifier_type( name, description,creator, uuid, uniqueness_behavior, location_behavior, date_created) Select 'ABHA Number','Health Id identifier type',creator,uuid(),'NON_UNIQUE','NOT_USED',now() from users where username='admin';
+            insert into patient_identifier_type( name, description,creator, uuid, uniqueness_behavior, location_behavior, date_created) Select 'ABHA Number','Health Id identifier type',creator,uuid(),'UNIQUE','NOT_USED',now() from users where username='admin';
         </sql>
     </changeSet>
 
