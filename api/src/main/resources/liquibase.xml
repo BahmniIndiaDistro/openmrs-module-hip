@@ -194,5 +194,14 @@
                     "org.openmrs.customdatatype.datatype.FreeTextDatatype", null, 0, 1, now(), 0, "4f056572-7490-4fdf-ad2e-d679b986f79b");
         </sql>
     </changeSet>
+    <changeSet id="Update-ABHA-Number-IdentifierType-To-Non-Unique-20230331120000"  author="Kavitha">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">select count(*) from patient_identifier_type where name='ABHA Number'</sqlCheck>
+        </preConditions>
+        <comment>Updating ABHA Number Identifier type</comment>
+        <sql>
+            update patient_identifier_type set uniqueness_behavior = 'NON_UNIQUE' where name = 'ABHA Number';
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>
