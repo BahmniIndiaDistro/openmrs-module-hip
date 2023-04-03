@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -38,13 +37,9 @@ public class ConsultationDaoImpl implements ConsultationDao {
     private final ProgramWorkflowService programWorkflowService;
     private final EpisodeService episodeService;
     private final EncounterDao encounterDao;
-    private final ObsService obsService;
-    private final OrderService orderService;
 
     @Autowired
-    public ConsultationDaoImpl(ObsService obsService, OrderService orderService, ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
-        this.obsService = obsService;
-        this.orderService = orderService;
+    public ConsultationDaoImpl(ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
         this.programWorkflowService = programWorkflowService;
         this.episodeService = episodeService;
         this.encounterDao = encounterDao;
@@ -60,7 +55,7 @@ public class ConsultationDaoImpl implements ConsultationDao {
 
     @Override
     public List<Obs> getChiefComplaintForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Obs> obs = getAllObs(programName, fromDate, toDate, patient);
+        List<Obs> obs = getAllObsForProgram(programName, fromDate, toDate, patient);
         List<Obs> obsSet = new ArrayList<>();
         for (Obs o : obs) {
             if (Objects.equals(o.getEncounter().getEncounterType().getName(), Config.CONSULTATION.getValue())
@@ -73,7 +68,7 @@ public class ConsultationDaoImpl implements ConsultationDao {
         return obsSet;
     }
 
-    public List<Obs> getAllObs(String programName, Date fromDate, Date toDate, Patient patient) {
+    public List<Obs> getAllObsForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(patient, programWorkflowService.getProgramByName(programName), fromDate, toDate, null, null, false);
         Set<PatientProgram> patientProgramSet = new HashSet<>(patientPrograms);
         List<Obs> obs = new ArrayList<>();
@@ -112,23 +107,6 @@ public class ConsultationDaoImpl implements ConsultationDao {
             }
         }
         return orderSet;
-    }
-
-    @Override
-    public List<Obs> getPhysicalExaminationForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        final String[] formNames = Config.Forms_To_Ignore_In_Physical_Examination.getValue().split("\\s*,\\s*");
-        List<Obs> physicalExaminationObsMap = new ArrayList<>();
-        List<Obs> obs = getAllObs(programName, fromDate, toDate, patient);
-        for (Obs o : obs) {
-            if (Objects.equals(o.getEncounter().getEncounterType().getName(), Config.CONSULTATION.getValue())
-                    && o.getValueCoded() == null
-                    && o.getConcept().getName().getLocalePreferred()
-                    && o.getObsGroup() == null
-                    && !Arrays.asList(formNames).contains(o.getConcept().getName().getName())) {
-                physicalExaminationObsMap.add(o);
-            }
-        }
-        return physicalExaminationObsMap;
     }
 }
 

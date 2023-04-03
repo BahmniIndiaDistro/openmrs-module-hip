@@ -68,7 +68,9 @@ public class ConsultationService {
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Obs> physicalExaminations = consultationDao.getPhysicalExaminationForProgram(programName,fromDate,toDate,patient);
+        List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
+        List<Obs> physicalExaminations = consultationDao.getAllObsForProgram(programName, fromDate, toDate, patient)
+                .stream().filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
         return getEncounterListMapForPhysicalExamination(physicalExaminations);
     }
 
