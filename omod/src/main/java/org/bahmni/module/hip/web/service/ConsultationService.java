@@ -4,6 +4,7 @@ import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.ConsultationDao;
 import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
+import org.openmrs.Concept;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
 import org.openmrs.Order;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +32,7 @@ public class ConsultationService {
     private final ConsultationDao consultationDao;
     private final OPConsultDao opConsultDao;
     private final DiagnosticReportService diagnosticReportService;
+    private final AbdmConfig abdmConfig;
 
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Image","Tuberculosis, Treatment Plan","Tuberculosis, Next Followup Visit","Tuberculosis, Plan for next visit","Tuberculosis, Patient Category","Current Followup Visit After",
             "Tuberculosis, Plan for next visit","Malaria, Parents Name","Malaria, Death Date", "Childhood Illness, Vitamin A Capsules Provided","Childhood Illness, Albendazole Given","Childhood Illness, Referred out",
@@ -37,10 +40,11 @@ public class ConsultationService {
             "HIVTC, Transferred out", "HIVTC, Regimen when transferred out", "HIVTC, Date of transferred out", "HIVTC, Transferred out to", "HIVTC, Chief Complaint"));
 
     @Autowired
-    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao, DiagnosticReportService diagnosticReportService) {
+    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao, DiagnosticReportService diagnosticReportService, AbdmConfig abdmConfig) {
         this.consultationDao = consultationDao;
         this.opConsultDao = opConsultDao;
         this.diagnosticReportService = diagnosticReportService;
+        this.abdmConfig = abdmConfig;
     }
 
     public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Visit visit) {
@@ -54,8 +58,13 @@ public class ConsultationService {
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit) {
-        List<Obs> physicalExaminations = consultationDao.getPhysicalExamination(visit);
-        return getEncounterListMapForPhysicalExamination(physicalExaminations);
+        List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
+        Map<Encounter, List<Obs>> encounterObsMap = visit.getEncounters().stream()
+                .map(encounter -> encounter.getObsAtTopLevel(false))
+                .flatMap(Collection::stream)
+                .filter(obs -> conceptList.contains(obs.getConcept()))
+                .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
+        return encounterObsMap;
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {

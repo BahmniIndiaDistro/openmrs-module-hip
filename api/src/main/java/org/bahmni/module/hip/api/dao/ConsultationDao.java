@@ -11,7 +11,6 @@ import java.util.List;
 public interface ConsultationDao {
     List<Obs> getChiefComplaints(Visit visit);
     List<Obs> getChiefComplaintForProgram(String programName, Date fromDate, Date toDate, Patient patient);
-    List<Obs> getPhysicalExamination(Visit visit);
     List<Order> getOrders(Visit visit);
     List<Order> getOrdersForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Obs> getPhysicalExaminationForProgram(String programName, Date fromDate, Date toDate, Patient patient);

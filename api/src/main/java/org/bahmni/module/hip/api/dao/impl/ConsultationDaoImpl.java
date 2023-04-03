@@ -88,17 +88,6 @@ public class ConsultationDaoImpl implements ConsultationDao {
     }
 
     @Override
-    public List<Obs> getPhysicalExamination(Visit visit) {
-        final String[] formNames = Config.Forms_To_Ignore_In_Physical_Examination.getValue().split("\\s*,\\s*");
-        List<Obs> physicalExaminationObsMap = encounterDao.GetAllObsForVisit(visit,Config.CONSULTATION.getValue(),null)
-                .stream().filter(o -> o.getValueCoded() == null
-                        &&  o.getObsGroup() == null
-                        && !Arrays.asList(formNames).contains(o.getConcept().getName().getName()) )
-                .collect(Collectors.toList());
-        return physicalExaminationObsMap;
-    }
-
-    @Override
     public List<Order> getOrders(Visit visit) {
         return  encounterDao.GetOrdersForVisit(visit).stream()
                 .filter(order -> order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION))
