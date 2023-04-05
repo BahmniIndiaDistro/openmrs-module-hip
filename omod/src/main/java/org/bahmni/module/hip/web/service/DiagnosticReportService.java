@@ -171,15 +171,17 @@ public class DiagnosticReportService {
     }
 
     private void putFulFilledOrders(String orderUuid, Map<String, List<LabOrderResult>> groupedByOrderUUID, Map<Order,List<Obs>> groupObs, Map<LabOrderResult, Obs> labresult){
-        LabOrderResult labOrderResult = groupedByOrderUUID.get(orderUuid).get(0);
+        List<LabOrderResult> labOrderResults = groupedByOrderUUID.get(orderUuid);
         Order order = orderDao.getOrderByUuid(orderUuid);
         Obs labObservation = groupObs.containsKey(order) ? groupObs.get(order).get(0) : null;
-        if(labOrderResult.getResult() != null){
-            labresult.put(labOrderResult, labObservation);
-        }
-        else{
-            if(labObservation != null)
-                labresult.put(labOrderResult,labObservation);
+        for (LabOrderResult labOrderResult: labOrderResults) {
+            if(labOrderResult.getResult() != null){
+                labresult.put(labOrderResult, labObservation);
+            }
+            else{
+                if(labObservation != null)
+                    labresult.put(labOrderResult,labObservation);
+            }
         }
     }
 

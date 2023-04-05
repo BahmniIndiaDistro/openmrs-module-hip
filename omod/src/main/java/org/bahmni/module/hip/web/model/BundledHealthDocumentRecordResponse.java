@@ -10,5 +10,5 @@ import java.util.List;
 @Getter
 @Setter
 public class BundledHealthDocumentRecordResponse {
-    private List<HealthDocumentRecordBundle> healthDocumentRecords;
+    private List<HealthDocumentRecordBundle> healthDocumentRecord;
 }

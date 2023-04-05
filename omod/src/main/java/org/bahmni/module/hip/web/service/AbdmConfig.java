@@ -56,6 +56,10 @@ public class AbdmConfig {
         Arrays.stream(DocTemplateAttribute.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
+
+        Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
     }
 
@@ -131,10 +135,35 @@ public class AbdmConfig {
         WellnessAttribute(String mapping) {
             this.mapping = mapping;
         }
+        public String getMapping() {
+            return mapping;
+        }
+    }
+    public enum PhysicalExamination {
+        HEIGHT("abdm.conceptMap.physicalExamination.height"),
+        WEIGHT("abdm.conceptMap.physicalExamination.weight"),
+        TEMPERATURE("abdm.conceptMap.physicalExamination.temperature"),
+        SYSTOLICBP("abdm.conceptMap.physicalExamination.systolicBP"),
+        DIASTOLICBP("abdm.conceptMap.physicalExamination.diastolicBP"),
+        PULSE("abdm.conceptMap.physicalExamination.pulse");
+
+        private final String mapping;
+
+        PhysicalExamination(String mapping) {
+            this.mapping = mapping;
+        }
 
         public String getMapping() {
             return mapping;
         }
+    }
+
+    public List<Concept> getPhysicalExaminationConcepts(){
+        List<Concept> conceptList = new ArrayList<>();
+        Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
+                conceptList.add(lookupConcept(attribute.getMapping())));
+        log.warn("conceptList " + conceptList);
+        return conceptList;
     }
 
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {

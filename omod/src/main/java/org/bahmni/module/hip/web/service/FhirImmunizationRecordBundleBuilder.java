@@ -127,7 +127,7 @@ public class FhirImmunizationRecordBundleBuilder {
         FHIRUtils.addToBundleEntry(bundle, orgContext.getOrganization(), false);
         FHIRUtils.addToBundleEntry(bundle, immunizationEncounter, false);
         FHIRUtils.addToBundleEntry(bundle, practitioners, false);
-        if (incident.getManufacturer() != null) {
+        if (incident.getManufacturer() != null && incident.getManufacturer().getResource() != null) {
             FHIRUtils.addToBundleEntry(bundle, (Resource) incident.getManufacturer().getResource(), false);
         }
 

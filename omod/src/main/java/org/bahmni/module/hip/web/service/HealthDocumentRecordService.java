@@ -91,6 +91,9 @@ public class HealthDocumentRecordService {
     private boolean isExternalOriginDoc(Obs obs) {
         if (obs.isObsGrouping()) {
             Concept externalOriginDocConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.EXTERNAL_ORIGIN);
+            if (externalOriginDocConcept == null) {
+                return false;
+            }
             Optional<Obs> externalOriginObs = obs.getGroupMembers().stream().filter(o -> o.getConcept().getUuid().equals(externalOriginDocConcept.getUuid())).findFirst();
             if (externalOriginObs.isPresent()) {
                 return !StringUtils.isEmpty(externalOriginObs.get().getValueText());
