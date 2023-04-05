@@ -125,7 +125,7 @@ public class OmrsObsDocumentTransformer {
         try {
             Path filePath = Paths.get(Config.PATIENT_DOCUMENTS_PATH.getValue(), getFileLocation(obs));
             if (!Files.exists(filePath)) {
-                log.info(String.format("Can not read file: %s", filePath));
+                log.warn(String.format("Can not read file: %s", filePath));
                 return null;
             }
             byte[] fileContent = Files.readAllBytes(filePath);
