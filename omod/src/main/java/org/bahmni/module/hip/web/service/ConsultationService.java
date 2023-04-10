@@ -115,17 +115,27 @@ public class ConsultationService {
         ConcurrentHashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new ConcurrentHashMap<>();
 
         for (Obs obs:chiefComplaints) {
-            String valutext = null;
+            String value;
             if (obs.getGroupMembers().size() > 0 && Config.CONCEPT_DETAILS_CONCEPT_CLASS.getValue().equals(obs.getConcept().getConceptClass().getName()) && obs.getFormFieldNamespace() != null) {
-                valutext = getCustomDisplayStringForChiefComplaint(obs.getGroupMembers());
+                value = getCustomDisplayStringForChiefComplaint(obs.getGroupMembers());
             }
+            else
+                value = getObsValue(obs);
             if(!encounterChiefComplaintsMap.containsKey(obs.getEncounter())){
                 encounterChiefComplaintsMap.put(obs.getEncounter(), new ArrayList<>());
             }
-            encounterChiefComplaintsMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), valutext != null ? valutext : obs.getValueCoded().getDisplayString(), obs.getDateCreated()));
+            encounterChiefComplaintsMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), value , obs.getDateCreated()));
         }
 
         return encounterChiefComplaintsMap;
+    }
+
+    private String getObsValue(Obs obs){
+        if(obs.getValueCoded() != null)
+            return obs.getValueCoded().getDisplayString();
+        else if(obs.getValueNumeric() != null)
+            return String.valueOf(Math.round(obs.getValueNumeric()));
+        return obs.getValueText();
     }
 
     private List<Obs> getObservationsForChiefComplaint(Stream<Obs> obsStream){
@@ -134,7 +144,7 @@ public class ConsultationService {
             return obsStream.filter(obs -> obs.getConcept().equals(chiefComplaintObsRootConcept)).collect(Collectors.toList());
         }
         List<Concept> conceptList = abdmConfig.getHistoryExaminationConcepts();
-        return obsStream.filter(obs -> conceptList.contains(obs.getObsGroup().getConcept())).collect(Collectors.toList());
+        return obsStream.filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
     }
 
     private Map<Encounter, List<Obs>> getEncounterListMapForPhysicalExamination(List<Obs> physicalExaminations) {
@@ -209,12 +219,13 @@ public class ConsultationService {
     public String getCustomDisplayStringForChiefComplaint(Set<Obs> groupMembers) {
         String chiefComplaintCoded = null, signOrSymptomDuration = null, chiefComplaintDuration = null;
         for (Obs childObs : groupMembers) {
-            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_CODED.getMapping())))
-                chiefComplaintCoded = childObs.getValueCoded().getDisplayString();
+            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_CODED.getMapping()))
+                || childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_NON_CODED.getMapping())))
+                chiefComplaintCoded = getObsValue(childObs);
             if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.SIGN_SYMPTOM_DURATION.getMapping())))
-                signOrSymptomDuration = String.valueOf(Math.round(childObs.getValueNumeric()));
+                signOrSymptomDuration = getObsValue(childObs);
             if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_DURATION.getMapping())))
-                chiefComplaintDuration = childObs.getValueCoded().getDisplayString();
+                chiefComplaintDuration = getObsValue(childObs);
         }
         return (chiefComplaintCoded + " " + "since" + " " + signOrSymptomDuration + " " + chiefComplaintDuration);
     }
