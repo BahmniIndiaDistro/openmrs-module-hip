@@ -46,14 +46,6 @@ public class ConsultationDaoImpl implements ConsultationDao {
     }
 
     @Override
-    public List<Obs> getChiefComplaints(Visit visit) {
-        List<Obs> chiefComplaintObsMap = encounterDao.GetAllObsForVisit(visit,Config.CONSULTATION.getValue(),Config.CHIEF_COMPLAINT.getValue())
-                .stream().filter(o -> o.getValueCoded() != null && o.getConcept().getName().getLocalePreferred())
-                .collect(Collectors.toList());
-        return chiefComplaintObsMap;
-    }
-
-    @Override
     public List<Obs> getChiefComplaintForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<Obs> obs = getAllObsForProgram(programName, fromDate, toDate, patient);
         List<Obs> obsSet = new ArrayList<>();

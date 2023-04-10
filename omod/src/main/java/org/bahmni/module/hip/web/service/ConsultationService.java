@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ConsultationService {
@@ -48,8 +49,15 @@ public class ConsultationService {
     }
 
     public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Visit visit) {
-        List<Obs> chiefComplaints = consultationDao.getChiefComplaints(visit);
-        return getEncounterListConcurrentHashMapForChiefComplaint(chiefComplaints);
+        Stream<Obs> obsStream = visit.getEncounters().stream()
+                .map(Encounter::getAllObs)
+                .flatMap(Collection::stream);
+        Concept chiefComplaintObsRootConcept = abdmConfig.getChiefComplaintObsRootConcept();
+        if(abdmConfig.getChiefComplaintObsRootConcept() != null){
+            return getEncounterListConcurrentHashMapForChiefComplaint(obsStream.filter(obs -> obs.getConcept().equals(chiefComplaintObsRootConcept)).collect(Collectors.toList()));
+        }
+        List<Concept> conceptList = abdmConfig.getHistoryExaminationConcepts();
+        return  getEncounterListConcurrentHashMapForChiefComplaint(obsStream.filter(obs -> conceptList.contains(obs.getObsGroup().getConcept())).collect(Collectors.toList()));
     }
 
     public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
@@ -109,12 +117,17 @@ public class ConsultationService {
     private ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterListConcurrentHashMapForChiefComplaint(List<Obs> chiefComplaints) {
         ConcurrentHashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = new ConcurrentHashMap<>();
 
-        for (Obs o : chiefComplaints) {
-            if(!encounterChiefComplaintsMap.containsKey(o.getEncounter())){
-                encounterChiefComplaintsMap.put(o.getEncounter(), new ArrayList<>());
+        for (Obs obs:chiefComplaints) {
+            String valutext = null;
+            if (obs.getGroupMembers().size() > 0 && Config.CONCEPT_DETAILS_CONCEPT_CLASS.getValue().equals(obs.getConcept().getConceptClass().getName()) && obs.getFormFieldNamespace() != null) {
+                valutext = getCustomDisplayStringForChiefComplaint(obs.getGroupMembers());
             }
-            encounterChiefComplaintsMap.get(o.getEncounter()).add(new OpenMrsCondition(o.getUuid(), o.getValueCoded().getDisplayString(), o.getDateCreated()));
+            if(!encounterChiefComplaintsMap.containsKey(obs.getEncounter())){
+                encounterChiefComplaintsMap.put(obs.getEncounter(), new ArrayList<>());
+            }
+            encounterChiefComplaintsMap.get(obs.getEncounter()).add(new OpenMrsCondition(obs.getUuid(), valutext != null ? valutext : obs.getValueCoded().getDisplayString(), obs.getDateCreated()));
         }
+
         return encounterChiefComplaintsMap;
     }
 
@@ -185,5 +198,18 @@ public class ConsultationService {
         } else {
             groupMembers.add(physicalExamination);
         }
+    }
+
+    public String getCustomDisplayStringForChiefComplaint(Set<Obs> groupMembers) {
+        String chiefComplaintCoded = null, signOrSymptomDuration = null, chiefComplaintDuration = null;
+        for (Obs childObs : groupMembers) {
+            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_CODED.getMapping())))
+                chiefComplaintCoded = childObs.getValueCoded().getDisplayString();
+            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.SIGN_SYMPTOM_DURATION.getMapping())))
+                signOrSymptomDuration = String.valueOf(Math.round(childObs.getValueNumeric()));
+            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_DURATION.getMapping())))
+                chiefComplaintDuration = childObs.getValueCoded().getDisplayString();
+        }
+        return (chiefComplaintCoded + " " + "since" + " " + signOrSymptomDuration + " " + chiefComplaintDuration);
     }
 }

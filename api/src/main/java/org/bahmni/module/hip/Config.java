@@ -33,15 +33,7 @@ public enum Config {
     IMAGE("Image"),
     PATIENT_VIDEO("Patient Video"),
     CONCEPT_DETAILS_CONCEPT_CLASS("Concept Details"),
-    CHIEF_COMPLAINT_CODED("Chief Complaint Coded"),
-    SIGN_SYMPTOM_DURATION("Sign/symptom duration"),
-    CHIEF_COMPLAINT_DURATION("Chief Complaint Duration"),
     LAB_ORDER_TYPE_ID("4"),
-
-    //Physical_Examination_Ignoring_Form_List
-    Forms_To_Ignore_In_Physical_Examination("Discharge Summary, Death Note, Delivery Note, Opioid Substitution Therapy - Intake, Opportunistic Infection, " +
-            "Safe Abortion, ECG Notes, Operative Notes, USG Notes, Procedure Notes,Triage Reference, History and Examination, Visit Diagnoses, Patient Video"),
-
 
     PROP_HFR_ID("bahmniHip.healthFacilityRegistryId"),
     PROP_HFR_NAME( "bahmniHip.healthFacilityName"),
