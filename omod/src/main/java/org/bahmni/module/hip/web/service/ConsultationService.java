@@ -52,17 +52,14 @@ public class ConsultationService {
         Stream<Obs> obsStream = visit.getEncounters().stream()
                 .map(Encounter::getAllObs)
                 .flatMap(Collection::stream);
-        Concept chiefComplaintObsRootConcept = abdmConfig.getChiefComplaintObsRootConcept();
-        if(abdmConfig.getChiefComplaintObsRootConcept() != null){
-            return getEncounterListConcurrentHashMapForChiefComplaint(obsStream.filter(obs -> obs.getConcept().equals(chiefComplaintObsRootConcept)).collect(Collectors.toList()));
-        }
-        List<Concept> conceptList = abdmConfig.getHistoryExaminationConcepts();
-        return  getEncounterListConcurrentHashMapForChiefComplaint(obsStream.filter(obs -> conceptList.contains(obs.getObsGroup().getConcept())).collect(Collectors.toList()));
+        List<Obs> chiefComplaintObs = getObservationsForChiefComplaint(obsStream);
+        return getEncounterListConcurrentHashMapForChiefComplaint(chiefComplaintObs);
     }
 
     public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Obs> chiefComplaints = consultationDao.getChiefComplaintForProgram(programName,fromDate, toDate,patient);
-        return getEncounterListConcurrentHashMapForChiefComplaint(chiefComplaints);
+        Stream<Obs> obs = consultationDao.getAllObsForProgram(programName, fromDate, toDate, patient).stream();
+        List<Obs> chiefComplaintObs = getObservationsForChiefComplaint(obs);
+        return getEncounterListConcurrentHashMapForChiefComplaint(chiefComplaintObs);
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit) {
@@ -129,6 +126,15 @@ public class ConsultationService {
         }
 
         return encounterChiefComplaintsMap;
+    }
+
+    private List<Obs> getObservationsForChiefComplaint(Stream<Obs> obsStream){
+        Concept chiefComplaintObsRootConcept = abdmConfig.getChiefComplaintObsRootConcept();
+        if(abdmConfig.getChiefComplaintObsRootConcept() != null){
+            return obsStream.filter(obs -> obs.getConcept().equals(chiefComplaintObsRootConcept)).collect(Collectors.toList());
+        }
+        List<Concept> conceptList = abdmConfig.getHistoryExaminationConcepts();
+        return obsStream.filter(obs -> conceptList.contains(obs.getObsGroup().getConcept())).collect(Collectors.toList());
     }
 
     private Map<Encounter, List<Obs>> getEncounterListMapForPhysicalExamination(List<Obs> physicalExaminations) {

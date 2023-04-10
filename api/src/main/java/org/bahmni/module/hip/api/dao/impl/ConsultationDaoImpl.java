@@ -45,21 +45,6 @@ public class ConsultationDaoImpl implements ConsultationDao {
         this.encounterDao = encounterDao;
     }
 
-    @Override
-    public List<Obs> getChiefComplaintForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Obs> obs = getAllObsForProgram(programName, fromDate, toDate, patient);
-        List<Obs> obsSet = new ArrayList<>();
-        for (Obs o : obs) {
-            if (Objects.equals(o.getEncounter().getEncounterType().getName(), Config.CONSULTATION.getValue())
-                    && Objects.equals(o.getConcept().getName().getName(), Config.CHIEF_COMPLAINT.getValue())
-                    && o.getValueCoded() != null
-                    && o.getConcept().getName().getLocalePreferred()) {
-                obsSet.add(o);
-            }
-        }
-        return obsSet;
-    }
-
     public List<Obs> getAllObsForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(patient, programWorkflowService.getProgramByName(programName), fromDate, toDate, null, null, false);
         Set<PatientProgram> patientProgramSet = new HashSet<>(patientPrograms);
