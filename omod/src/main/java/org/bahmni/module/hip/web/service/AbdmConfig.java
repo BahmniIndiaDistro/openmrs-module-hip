@@ -144,6 +144,7 @@ public class AbdmConfig {
     public enum HistoryAndExamination {
         CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
         CHIEF_COMPLAINT_CODED("abdm.conceptMap.historyExamination.codedChiefComplaint"),
+        CHIEF_COMPLAINT_NON_CODED("abdm.conceptMap.historyExamination.nonCodedChiefComplaint"),
         SIGN_SYMPTOM_DURATION("abdm.conceptMap.historyExamination.signAndSymptomDuration"),
         CHIEF_COMPLAINT_DURATION("abdm.conceptMap.physicalExamination.chiefComplainDuration");
 
