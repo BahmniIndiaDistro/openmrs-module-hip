@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -171,14 +172,14 @@ public class AbdmConfig {
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
-        return conceptList;
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public List<Concept> getPhysicalExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
-        return conceptList;
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {
