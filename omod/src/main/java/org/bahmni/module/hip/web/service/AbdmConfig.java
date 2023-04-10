@@ -191,7 +191,6 @@ public class AbdmConfig {
     }
 
     private Concept retrieveConcept(String lookupValue) {
-        //should check with resolution (UUID now)
         return Optional.ofNullable(conceptCache.get(lookupValue))
                 .orElseGet(() -> {
                     Concept concept = conceptService.getConceptByUuid(lookupValue);
@@ -204,7 +203,7 @@ public class AbdmConfig {
         String lookupValues = (String) properties.get(lookupKey);
         if (StringUtils.isEmpty(lookupValues)) {
             log.info(String.format("Property [%s] is not set. System may not be able to send data", lookupKey));
-            return null;
+            return Collections.emptyList();
         }
         return retrieveConcepts(lookupValues);
     }
@@ -253,13 +252,10 @@ public class AbdmConfig {
     private static void updateImmunizationAttributeMap(AbdmConfig conf) {
         Arrays.stream(ImmunizationAttribute.values()).forEach(conceptAttribute ->
            conf.immunizationAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
-        Arrays.stream(WellnessAttribute.values()).forEach(conceptAttribute ->
-                conf.wellnessAttributeStringHashMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
     }
 
     @PostConstruct
     private void postConstruct() {
-        log.warn("Inside postConstruct");
         Path configFilePath = Paths.get(OpenmrsUtil.getApplicationDataDirectory(), ABDM_PROPERTIES_FILE_NAME);
         if (!Files.exists(configFilePath)) {
             log.warn(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
@@ -270,7 +266,6 @@ public class AbdmConfig {
         try (InputStream configFile = Files.newInputStream(configFilePath)) {
             properties.load(configFile);
             updateImmunizationAttributeMap(this);
-            log.warn(String.format("Wellness map", wellnessAttributeStringHashMap));
         } catch (IOException e) {
             log.error("Error Occurred while trying to read ABDM config file", e);
         }

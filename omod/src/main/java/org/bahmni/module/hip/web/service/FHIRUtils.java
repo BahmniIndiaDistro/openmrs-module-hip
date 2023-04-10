@@ -317,7 +317,6 @@ public class FHIRUtils {
         CodeableConcept type = new CodeableConcept();
         Coding coding = type.addCoding();
         coding.setSystem(Constants.FHIR_SCT_SYSTEM);
-//        coding.setCode("310813001");
         coding.setDisplay("Women Health");
         return type;
     }
@@ -335,7 +334,6 @@ public class FHIRUtils {
         CodeableConcept type = new CodeableConcept();
         Coding coding = type.addCoding();
         coding.setSystem(Constants.FHIR_SCT_SYSTEM);
-//        coding.setCode("134436002");
         coding.setDisplay("Other Observations");
         return type;
 	}

@@ -63,28 +63,28 @@ public class WellnessRecordService {
 
 		Map<AbdmConfig.WellnessAttribute, List<Concept>> wellnessAttributeConceptMap = getWellnessAttributeConcept();
 
+		if (wellnessAttributeConceptMap.isEmpty())
+			return Collections.emptyList();
 		Map<Encounter, List<Obs>> encounterObsList = visit.getEncounters().stream()
 				.filter(e -> fromEncounterDate == null || e.getEncounterDatetime().after(fromEncounterDate))
+				.filter(e-> toEncounterDate == null || e.getEncounterDatetime().before(toEncounterDate))
 				.map(encounter -> encounter.getObsAtTopLevel(false))
 				.flatMap(Collection::stream)
 				.collect(Collectors.groupingBy(obs -> obs.getEncounter()));
 
 		Map<AbdmConfig.WellnessAttribute, List<Obs>> wellnessAttributeObsMap = new HashMap<>();
 		encounterObsList.entrySet().stream().forEach(entry -> entry.getValue().stream().forEach(obs -> {
-					AbdmConfig.WellnessAttribute temp = getWellnessAttributeTypeForObs(obs, wellnessAttributeConceptMap);
-					if (temp != null) {
-						List<Obs> obsList = wellnessAttributeObsMap.get(temp);
-						obsList.add(obs);
-						wellnessAttributeObsMap.put(temp, obsList);
-//						wellnessAttributeObsMap.computeIfAbsent(temp, obsList);
-//						if (wellnessAttributeObsMap.containsKey(temp)) {
-//
-//						} else
-//							wellnessAttributeObsMap.put(temp, Arrays.asList(obs));
+					AbdmConfig.WellnessAttribute wellnessAttributeTypeForObs = getWellnessAttributeTypeForObs(obs, wellnessAttributeConceptMap);
+					if (wellnessAttributeTypeForObs != null) {
+						if (wellnessAttributeObsMap.containsKey(wellnessAttributeTypeForObs)) {
+							List<Obs> obsList = wellnessAttributeObsMap.get(wellnessAttributeTypeForObs);
+							obsList.add(obs);
+							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, obsList);
+						} else
+							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, Arrays.asList(obs));
 					}
 				}
 		));
-		log.warn("wellnessAttributeObsMap"+ wellnessAttributeObsMap);
 		return encounterObsList.entrySet()
 				.stream().map(entry -> fhirWellnessRecordBundleBuilder.build(entry.getKey(), wellnessAttributeObsMap, organizationContext))
 				.filter(Objects::nonNull)
@@ -97,14 +97,6 @@ public class WellnessRecordService {
 				return entry.getKey();
 		}
 		return null;
-	}
-
-	private Optional<Location> identifyLocationByTag(Location location, String tagName) {
-		if (location == null) {
-			return Optional.empty();
-		}
-		boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
-		return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
 	}
 
 	private Map<AbdmConfig.WellnessAttribute, List<Concept>> getWellnessAttributeConcept() {
