@@ -58,6 +58,10 @@ public class AbdmConfig {
         Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
+
+        Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
     }
 
@@ -137,11 +141,42 @@ public class AbdmConfig {
         }
     }
 
+    public enum HistoryAndExamination {
+        CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
+        CHIEF_COMPLAINT_CODED("abdm.conceptMap.historyExamination.codedChiefComplaint"),
+        SIGN_SYMPTOM_DURATION("abdm.conceptMap.historyExamination.signAndSymptomDuration"),
+        CHIEF_COMPLAINT_DURATION("abdm.conceptMap.physicalExamination.chiefComplainDuration");
+
+        private final String mapping;
+
+        HistoryAndExamination(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
+    public Concept getChiefComplaintObsRootConcept() {
+        return lookupConcept(HistoryAndExamination.CHIFF_COMPLAINT_TEMPLATE.getMapping());
+    }
+
+    public Concept getConcept(String mapping){
+        return lookupConcept(mapping);
+    }
+
+    public List<Concept> getHistoryExaminationConcepts(){
+        List<Concept> conceptList = new ArrayList<>();
+        Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
+                conceptList.add(lookupConcept(attribute.getMapping())));
+        return conceptList;
+    }
+
     public List<Concept> getPhysicalExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
-        log.warn("conceptList " + conceptList);
         return conceptList;
     }
 
