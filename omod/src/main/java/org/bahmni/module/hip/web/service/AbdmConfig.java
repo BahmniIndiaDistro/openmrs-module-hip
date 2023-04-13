@@ -185,7 +185,7 @@ public class AbdmConfig {
                 .orElseGet(() -> {
                     Concept concept = conceptService.getConceptByUuid(lookupValue);
                     if (concept != null) {
-                        conceptCache.put(lookupValue, concept.getConceptId());
+                        conceptCache.put(lookupValue, concept.getConceptId().intValue());
                     }
                     return concept;
                 });
