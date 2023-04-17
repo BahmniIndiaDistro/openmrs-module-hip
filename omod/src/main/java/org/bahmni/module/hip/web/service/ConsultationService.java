@@ -219,12 +219,12 @@ public class ConsultationService {
     public String getCustomDisplayStringForChiefComplaint(Set<Obs> groupMembers) {
         String chiefComplaintCoded = null, signOrSymptomDuration = null, chiefComplaintDuration = null;
         for (Obs childObs : groupMembers) {
-            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_CODED.getMapping()))
-                || childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_NON_CODED.getMapping())))
+            if(childObs.getConcept().equals(abdmConfig.getHnEConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_CODED))
+                || childObs.getConcept().equals(abdmConfig.getHnEConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_NON_CODED)))
                 chiefComplaintCoded = getObsValue(childObs);
-            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.SIGN_SYMPTOM_DURATION.getMapping())))
+            if(childObs.getConcept().equals(abdmConfig.getHnEConcept(AbdmConfig.HistoryAndExamination.SIGN_SYMPTOM_DURATION)))
                 signOrSymptomDuration = getObsValue(childObs);
-            if(childObs.getConcept().equals(abdmConfig.getConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_DURATION.getMapping())))
+            if(childObs.getConcept().equals(abdmConfig.getHnEConcept(AbdmConfig.HistoryAndExamination.CHIEF_COMPLAINT_DURATION)))
                 chiefComplaintDuration = getObsValue(childObs);
         }
         return (chiefComplaintCoded + " " + "since" + " " + signOrSymptomDuration + " " + chiefComplaintDuration);
