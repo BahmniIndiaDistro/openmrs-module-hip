@@ -21,8 +21,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -68,6 +70,10 @@ public class AbdmConfig {
         });
 
         Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+
+        Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
@@ -149,12 +155,44 @@ public class AbdmConfig {
         }
     }
 
+    public enum HistoryAndExamination {
+        CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
+        CHIEF_COMPLAINT_CODED("abdm.conceptMap.historyExamination.codedChiefComplaint"),
+        CHIEF_COMPLAINT_NON_CODED("abdm.conceptMap.historyExamination.nonCodedChiefComplaint"),
+        SIGN_SYMPTOM_DURATION("abdm.conceptMap.historyExamination.signAndSymptomDuration"),
+        CHIEF_COMPLAINT_DURATION("abdm.conceptMap.physicalExamination.chiefComplainDuration");
+
+        private final String mapping;
+
+        HistoryAndExamination(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
+    public Concept getChiefComplaintObsRootConcept() {
+        return lookupConcept(HistoryAndExamination.CHIFF_COMPLAINT_TEMPLATE.getMapping());
+    }
+
+    public Concept getHnEConcept(HistoryAndExamination type) {
+        return lookupConcept(type.getMapping());
+    }
+
+    public List<Concept> getHistoryExaminationConcepts(){
+        List<Concept> conceptList = new ArrayList<>();
+        Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
+                conceptList.add(lookupConcept(attribute.getMapping())));
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
     public List<Concept> getPhysicalExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
-        log.warn("conceptList " + conceptList);
-        return conceptList;
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {

@@ -9,8 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 public interface ConsultationDao {
-    List<Obs> getChiefComplaints(Visit visit);
-    List<Obs> getChiefComplaintForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Order> getOrders(Visit visit);
     List<Order> getOrdersForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Obs> getAllObsForProgram(String programName, Date fromDate, Date toDate, Patient patient);
