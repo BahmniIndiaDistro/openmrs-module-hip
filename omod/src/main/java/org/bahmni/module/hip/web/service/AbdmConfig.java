@@ -16,7 +16,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -34,8 +41,13 @@ public class AbdmConfig {
      */
     private final Properties properties = new Properties();
 
-    private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
-    private final Map<String, Concept> conceptCache = new HashMap<>();
+    /**
+     * For now this is safe, as this is only initialized at initialization. Otherwise, have to use a
+     * Concurrent HashMap and then ensure key and value to be not null. If value can be null then have
+     * Optional as value
+     */
+    private final Map<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final Map<String, Integer> conceptCache = new ConcurrentHashMap<>();
 
     @Autowired
     public AbdmConfig(@Qualifier("adminService") AdministrationService adminService,
@@ -169,9 +181,12 @@ public class AbdmConfig {
     private Concept retrieveConcept(String lookupValue) {
         //should check with resolution (UUID now)
         return Optional.ofNullable(conceptCache.get(lookupValue))
+                .map(conceptId -> conceptService.getConcept(conceptId))
                 .orElseGet(() -> {
                     Concept concept = conceptService.getConceptByUuid(lookupValue);
-                    conceptCache.put(lookupValue, concept);
+                    if (concept != null) {
+                        conceptCache.put(lookupValue, concept.getConceptId().intValue());
+                    }
                     return concept;
                 });
     }

@@ -48,6 +48,7 @@ public class OmrsObsDocumentTransformerTest {
         OmrsObsDocumentTransformer transformer = new OmrsObsDocumentTransformer(abdmConfig, conceptTranslator);
         Obs obs = new Obs();
         Concept concept = new Concept();
+        concept.setConceptId(123456);
         concept.setUuid(PRESCRIPTION_DOC_TYPE_CONCEPT);
         obs.setConcept(concept);
         when(conceptService.getConceptByUuid(PRESCRIPTION_DOC_TYPE_CONCEPT)).thenReturn(concept);
