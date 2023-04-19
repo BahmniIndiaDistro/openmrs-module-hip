@@ -16,8 +16,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -35,9 +44,14 @@ public class AbdmConfig {
      */
     private final Properties properties = new Properties();
 
-    private final HashMap<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    /**
+     * For now this is safe, as this is only initialized at initialization. Otherwise, have to use a
+     * Concurrent HashMap and then ensure key and value to be not null. If value can be null then have
+     * Optional as value
+     */
+    private final Map<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
     private final HashMap<WellnessAttribute, String> wellnessAttributeStringHashMap = new HashMap<>();
-    private final Map<String, Concept> conceptCache = new HashMap<>();
+    private final Map<String, Integer> conceptCache = new ConcurrentHashMap<>();
 
     @Autowired
     public AbdmConfig(@Qualifier("adminService") AdministrationService adminService,
@@ -58,6 +72,10 @@ public class AbdmConfig {
         });
 
         Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+
+        Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
@@ -158,12 +176,44 @@ public class AbdmConfig {
         }
     }
 
+    public enum HistoryAndExamination {
+        CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
+        CHIEF_COMPLAINT_CODED("abdm.conceptMap.historyExamination.codedChiefComplaint"),
+        CHIEF_COMPLAINT_NON_CODED("abdm.conceptMap.historyExamination.nonCodedChiefComplaint"),
+        SIGN_SYMPTOM_DURATION("abdm.conceptMap.historyExamination.signAndSymptomDuration"),
+        CHIEF_COMPLAINT_DURATION("abdm.conceptMap.physicalExamination.chiefComplainDuration");
+
+        private final String mapping;
+
+        HistoryAndExamination(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
+    public Concept getChiefComplaintObsRootConcept() {
+        return lookupConcept(HistoryAndExamination.CHIFF_COMPLAINT_TEMPLATE.getMapping());
+    }
+
+    public Concept getHnEConcept(HistoryAndExamination type) {
+        return lookupConcept(type.getMapping());
+    }
+
+    public List<Concept> getHistoryExaminationConcepts(){
+        List<Concept> conceptList = new ArrayList<>();
+        Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
+                conceptList.add(lookupConcept(attribute.getMapping())));
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
     public List<Concept> getPhysicalExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
-        log.warn("conceptList " + conceptList);
-        return conceptList;
+        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public Map<ImmunizationAttribute, String> getImmunizationAttributeConfigs() {
@@ -192,9 +242,12 @@ public class AbdmConfig {
 
     private Concept retrieveConcept(String lookupValue) {
         return Optional.ofNullable(conceptCache.get(lookupValue))
+                .map(conceptId -> conceptService.getConcept(conceptId))
                 .orElseGet(() -> {
                     Concept concept = conceptService.getConceptByUuid(lookupValue);
-                    conceptCache.put(lookupValue, concept);
+                    if (concept != null) {
+                        conceptCache.put(lookupValue, concept.getConceptId().intValue());
+                    }
                     return concept;
                 });
     }
@@ -211,9 +264,12 @@ public class AbdmConfig {
     private List<Concept> retrieveConcepts(String lookupValues) {
         List<String> lookupValueList = Arrays.asList(lookupValues.split(","));
         return lookupValueList.stream().map(lookupValue -> Optional.ofNullable(conceptCache.get(lookupValue))
+				.map(conceptId -> conceptService.getConcept(conceptId))
                 .orElseGet(() -> {
                     Concept concept = conceptService.getConceptByUuid(lookupValue);
-                    conceptCache.put(lookupValue, concept);
+                    if (concept != null) {
+                        conceptCache.put(lookupValue, concept.getConceptId().intValue());
+                    }
                     return concept;
                 })).collect(Collectors.toList());
     }
