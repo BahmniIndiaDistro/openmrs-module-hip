@@ -191,21 +191,11 @@ public class ExistingPatientService {
                                 getAddress(patient),
                                 patient.getGender(),
                                 patient.getUuid(),
-                                getPhoneNumber(patient))
+                                existingPatientDao.getPhoneNumber(patient))
                 );
             }
         }
         return existingPatients;
-    }
-
-    private String getPhoneNumber(Patient patient) {
-        String phoneNumber = " ";
-        try {
-            phoneNumber = patient.getAttribute(Config.PHONE_NUMBER.getValue()).getValue();
-        } catch (NullPointerException ignored) {
-
-        }
-        return phoneNumber;
     }
 
     private String getAddress(Patient patient) {
@@ -258,7 +248,7 @@ public class ExistingPatientService {
                     getAddress(patient),
                     patient.getGender(),
                     patient.getUuid(),
-                    getPhoneNumber(patient));
+                    existingPatientDao.getPhoneNumber(patient));
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
+import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.CareContextRepository;
 import org.bahmni.module.hip.api.dao.ExistingPatientDao;
 import org.bahmni.module.hip.model.PatientCareContext;
@@ -12,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class CareContextService {
@@ -50,14 +54,19 @@ public class CareContextService {
         return new NewCareContext(patient.getGivenName() + (patient.getMiddleName() == null ? " " : patient.getMiddleName()) + patient.getFamilyName(),
                 existingPatientDao.getPatientHealthIdWithPatientId(patient.getId()),
                 patient.getPatientIdentifier("Patient Identifier").getIdentifier(),
+                existingPatientDao.getPhoneNumber(patient),
                 getCareContexts(patient));
     }
 
     public NewCareContext CareContextsByVisitUuid(String patientUuid, String visitUuid) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        return new NewCareContext(patient.getGivenName() + (patient.getMiddleName() == null ? " " : patient.getMiddleName()) + patient.getFamilyName(),
-                existingPatientDao.getPatientHealthIdWithPatientId(patient.getId()),
+        List<String> name = Arrays.asList(patient.getGivenName(),patient.getMiddleName(),patient.getFamilyName())
+                .stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return new NewCareContext(String.join(" ", name),
+                patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()) != null ?
+                        patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()).getIdentifier() : null,
                 patient.getPatientIdentifier("Patient Identifier").getIdentifier(),
+                existingPatientDao.getPhoneNumber(patient),
                 careContextRepository.getPatientCareContextByVisitUuid(visitUuid));
     }
 
