@@ -130,6 +130,13 @@
 			Consent suffix property
 		</description>
 	</globalProperty>
+	<globalProperty>
+		<property>bahmniHip.EnableDemographics</property>
+		<defaultValue>false</defaultValue>
+		<description>
+			To enable demographics authMode
+		</description>
+	</globalProperty>
 	<!-- /Internationalization -->
 	
 </module>
