@@ -53,6 +53,14 @@ public class CareContextService {
                 getCareContexts(patient));
     }
 
+    public NewCareContext CareContextsByVisitUuid(String patientUuid, String visitUuid) {
+        Patient patient = patientService.getPatientByUuid(patientUuid);
+        return new NewCareContext(patient.getGivenName() + (patient.getMiddleName() == null ? " " : patient.getMiddleName()) + patient.getFamilyName(),
+                existingPatientDao.getPatientHealthIdWithPatientId(patient.getId()),
+                patient.getPatientIdentifier("Patient Identifier").getIdentifier(),
+                careContextRepository.getPatientCareContextByVisitUuid(visitUuid));
+    }
+
     private List<PatientCareContext> getCareContexts(Patient patient) {
         List<PatientCareContext> patientCareContexts = careContextRepository.getNewPatientCareContext(patient);
         if (patientCareContexts.size() > 1) {

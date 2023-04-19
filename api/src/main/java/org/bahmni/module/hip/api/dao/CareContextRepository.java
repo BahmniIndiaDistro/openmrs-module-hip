@@ -2,6 +2,7 @@ package org.bahmni.module.hip.api.dao;
 
 import org.bahmni.module.hip.model.PatientCareContext;
 import org.openmrs.Patient;
+import org.openmrs.Visit;
 
 import java.util.List;
 
@@ -10,4 +11,5 @@ public interface CareContextRepository {
 
     List<PatientCareContext> getNewPatientCareContext(Patient patient);
 
+    List<PatientCareContext> getPatientCareContextByVisitUuid(String visitUuid);
 }
