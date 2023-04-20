@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class AbdmConfig {
      * Optional as value
      */
     private final Map<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final HashMap<WellnessAttribute, String> wellnessAttributeStringHashMap = new HashMap<>();
     private final Map<String, Integer> conceptCache = new ConcurrentHashMap<>();
 
     @Autowired
@@ -136,6 +138,25 @@ public class AbdmConfig {
         }
     }
 
+    public enum WellnessAttribute {
+        VITAL_SIGNS("abdm.conceptMap.wellness.vitalSigns"),
+        BODY_MEASUREMENT("abdm.conceptMap.wellness.bodyMeasurement"),
+        PHYSICAL_ACTIVITY("abdm.conceptMap.wellness.physicalActivity"),
+        GENERAL_ASSESSMENT("abdm.conceptMap.wellness.generalAssessment"),
+        WOMEN_HEALTH("abdm.conceptMap.wellness.womenHealth"),
+        LIFESTYLE("abdm.conceptMap.wellness.lifestyle"),
+        OTHER_OBSERVATIONS("abdm.conceptMap.wellness.otherObservations"),
+        DOCUMENT_REFERENCE("abdm.conceptMap.wellness.documentReference");
+
+        private final String mapping;
+
+        WellnessAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+        public String getMapping() {
+            return mapping;
+        }
+    }
     public enum PhysicalExamination {
         HEIGHT("abdm.conceptMap.physicalExamination.height"),
         WEIGHT("abdm.conceptMap.physicalExamination.weight"),
@@ -199,6 +220,9 @@ public class AbdmConfig {
         return immunizationAttributesMap;
     }
 
+    public Map<WellnessAttribute, String> getWellnessAttributeConfigs() {
+        return wellnessAttributeStringHashMap;
+    }
     public Concept getImmunizationObsRootConcept() {
         return getImmunizationAttributeConcept(ImmunizationAttribute.TEMPLATE);
     }
@@ -217,7 +241,6 @@ public class AbdmConfig {
     }
 
     private Concept retrieveConcept(String lookupValue) {
-        //should check with resolution (UUID now)
         return Optional.ofNullable(conceptCache.get(lookupValue))
                 .map(conceptId -> conceptService.getConcept(conceptId))
                 .orElseGet(() -> {
@@ -229,7 +252,27 @@ public class AbdmConfig {
                 });
     }
 
+    private List<Concept> lookupConcepts(String lookupKey) {
+        String lookupValues = (String) properties.get(lookupKey);
+        if (StringUtils.isEmpty(lookupValues)) {
+            log.info(String.format("Property [%s] is not set. System may not be able to send data", lookupKey));
+            return Collections.emptyList();
+        }
+        return retrieveConcepts(lookupValues);
+    }
 
+    private List<Concept> retrieveConcepts(String lookupValues) {
+        List<String> lookupValueList = Arrays.asList(lookupValues.split(","));
+        return lookupValueList.stream().map(lookupValue -> Optional.ofNullable(conceptCache.get(lookupValue))
+				.map(conceptId -> conceptService.getConcept(conceptId))
+                .orElseGet(() -> {
+                    Concept concept = conceptService.getConceptByUuid(lookupValue);
+                    if (concept != null) {
+                        conceptCache.put(lookupValue, concept.getConceptId().intValue());
+                    }
+                    return concept;
+                })).collect(Collectors.toList());
+    }
     public Concept getDocumentConcept(DocumentKind type) {
         return lookupConcept(type.getMapping());
     }
@@ -240,6 +283,9 @@ public class AbdmConfig {
 
     public Concept getImmunizationAttributeConcept(ImmunizationAttribute type) {
         return lookupConcept(type.getMapping());
+    }
+    public List<Concept> getWellnessAttributeConcept(WellnessAttribute type) {
+        return lookupConcepts(type.getMapping());
     }
 
 
@@ -268,7 +314,7 @@ public class AbdmConfig {
     private void postConstruct() {
         Path configFilePath = Paths.get(OpenmrsUtil.getApplicationDataDirectory(), ABDM_PROPERTIES_FILE_NAME);
         if (!Files.exists(configFilePath)) {
-            log.info(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
+            log.warn(String.format("ABDM config file does not exist: [%s]. Trying to read from Global Properties", configFilePath));
             readFromGlobalProperties();
             return;
         }
