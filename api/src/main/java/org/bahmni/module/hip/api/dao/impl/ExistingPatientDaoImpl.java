@@ -54,20 +54,13 @@ public class ExistingPatientDaoImpl implements ExistingPatientDao {
     }
 
     @Override
-    public String getPatientHealthIdWithPatientId(Integer patientId) {
-        String getPatientHealthId = "select\n" +
-                "\tpi.identifier\n" +
-                "from\n" +
-                "\tpatient_identifier as pi\n" +
-                "inner join patient_identifier_type as piy on\n" +
-                "\tpi.identifier_type = piy.patient_identifier_type_id\n" +
-                "where\n" +
-                "\tpi.patient_id = :patientId\n" +
-                "\tand piy.name = :healthId ;";
-        Query query = this.sessionFactory.openSession().createSQLQuery(getPatientHealthId);
-        query.setParameter("patientId", patientId);
-        query.setParameter("healthId", Config.ABHA_ADDRESS.getValue());
-        List<String> healthIds = query.list();
-        return healthIds.size() > 0 ? healthIds.get(0) : null;
+    public String getPatientHealthIdWithPatient(Patient patient) {
+        String healthId = null;
+        try {
+            healthId =  patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()).getIdentifier();
+        } catch (NullPointerException ignored) {
+
+        }
+        return healthId;
     }
 }

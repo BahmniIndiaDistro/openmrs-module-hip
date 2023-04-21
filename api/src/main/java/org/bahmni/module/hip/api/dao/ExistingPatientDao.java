@@ -11,6 +11,6 @@ public interface ExistingPatientDao {
 
     String getPhoneNumber(Patient patient);
 
-    String getPatientHealthIdWithPatientId(Integer patientId);
+    String getPatientHealthIdWithPatient(Patient patient);
 
 }
