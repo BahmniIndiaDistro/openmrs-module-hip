@@ -10,5 +10,5 @@ import java.util.List;
 @Getter
 @Setter
 public class BundledWellnessResponse {
-    private List<WellnessRecordBundle> wellnessRecordBundles;
+    private List<WellnessRecordBundle> wellnessRecord;
 }
