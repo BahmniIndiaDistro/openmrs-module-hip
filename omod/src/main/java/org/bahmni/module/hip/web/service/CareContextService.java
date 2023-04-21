@@ -51,22 +51,22 @@ public class CareContextService {
 
     public NewCareContext newCareContextsForPatient(String patientUuid) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        return new NewCareContext(patient.getGivenName() + (patient.getMiddleName() == null ? " " : patient.getMiddleName()) + patient.getFamilyName(),
-                existingPatientDao.getPatientHealthIdWithPatient(patient),
-                patient.getPatientIdentifier("Patient Identifier").getIdentifier(),
-                existingPatientDao.getPhoneNumber(patient),
-                getCareContexts(patient));
+        return createNewCareContext(patient,getCareContexts(patient));
     }
 
-    public NewCareContext CareContextsByVisitUuid(String patientUuid, String visitUuid) {
+    public NewCareContext newCareContextsForPatientByVisitUuid(String patientUuid, String visitUuid) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
+        return createNewCareContext(patient,careContextRepository.getPatientCareContextByVisitUuid(visitUuid));
+    }
+    
+    private NewCareContext createNewCareContext(Patient patient, List<PatientCareContext> careContexts){
         List<String> name = Arrays.asList(patient.getGivenName(),patient.getMiddleName(),patient.getFamilyName())
                 .stream().filter(Objects::nonNull).collect(Collectors.toList());
         return new NewCareContext(String.join(" ", name),
                 existingPatientDao.getPatientHealthIdWithPatient(patient),
                 patient.getPatientIdentifier("Patient Identifier").getIdentifier(),
                 existingPatientDao.getPhoneNumber(patient),
-                careContextRepository.getPatientCareContextByVisitUuid(visitUuid));
+                careContexts);
     }
 
     private List<PatientCareContext> getCareContexts(Patient patient) {

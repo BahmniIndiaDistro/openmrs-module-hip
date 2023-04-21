@@ -35,7 +35,7 @@ public class CareContextController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.noPatientIdProvided());
         }
         if(visitUuid != null){
-            return ResponseEntity.ok(careContextService.CareContextsByVisitUuid(patientUuid, visitUuid));
+            return ResponseEntity.ok(careContextService.newCareContextsForPatientByVisitUuid(patientUuid, visitUuid));
         }
         if (!validationService.isValidPatient(patientUuid))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
