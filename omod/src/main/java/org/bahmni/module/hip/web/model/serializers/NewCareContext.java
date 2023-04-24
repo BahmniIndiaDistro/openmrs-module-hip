@@ -16,5 +16,6 @@ public class NewCareContext {
     String patientName;
     String healthId;
     String patientReferenceNumber;
+    String mobile;
     List<PatientCareContext> careContexts;
 }

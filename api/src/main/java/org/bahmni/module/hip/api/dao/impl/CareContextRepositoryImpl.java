@@ -9,6 +9,7 @@ import org.openmrs.Encounter;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
+import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.VisitService;
@@ -89,6 +90,13 @@ public class CareContextRepositoryImpl implements CareContextRepository {
                 VISIT_TYPE.concat(":").concat(visit.getUuid()));
     }
 
+    @Override
+    public List<PatientCareContext> getPatientCareContextByVisitUuid(String visitUuid) {
+        Visit visit = visitService.getVisitByUuid(visitUuid);
+        List<PatientCareContext> careContexts = new ArrayList<>();
+        careContexts.add(getPatientCareContext(visit));
+        return careContexts;
+    }
     private PatientCareContext getPatientCareContext(PatientProgram program) {
         return new PatientCareContext(PROGRAM,
                 program.getProgram().getName(),

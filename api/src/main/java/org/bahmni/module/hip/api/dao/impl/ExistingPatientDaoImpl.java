@@ -43,32 +43,24 @@ public class ExistingPatientDaoImpl implements ExistingPatientDao {
     }
 
     @Override
-    public String getPhoneNumber(Integer patientId) {
-        String getPatientPhoneNumberWithPatientIdQuery =
-                " SELECT   value FROM   person_attribute   INNER JOIN person_attribute_type ON" +
-                        " person_attribute.person_attribute_type_id = person_attribute_type.person_attribute_type_id " +
-                        "where   person_id = :patientId   and name = \"phoneNumber\";";
-        Query query = this.sessionFactory.openSession().createSQLQuery(getPatientPhoneNumberWithPatientIdQuery);
-        query.setParameter("patientId", patientId);
-        List<String> phoneNumbers = query.list();
-        return phoneNumbers.size() > 0 ? phoneNumbers.get(0) : null;
+    public String getPhoneNumber(Patient patient) {
+        String phoneNumber = " ";
+        try {
+            phoneNumber = patient.getAttribute(Config.PHONE_NUMBER.getValue()).getValue();
+        } catch (NullPointerException ignored) {
+
+        }
+        return phoneNumber;
     }
 
     @Override
-    public String getPatientHealthIdWithPatientId(Integer patientId) {
-        String getPatientHealthId = "select\n" +
-                "\tpi.identifier\n" +
-                "from\n" +
-                "\tpatient_identifier as pi\n" +
-                "inner join patient_identifier_type as piy on\n" +
-                "\tpi.identifier_type = piy.patient_identifier_type_id\n" +
-                "where\n" +
-                "\tpi.patient_id = :patientId\n" +
-                "\tand piy.name = :healthId ;";
-        Query query = this.sessionFactory.openSession().createSQLQuery(getPatientHealthId);
-        query.setParameter("patientId", patientId);
-        query.setParameter("healthId", Config.ABHA_ADDRESS.getValue());
-        List<String> healthIds = query.list();
-        return healthIds.size() > 0 ? healthIds.get(0) : null;
+    public String getPatientHealthIdWithPatient(Patient patient) {
+        String healthId = null;
+        try {
+            healthId =  patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()).getIdentifier();
+        } catch (NullPointerException ignored) {
+
+        }
+        return healthId;
     }
 }

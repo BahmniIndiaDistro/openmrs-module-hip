@@ -143,7 +143,7 @@ public class CareContextControllerTest {
 
     @Test
     public void shouldReturn200OKForValidPatientUUID() throws Exception {
-        NewCareContext newCareContext = new NewCareContext("abc", "abc@sbc", "12gvx", new ArrayList<>());
+        NewCareContext newCareContext = new NewCareContext("abc", "abc@sbc", "12gvx", "9876543210", new ArrayList<>());
 
         when(validationService.isValidPatient("0f90531a-285c-438b-b265-bb3abb4745bd")).thenReturn(true);
         when(careContextService.newCareContextsForPatient(anyString()))
