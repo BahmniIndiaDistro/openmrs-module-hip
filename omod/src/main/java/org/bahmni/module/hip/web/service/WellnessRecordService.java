@@ -81,7 +81,7 @@ public class WellnessRecordService {
 							obsList.add(obs);
 							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, obsList);
 						} else
-							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, Arrays.asList(obs));
+							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, new ArrayList<> (Collections.singletonList(obs)));
 					}
 				}
 		));

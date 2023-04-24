@@ -302,12 +302,18 @@ public class AbdmConfig {
         AbdmConfig instance = new AbdmConfig(adminService, conceptService);
         instance.properties.putAll(props);
         updateImmunizationAttributeMap(instance);
+        updateWellnessAttributeMap(instance);
         return instance;
     }
 
     private static void updateImmunizationAttributeMap(AbdmConfig conf) {
         Arrays.stream(ImmunizationAttribute.values()).forEach(conceptAttribute ->
            conf.immunizationAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
+    }
+
+    private static void updateWellnessAttributeMap(AbdmConfig conf) {
+        Arrays.stream(WellnessAttribute.values()).forEach(conceptAttribute ->
+                conf.wellnessAttributeStringHashMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
     }
 
     @PostConstruct
@@ -322,6 +328,7 @@ public class AbdmConfig {
         try (InputStream configFile = Files.newInputStream(configFilePath)) {
             properties.load(configFile);
             updateImmunizationAttributeMap(this);
+            updateWellnessAttributeMap(this);
         } catch (IOException e) {
             log.error("Error Occurred while trying to read ABDM config file", e);
         }
@@ -337,5 +344,6 @@ public class AbdmConfig {
             }
         });
         updateImmunizationAttributeMap(this);
+        updateWellnessAttributeMap(this);
     }
 }
