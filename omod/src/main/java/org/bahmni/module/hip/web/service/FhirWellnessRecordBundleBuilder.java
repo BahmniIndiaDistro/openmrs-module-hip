@@ -49,6 +49,7 @@ public class FhirWellnessRecordBundleBuilder {
 				orgContext.getWebUrl());
 		Composition document = compositionFrom(encounter.getEncounterDatetime(), UUID.randomUUID().toString(), orgContext);
 		document
+				.setEncounter(FHIRUtils.getReferenceToResource(wellnessEncounter))
 				.setSubject(patientRef)
 				.setAuthor(Collections.singletonList(FHIRUtils.getReferenceToResource(orgContext.getOrganization(), "Organization")));
 
