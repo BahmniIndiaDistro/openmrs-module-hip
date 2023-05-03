@@ -171,7 +171,7 @@ public class FhirLabResult {
         if(obs != null) {
             Attachment attachment = new Attachment();
             attachment.setContentType(FHIRUtils.getTypeOfTheObsDocument(obs.getValueText()));
-            byte[] fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + obs.getValueText()).toPath());
+            byte[] fileContent = Files.readAllBytes(new File(Config.LAB_UPLOADS_PATH.getValue() + obs.getValueText()).toPath());
             attachment.setData(fileContent);
             attachment.setTitle("LAB REPORT : " + testNmae);
             attachments.add(attachment);
