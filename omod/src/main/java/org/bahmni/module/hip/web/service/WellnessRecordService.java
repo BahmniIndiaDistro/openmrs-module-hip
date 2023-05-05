@@ -72,21 +72,24 @@ public class WellnessRecordService {
 				.flatMap(Collection::stream)
 				.collect(Collectors.groupingBy(obs -> obs.getEncounter()));
 
-		Map<AbdmConfig.WellnessAttribute, List<Obs>> wellnessAttributeObsMap = new HashMap<>();
-		encounterObsList.entrySet().stream().forEach(entry -> entry.getValue().stream().forEach(obs -> {
-					AbdmConfig.WellnessAttribute wellnessAttributeTypeForObs = getWellnessAttributeTypeForObs(obs, wellnessAttributeConceptMap);
-					if (wellnessAttributeTypeForObs != null) {
-						if (wellnessAttributeObsMap.containsKey(wellnessAttributeTypeForObs)) {
-							List<Obs> obsList = wellnessAttributeObsMap.get(wellnessAttributeTypeForObs);
-							obsList.add(obs);
-							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, obsList);
-						} else
-							wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, new ArrayList<> (Collections.singletonList(obs)));
+		Map<Encounter, Map<AbdmConfig.WellnessAttribute, List<Obs>>> wellnessAttributeEncounterMap = new HashMap<>();
+		encounterObsList.entrySet().stream().forEach(entry -> {
+				Map<AbdmConfig.WellnessAttribute, List<Obs>> wellnessAttributeObsMap = new HashMap<>();
+					for (Obs obs : entry.getValue()) {
+						AbdmConfig.WellnessAttribute wellnessAttributeTypeForObs = getWellnessAttributeTypeForObs(obs, wellnessAttributeConceptMap);
+						if (wellnessAttributeTypeForObs != null) {
+							if (wellnessAttributeObsMap.containsKey(wellnessAttributeTypeForObs)) {
+								List<Obs> obsList = wellnessAttributeObsMap.get(wellnessAttributeTypeForObs);
+								obsList.add(obs);
+								wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, obsList);
+							} else
+								wellnessAttributeObsMap.put(wellnessAttributeTypeForObs, new ArrayList<>(Collections.singletonList(obs)));
+						}
 					}
-				}
-		));
-		return encounterObsList.entrySet()
-				.stream().map(entry -> fhirWellnessRecordBundleBuilder.build(entry.getKey(), wellnessAttributeObsMap, organizationContext))
+					wellnessAttributeEncounterMap.put(entry.getKey(),wellnessAttributeObsMap);
+				});
+		return wellnessAttributeEncounterMap.entrySet()
+				.stream().map(entry -> fhirWellnessRecordBundleBuilder.build(entry.getKey(), entry.getValue(), organizationContext))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 	}
