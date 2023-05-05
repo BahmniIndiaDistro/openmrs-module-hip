@@ -4,6 +4,7 @@ public enum Config {
 
 
     PATIENT_DOCUMENTS_PATH("/home/bahmni/document_images/"),
+    LAB_UPLOADS_PATH("/home/bahmni/uploaded_results/"),
     LOCATION("Bahmni Clinic"),
 
     //attribute name
