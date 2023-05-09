@@ -50,6 +50,7 @@ public class AbdmConfig {
      * Optional as value
      */
     private final Map<ImmunizationAttribute, String> immunizationAttributesMap = new HashMap<>();
+    private final Map<ProcedureAttribute, String> procedureAttributesMap = new HashMap<>();
     private final HashMap<WellnessAttribute, String> wellnessAttributeStringHashMap = new HashMap<>();
     private final Map<String, Integer> conceptCache = new ConcurrentHashMap<>();
 
@@ -194,6 +195,35 @@ public class AbdmConfig {
         }
     }
 
+    public enum ProcedureAttribute {
+        PROCEDURE_TEMPLATE("abdm.conceptMap.procedure.procedureTemplate"),
+        PROCEDURE_NAME("abdm.conceptMap.procedure.procedureName"),
+        PROCEDURE_START_DATETIME("abdm.conceptMap.procedure.procedureStartDate"),
+        PROCEDURE_END_DATETIME("abdm.conceptMap.procedure.procedureEndDate"),
+        PROCEDURE_BODYSITE("abdm.conceptMap.procedure.procedureBodySite"),
+        PROCEDURE_NONCODED_BODYSITE("abdm.conceptMap.procedure.procedureNonCodedBodySite"),
+        PROCEDURE_OUTCOME("abdm.conceptMap.procedure.procedureOutcome"),
+        PROCEDURE_NOTE("abdm.conceptMap.procedure.procedureNote");
+
+        private final String mapping;
+
+        ProcedureAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
+    public Concept getProcedureObsRootConcept() {
+        return lookupConcept(ProcedureAttribute.PROCEDURE_TEMPLATE.getMapping());
+    }
+
+    public Map<ProcedureAttribute, String> getProcedureAttributesMap() {
+        return procedureAttributesMap;
+    }
+
     public Concept getChiefComplaintObsRootConcept() {
         return lookupConcept(HistoryAndExamination.CHIFF_COMPLAINT_TEMPLATE.getMapping());
     }
@@ -316,6 +346,18 @@ public class AbdmConfig {
                 conf.wellnessAttributeStringHashMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
     }
 
+    public Map<AbdmConfig.ProcedureAttribute, Concept> getProcedureAttributeConcepts() {
+        return getProcedureAttributesMap().entrySet()
+                .stream()
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(),
+                        lookupConcept(v.getKey().getMapping())), HashMap::putAll);
+    }
+
+    private static void updateProcedureAttributeMap(AbdmConfig conf) {
+        Arrays.stream(ProcedureAttribute.values()).forEach(conceptAttribute ->
+                conf.procedureAttributesMap.put(conceptAttribute, (String) conf.properties.get(conceptAttribute.getMapping())));
+    }
+
     @PostConstruct
     private void postConstruct() {
         Path configFilePath = Paths.get(OpenmrsUtil.getApplicationDataDirectory(), ABDM_PROPERTIES_FILE_NAME);
@@ -329,6 +371,7 @@ public class AbdmConfig {
             properties.load(configFile);
             updateImmunizationAttributeMap(this);
             updateWellnessAttributeMap(this);
+            updateProcedureAttributeMap(this);
         } catch (IOException e) {
             log.error("Error Occurred while trying to read ABDM config file", e);
         }
@@ -345,5 +388,6 @@ public class AbdmConfig {
         });
         updateImmunizationAttributeMap(this);
         updateWellnessAttributeMap(this);
+        updateProcedureAttributeMap(this);
     }
 }
