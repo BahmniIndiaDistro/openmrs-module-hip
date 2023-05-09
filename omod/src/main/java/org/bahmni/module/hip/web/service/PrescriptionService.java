@@ -45,28 +45,27 @@ public class PrescriptionService {
     }
 
 
-    public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitUuid, String fromDate, String ToDate) throws ParseException {
+    public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitUuid, Date fromDate, Date toDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
-        if (isDateBetweenDateRange(visit.getStartDatetime(), fromDate, ToDate)) {
-            DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
-            Concept docType = abdmConfig.getDocumentConcept(AbdmConfig.DocumentKind.PRESCIPTION);
-            Map<Encounter, List<Obs>> encounterDocObs = visit.getEncounters()
-                    .stream()
-                    .map(e -> e.getObsAtTopLevel(false))
-                    .flatMap(Collection::stream)
-                    .filter(obs -> isPrescriptionDoc(obs, docType))
-                    .collect(Collectors.groupingBy(Obs::getEncounter));
-            if (drugOrders.isEmpty() && encounterDocObs.isEmpty()) {
-                return new ArrayList<>();
-            }
-            List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
-                    .from(drugOrders.groupByEncounter(), encounterDocObs);
-            return openMrsPrescriptions
-                    .stream()
-                    .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
-                    .collect(Collectors.toList());
+        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate));
+        Concept docType = abdmConfig.getDocumentConcept(AbdmConfig.DocumentKind.PRESCIPTION);
+        Map<Encounter, List<Obs>> encounterDocObs = visit.getEncounters()
+                .stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
+                .map(e -> e.getObsAtTopLevel(false))
+                .flatMap(Collection::stream)
+                .filter(obs -> isPrescriptionDoc(obs, docType))
+                .collect(Collectors.groupingBy(Obs::getEncounter));
+        if (drugOrders.isEmpty() && encounterDocObs.isEmpty()) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
+        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
+                .from(drugOrders.groupByEncounter(), encounterDocObs);
+        return openMrsPrescriptions
+                .stream()
+                .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
+                .collect(Collectors.toList());
     }
 
     private boolean isPrescriptionDoc(Obs obs, Concept docType) {

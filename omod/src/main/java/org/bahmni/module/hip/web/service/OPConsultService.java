@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
-
 @Service
 public class OPConsultService {
 
@@ -35,48 +33,48 @@ public class OPConsultService {
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final ConsultationService consultationService;
     private final VisitService visitService;
-
+    private final AbdmConfig abdmConfig;
 
     @Autowired
     public OPConsultService(FhirBundledOPConsultBuilder fhirBundledOPConsultBuilder,
                             OPConsultDao opConsultDao,
                             PatientService patientService,
                             OpenMRSDrugOrderClient openMRSDrugOrderClient,
-                            ConsultationService consultationService, HipVisitDao hipVisitDao, VisitService visitService) {
+                            ConsultationService consultationService, VisitService visitService, AbdmConfig abdmConfig) {
         this.fhirBundledOPConsultBuilder = fhirBundledOPConsultBuilder;
         this.opConsultDao = opConsultDao;
         this.patientService = patientService;
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.consultationService = consultationService;
         this.visitService = visitService;
+        this.abdmConfig = abdmConfig;
     }
 
-    public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, String visitUuid, String fromDate, String ToDate) throws ParseException {
+    public List<OPConsultBundle> getOpConsultsForVisit(String patientUuid, String visitUuid, Date fromDate, Date toDate) throws ParseException {
         Visit visit = visitService.getVisitByUuid(visitUuid);
 
-        if (isDateBetweenDateRange(visit.getStartDatetime(), fromDate, ToDate)) {
-            Patient patient = patientService.getPatientByUuid(patientUuid);
-            DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit));
-            Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
-            Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit);
-            Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit);
-            Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit);
-            Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(visit);
-            Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit);
-            Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit);
 
-            List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
-                    encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
-                    encounterPatientDocumentsMap, encounterOrdersMap, patient);
+        Patient patient = patientService.getPatientByUuid(patientUuid);
+        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit, fromDate, toDate));
+        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
+        Map<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit, fromDate, toDate);
+        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit, fromDate, toDate);
+        Map<Encounter, Obs> encounterProcedureMap = getEncounterProcedureMap(visit, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit, fromDate, toDate);
+        Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit, fromDate, toDate);
 
-            return openMrsOPConsultList.stream().
-                    map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
-        }
+        List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
+                encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
+                encounterPatientDocumentsMap, encounterOrdersMap, patient);
 
-        return new ArrayList<>();
+        return openMrsOPConsultList.stream().
+                map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
+
+
     }
 
-        public List<OPConsultBundle> getOpConsultsForProgram(String patientUuid, DateRange dateRange, String programName,String programEnrollmentId) {
+    public List<OPConsultBundle> getOpConsultsForProgram(String patientUuid, DateRange dateRange, String programName,String programEnrollmentId) {
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
@@ -98,8 +96,8 @@ public class OPConsultService {
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
     }
 
-    private Map<Encounter, Obs> getEncounterProcedureMap(Visit visit) {
-        List<Obs> obsProcedures = opConsultDao.getProcedures(visit);
+    private Map<Encounter, Obs> getEncounterProcedureMap(Visit visit, Date fromDate, Date toDate) {
+        List<Obs> obsProcedures = opConsultDao.getProcedures(visit,fromDate,toDate);
         Map<Encounter, Obs> encounterProcedureMap = new HashMap<>();
         for(Obs o: obsProcedures){
             encounterProcedureMap.put(o.getEncounter(), o);
