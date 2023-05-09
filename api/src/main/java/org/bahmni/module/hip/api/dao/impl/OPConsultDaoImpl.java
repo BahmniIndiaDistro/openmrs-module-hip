@@ -106,15 +106,6 @@ public class OPConsultDaoImpl implements OPConsultDao {
     }
 
     @Override
-    public List<Obs> getProcedures(Visit visit, Date fromDate, Date toDate) {
-        List<Obs> proceduresObsMap = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.PROCEDURE_NOTES.getValue(),fromDate,toDate).stream()
-                .filter(o -> !o.getVoided())
-                .collect(Collectors.toList());
-
-        return proceduresObsMap;
-    }
-
-    @Override
     public List<Obs> getProceduresForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(patient,programWorkflowService.getProgramByName(programName), fromDate, toDate,null,null,false);
         Set<PatientProgram> patientProgramSet = new HashSet<>(patientPrograms);

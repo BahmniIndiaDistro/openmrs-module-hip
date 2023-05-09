@@ -233,4 +233,19 @@ public class ConsultationService {
         }
         return (chiefComplaintCoded + " " + "since" + " " + signOrSymptomDuration + " " + chiefComplaintDuration);
     }
+
+    public Map<Encounter, List<Obs>> getEncounterProcedureMap(Visit visit, Date startDate, Date ToDate) {
+        Map<Encounter, List<Obs>> encounterProcedureMap = new HashMap<>();
+        for(Encounter encounter: visit.getEncounters().stream().filter(e -> startDate == null || e.getEncounterDatetime().after(startDate)).collect(Collectors.toList())){
+            List<Obs> obsList = encounter.getAllObs().stream().filter(obs -> obs.getConcept().equals(abdmConfig.getProcedureObsRootConcept())).collect(Collectors.toList());
+            if(obsList.size() > 0)
+                encounterProcedureMap.put(encounter,obsList);
+        }
+        return encounterProcedureMap;
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterProcedureMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
+        List<Obs> obsProcedures = opConsultDao.getProceduresForProgram(programName,fromDate, toDate,patient);
+        return obsProcedures.stream().collect(Collectors.groupingBy(Obs::getEncounter));
+    }
 }

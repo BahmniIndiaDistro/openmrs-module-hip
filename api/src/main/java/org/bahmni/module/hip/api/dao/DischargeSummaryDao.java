@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface DischargeSummaryDao {
     List<Obs> getCarePlan(Visit visit, Date fromDate, Date toDate);
-    List<Obs> getProcedures(Visit visit, Date fromDate, Date toDate);
     List<Obs> getProceduresForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Obs> getCarePlanForProgram(String programName, Date fromDate, Date toDate, Patient patient);
 }

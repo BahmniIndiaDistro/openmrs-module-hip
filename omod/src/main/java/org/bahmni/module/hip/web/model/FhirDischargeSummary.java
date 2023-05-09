@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.web.model;
 
+import org.bahmni.module.hip.web.service.AbdmConfig;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Bundle;
@@ -42,7 +43,7 @@ public class FhirDischargeSummary {
     private final List<Observation> observations;
     private final List<CarePlan> carePlan;
     private final List<DocumentReference> patientDocuments;
-    private final Procedure procedures;
+    private final List<Procedure> procedures;
     private final List<ServiceRequest> serviceRequest;
 
     public FhirDischargeSummary(Integer encounterID,
@@ -58,7 +59,7 @@ public class FhirDischargeSummary {
                                 List<CarePlan> carePlan,
                                 List<Observation> observations,
                                 List<DocumentReference> patientDocuments,
-                                Procedure procedures,
+                                List<Procedure> procedures,
                                 List<ServiceRequest> serviceRequest){
         this.visitTimestamp = visitTimestamp;
         this.encounterID = encounterID;
@@ -76,7 +77,7 @@ public class FhirDischargeSummary {
         this.procedures = procedures;
         this.serviceRequest = serviceRequest;
     }
-    public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper){
+    public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig){
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDischargeSummary.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsDischargeSummary.getEncounter());
@@ -101,12 +102,14 @@ public class FhirDischargeSummary {
                 map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
         List<DocumentReference> patientDocuments = openMrsDischargeSummary.getPatientDocuments().stream().
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
-        Procedure procedures = openMrsDischargeSummary.getProcedure() != null ?
-                fhirResourceMapper.mapToProcedure(openMrsDischargeSummary.getProcedure()) : null;
+        List<Procedure> fhirProcedureList = new ArrayList<>();
+        for(int i=0;i<openMrsDischargeSummary.getProcedure().size();i++){
+            fhirProcedureList.add(fhirResourceMapper.mapToProcedure(encounter,openMrsDischargeSummary.getProcedure().get(i),abdmConfig.getProcedureAttributeConcepts()));
+        }
         List<ServiceRequest> serviceRequest = openMrsDischargeSummary.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
-        return new FhirDischargeSummary(encounterId, encounter, visitDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations, patientDocuments, procedures, serviceRequest);
+        return new FhirDischargeSummary(encounterId, encounter, visitDatetime, practitioners, patientReference, chiefComplaints, medicationRequestsList, medications, fhirMedicalHistoryList, patient, carePlans, physicalExaminations, patientDocuments, fhirProcedureList, serviceRequest);
     }
 
     public Bundle bundleDischargeSummary(OrganizationContext orgContext) {
@@ -202,13 +205,16 @@ public class FhirDischargeSummary {
                     .forEach(patientDocumentsCompositionSection::addEntry);
         }
 
-        if (procedures != null) {
+        if (procedures.size() > 0) {
             Composition.SectionComponent procedureCompositionSection = composition.addSection();
             procedureCompositionSection
                     .setTitle("Procedure")
                     .setCode(FHIRUtils.getProcedureType());
 
-            procedureCompositionSection.addEntry(FHIRUtils.getReferenceToResource(procedures));
+            procedures
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(procedureCompositionSection::addEntry);
         }
 
         if (serviceRequest.size() > 0) {
