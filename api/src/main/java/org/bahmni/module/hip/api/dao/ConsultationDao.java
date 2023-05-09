@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 public interface ConsultationDao {
-    List<Order> getOrders(Visit visit);
+    List<Order> getOrders(Visit visit, Date fromDate, Date toDate);
     List<Order> getOrdersForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Obs> getAllObsForProgram(String programName, Date fromDate, Date toDate, Patient patient);
 }

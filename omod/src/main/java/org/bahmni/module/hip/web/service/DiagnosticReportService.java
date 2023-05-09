@@ -71,25 +71,22 @@ public class DiagnosticReportService {
         this.diagnosticReportDao = diagnosticReportDao;
     }
 
-    public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitUuid, String fromDate, String ToDate) throws ParseException {
+    public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitUuid, Date fromDate, Date toDate) throws ParseException {
         Visit visit = visitService.getVisitByUuid(visitUuid);
 
-        if(isDateBetweenDateRange(visit.getStartDatetime(),fromDate,ToDate)) {
-            HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(visit);
-            List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
+        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(visit,fromDate,toDate);
+        List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
 
-            return openMrsDiagnosticReports
-                    .stream()
-                    .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
-                    .collect(Collectors.toList());
+        return openMrsDiagnosticReports
+                .stream()
+                .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
+                .collect(Collectors.toList());
 
-        }
-        return new ArrayList<>();
     }
 
-    public HashMap<Encounter, List<Obs>> getAllObservationsForVisits(Visit visit) {
-        List<Obs> patientObs = encounterDao.GetAllObsForVisit(visit, Config.RADIOLOGY_TYPE.getValue(), Config.DOCUMENT_TYPE.getValue());
-        patientObs.addAll(encounterDao.GetAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(), Config.DOCUMENT_TYPE.getValue()));
+    public HashMap<Encounter, List<Obs>> getAllObservationsForVisits(Visit visit, Date fromDate, Date toDate) {
+        List<Obs> patientObs = encounterDao.GetAllObsForVisit(visit, Config.RADIOLOGY_TYPE.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate);
+        patientObs.addAll(encounterDao.GetAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate));
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
         for (Obs obs: patientObs) {
             Encounter encounter = obs.getEncounter();

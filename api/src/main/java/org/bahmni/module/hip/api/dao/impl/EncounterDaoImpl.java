@@ -138,9 +138,11 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Encounter> GetEncountersForVisit(Visit visit, String encounterType) {
+    public List<Encounter> GetEncountersForVisit(Visit visit, String encounterType, Date fromDate, Date toDate) {
         List<Integer> episodeEncounters = GetEpisodeEncounterIds();
         List<Encounter> encounters = visit.getEncounters().stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
                 .filter(encounter -> Objects.equals(encounter.getEncounterType().getName(), encounterType))
                 .collect(Collectors.toList());
@@ -148,9 +150,9 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Obs> GetAllObsForVisit(Visit visit, String encounterType, String conceptName) {
+    public List<Obs> GetAllObsForVisit(Visit visit, String encounterType, String conceptName, Date fromDate, Date toDate) {
         List<Obs> observations = new ArrayList<>();
-        List<Encounter> encounters = GetEncountersForVisit(visit,encounterType);
+        List<Encounter> encounters = GetEncountersForVisit(visit,encounterType,fromDate,toDate);
         for (Encounter encounter : encounters) {
             if(conceptName == null)
                 observations.addAll(encounter.getAllObs());
@@ -162,9 +164,11 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Order> GetOrdersForVisit(Visit visit) {
+    public List<Order> GetOrdersForVisit(Visit visit,Date fromDate, Date toDate) {
         List<Integer> episodeEncounters = GetEpisodeEncounterIds();
         List<Encounter> encounters = visit.getEncounters().stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
                 .collect(Collectors.toList());
         List<Order> orderList = new ArrayList<>();

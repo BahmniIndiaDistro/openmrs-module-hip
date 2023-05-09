@@ -27,22 +27,20 @@ import java.util.stream.Collectors;
 @Repository
 public class DischargeSummaryDaoImpl implements DischargeSummaryDao {
 
-    private final ObsService obsService;
     private final ProgramWorkflowService programWorkflowService;
     private final EpisodeService episodeService;
     private final EncounterDao encounterDao;
 
     @Autowired
-    public DischargeSummaryDaoImpl(ObsService obsService, ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
-        this.obsService = obsService;
+    public DischargeSummaryDaoImpl(ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
         this.programWorkflowService = programWorkflowService;
         this.episodeService = episodeService;
         this.encounterDao = encounterDao;
     }
 
     @Override
-    public List<Obs> getCarePlan(Visit visit) {
-        List<Obs> carePlanObs = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue()).stream()
+    public List<Obs> getCarePlan(Visit visit, Date fromDate, Date toDate) {
+        List<Obs> carePlanObs = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue(), fromDate, toDate).stream()
                 .filter(obs -> obs.getConcept().getName().getLocalePreferred())
                 .collect(Collectors.toList());
 
@@ -70,8 +68,8 @@ public class DischargeSummaryDaoImpl implements DischargeSummaryDao {
     }
 
     @Override
-    public List<Obs> getProcedures(Visit visit) {
-        List<Obs> proceduresObsMap = encounterDao.GetAllObsForVisit(visit,Config.CONSULTATION.getValue(), Config.PROCEDURE_NOTES.getValue()).stream()
+    public List<Obs> getProcedures(Visit visit, Date fromDate, Date toDate) {
+        List<Obs> proceduresObsMap = encounterDao.GetAllObsForVisit(visit,Config.CONSULTATION.getValue(), Config.PROCEDURE_NOTES.getValue(),fromDate,toDate).stream()
                 .filter(obs -> obs.getObsGroup() == null)
                 .collect(Collectors.toList());
         return proceduresObsMap;

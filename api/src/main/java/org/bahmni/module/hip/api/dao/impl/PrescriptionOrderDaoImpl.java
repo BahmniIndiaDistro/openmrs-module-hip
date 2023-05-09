@@ -32,8 +32,8 @@ public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
         this.orderService = orderService;
     }
 
-    public List<DrugOrder> getDrugOrders(Visit visit) {
-        List<DrugOrder> orderLists = encounterDao.GetOrdersForVisit(visit).stream()
+    public List<DrugOrder> getDrugOrders(Visit visit, Date fromDate, Date toDate) {
+        List<DrugOrder> orderLists = encounterDao.GetOrdersForVisit(visit,fromDate,toDate).stream()
                             .filter(order -> order.getOrderType().getUuid().equals(OrderType.DRUG_ORDER_TYPE_UUID))
                             .map(order -> (DrugOrder) order)
                              .collect(Collectors.toList());

@@ -6,6 +6,7 @@ import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DiagnosticReportBundle;
 import org.bahmni.module.hip.web.service.DiagnosticReportService;
 import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.web.utils.DateUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 
 import static org.bahmni.module.hip.web.utils.DateUtils.parseDate;
@@ -53,8 +56,22 @@ public class DiagnosticReportController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.invalidVisitUuid());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
+        Date fromEncounterDate = null, toEncounterDate = null;
+        if (!StringUtils.isEmpty(fromDate)) {
+            fromEncounterDate = DateUtils.validDate(fromDate);
+            if (fromEncounterDate == null) {
+                return ResponseEntity.badRequest().body(ClientError.invalidStartDate());
+            }
+        }
 
-        List<DiagnosticReportBundle> diagnosticReportBundle =  diagnosticReportService.getDiagnosticReportsForVisit(patientId, visitUuid, fromDate, toDate);
+        if (!StringUtils.isEmpty(toDate)) {
+            toEncounterDate = DateUtils.validDate(toDate);
+            if (toEncounterDate == null) {
+                return ResponseEntity.badRequest().body(ClientError.invalidEndDate());
+            }
+        }
+
+        List<DiagnosticReportBundle> diagnosticReportBundle =  diagnosticReportService.getDiagnosticReportsForVisit(patientId, visitUuid, fromEncounterDate, toEncounterDate);
 
         diagnosticReportBundle.addAll(diagnosticReportService.getLabResultsForVisits(patientId, visitUuid, fromDate, toDate));
         return ResponseEntity.ok()

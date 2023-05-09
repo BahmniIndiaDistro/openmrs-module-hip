@@ -117,9 +117,9 @@ public class OpenMRSDrugOrderClientTest {
                 .thenReturn(patient);
         when(orderService.getOrderTypeByUuid(any())).thenReturn(orderType);
 
-        openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit);
+        openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,any(),any());
 
         verify(prescriptionOrderDao, times(1))
-                .getDrugOrders(visit);
+                .getDrugOrders(visit,any(),any());
     }
 }
