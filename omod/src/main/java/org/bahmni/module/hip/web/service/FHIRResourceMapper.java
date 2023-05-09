@@ -34,6 +34,7 @@ import org.openmrs.Concept;
 import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
 import org.openmrs.module.fhir2.api.translators.MedicationTranslator;
 import org.openmrs.module.fhir2.api.translators.PatientTranslator;
+import org.openmrs.module.fhir2.api.translators.impl.ConceptTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.EncounterTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.ObservationTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.PractitionerTranslatorProviderImpl;
@@ -62,16 +63,18 @@ public class FHIRResourceMapper {
     private final MedicationTranslator medicationTranslator;
     private final EncounterTranslatorImpl encounterTranslator;
     private final ObservationTranslatorImpl observationTranslator;
+    private final ConceptTranslatorImpl conceptTranslator;
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Follow up Date", "Additional Advice on Discharge", "Discharge Summary, Plan for follow up"));
 
     @Autowired
-    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator) {
+    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator, ConceptTranslatorImpl conceptTranslator) {
         this.patientTranslator = patientTranslator;
         this.practitionerTranslatorProvider = practitionerTranslatorProvider;
         this.medicationRequestTranslator = medicationRequestTranslator;
         this.medicationTranslator = medicationTranslator;
         this.encounterTranslator = encounterTranslator;
         this.observationTranslator = observationTranslator;
+        this.conceptTranslator = conceptTranslator;
     }
 
     public Encounter mapToEncounter(org.openmrs.Encounter emrEncounter) {
@@ -105,6 +108,9 @@ public class FHIRResourceMapper {
                 Concept memberConcept = member.getConcept();
 
                 if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NAME))) {
+                    procedure.setCode(conceptTranslator.toFhirResource(member.getValueCoded()));
+                }
+                else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NAME_NONCODED))) {
                     CodeableConcept concept = new CodeableConcept();
                     concept.setText(member.getValueCoded().getDisplayString());
                     procedure.setCode(concept);
@@ -116,9 +122,7 @@ public class FHIRResourceMapper {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_BODYSITE))) {
-                    CodeableConcept concept = new CodeableConcept();
-                    concept.setText(member.getValueCoded().getDisplayString());
-                    procedure.setBodySite(Arrays.asList(concept));
+                    procedure.setBodySite(Arrays.asList(conceptTranslator.toFhirResource(member.getValueCoded())));
                 }
                 else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NONCODED_BODYSITE))) {
                     CodeableConcept concept = new CodeableConcept();
@@ -127,6 +131,9 @@ public class FHIRResourceMapper {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_OUTCOME))) {
+                    procedure.setOutcome(conceptTranslator.toFhirResource(member.getValueCoded()));
+                }
+                else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NONCODED_OUTCOME))) {
                     CodeableConcept concept = new CodeableConcept();
                     concept.setText(member.getValueCoded().getDisplayString());
                     procedure.setOutcome(concept);

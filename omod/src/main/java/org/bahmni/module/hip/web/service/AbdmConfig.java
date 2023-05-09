@@ -198,11 +198,13 @@ public class AbdmConfig {
     public enum ProcedureAttribute {
         PROCEDURE_TEMPLATE("abdm.conceptMap.procedure.procedureTemplate"),
         PROCEDURE_NAME("abdm.conceptMap.procedure.procedureName"),
+        PROCEDURE_NAME_NONCODED("abdm.conceptMap.procedure.procedureNameNonCoded"),
         PROCEDURE_START_DATETIME("abdm.conceptMap.procedure.procedureStartDate"),
         PROCEDURE_END_DATETIME("abdm.conceptMap.procedure.procedureEndDate"),
         PROCEDURE_BODYSITE("abdm.conceptMap.procedure.procedureBodySite"),
         PROCEDURE_NONCODED_BODYSITE("abdm.conceptMap.procedure.procedureNonCodedBodySite"),
         PROCEDURE_OUTCOME("abdm.conceptMap.procedure.procedureOutcome"),
+        PROCEDURE_NONCODED_OUTCOME("abdm.conceptMap.procedure.procedureOutcomeNonCoded"),
         PROCEDURE_NOTE("abdm.conceptMap.procedure.procedureNote");
 
         private final String mapping;
