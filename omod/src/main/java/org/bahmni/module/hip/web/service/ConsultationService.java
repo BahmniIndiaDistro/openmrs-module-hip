@@ -65,7 +65,7 @@ public class ConsultationService {
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit) {
         List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
         Map<Encounter, List<Obs>> encounterObsMap = visit.getEncounters().stream()
-                .map(encounter -> encounter.getObsAtTopLevel(false))
+                .map(Encounter::getAllObs)
                 .flatMap(Collection::stream)
                 .filter(obs -> conceptList.contains(obs.getConcept()))
                 .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
