@@ -56,7 +56,7 @@ public class OPConsultDaoImpl implements OPConsultDao {
     public Map<Encounter, List<Condition>> getMedicalHistoryConditions(Visit visit, Date fromDate, Date toDate) {
         final String conditionStatusHistoryOf = "HISTORY_OF";
         final String conditionStatusActive = "ACTIVE";
-        List<Encounter> encounters = encounterDao.GetEncountersForVisit(visit, Config.CONSULTATION.getValue(), fromDate, toDate);
+        List<Encounter> encounters = encounterDao.getEncountersForVisit(visit, Config.CONSULTATION.getValue(), fromDate, toDate);
         if(encounters.size() == 0)
             return new HashMap<>();
         List<org.openmrs.Condition> conditions = conditionService.getActiveConditions(visit.getPatient())
@@ -100,8 +100,8 @@ public class OPConsultDaoImpl implements OPConsultDao {
 
     @Override
     public List<Obs> getMedicalHistoryDiagnosis(Visit visit, Date fromDate, Date toDate) {
-        List<Obs> medicalHistoryDiagnosisObsMap = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.CODED_DIAGNOSIS.getValue(),fromDate,toDate);
-        medicalHistoryDiagnosisObsMap.addAll(encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.NON_CODED_DIAGNOSIS.getValue(),fromDate,toDate));
+        List<Obs> medicalHistoryDiagnosisObsMap = encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.CODED_DIAGNOSIS.getValue(),fromDate,toDate);
+        medicalHistoryDiagnosisObsMap.addAll(encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.NON_CODED_DIAGNOSIS.getValue(),fromDate,toDate));
         return medicalHistoryDiagnosisObsMap;
     }
 
@@ -202,10 +202,10 @@ public class OPConsultDaoImpl implements OPConsultDao {
     }
 
     public Map<Encounter, List<Obs>> getPatientDocumentsForVisit(Visit visit, Date fromDate, Date toDate){
-        List<Obs> patientObs = encounterDao.GetAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(),null, fromDate, toDate)
+        List<Obs> patientObs = encounterDao.getAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(),null, fromDate, toDate)
                 .stream().filter(o -> !o.getConcept().getName().getName().equals(Config.DOCUMENT_TYPE.getValue()) ).collect(Collectors.toList());
-        patientObs.addAll(encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.IMAGE.getValue(),fromDate, toDate));
-        patientObs.addAll(encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.PATIENT_VIDEO.getValue(), fromDate, toDate));
+        patientObs.addAll(encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.IMAGE.getValue(),fromDate, toDate));
+        patientObs.addAll(encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.PATIENT_VIDEO.getValue(), fromDate, toDate));
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
         for (Obs obs: patientObs) {
             Encounter encounter = obs.getEncounter();

@@ -8,7 +8,6 @@ import org.openmrs.Obs;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
-import org.openmrs.api.ObsService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.module.episodes.Episode;
 import org.openmrs.module.episodes.service.EpisodeService;
@@ -40,7 +39,7 @@ public class DischargeSummaryDaoImpl implements DischargeSummaryDao {
 
     @Override
     public List<Obs> getCarePlan(Visit visit, Date fromDate, Date toDate) {
-        List<Obs> carePlanObs = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue(), fromDate, toDate).stream()
+        List<Obs> carePlanObs = encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue(), fromDate, toDate).stream()
                 .filter(obs -> obs.getConcept().getName().getLocalePreferred())
                 .collect(Collectors.toList());
 

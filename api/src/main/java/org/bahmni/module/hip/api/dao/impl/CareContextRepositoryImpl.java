@@ -9,7 +9,6 @@ import org.openmrs.Encounter;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
-import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.VisitService;
@@ -122,7 +121,7 @@ public class CareContextRepositoryImpl implements CareContextRepository {
         List<Visit> visits = new ArrayList<>();
         for (Visit visit: visitService.getVisitsByPatient(patient)) {
             Set<Encounter> encounters = visit.getEncounters().stream()
-                    .filter(encounter -> !encounterDao.GetEpisodeEncounterIds().contains(encounter.getEncounterId()))
+                    .filter(encounter -> !encounterDao.getEpisodeEncounterIds().contains(encounter.getEncounterId()))
                     .collect(Collectors.toSet());
             if(!encounters.isEmpty())
                 visits.add(visit);

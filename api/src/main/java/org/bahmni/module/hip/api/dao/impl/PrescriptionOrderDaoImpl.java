@@ -33,7 +33,7 @@ public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
     }
 
     public List<DrugOrder> getDrugOrders(Visit visit, Date fromDate, Date toDate) {
-        List<DrugOrder> orderLists = encounterDao.GetOrdersForVisit(visit,fromDate,toDate).stream()
+        List<DrugOrder> orderLists = encounterDao.getOrdersForVisit(visit,fromDate,toDate).stream()
                             .filter(order -> order.getOrderType().getUuid().equals(OrderType.DRUG_ORDER_TYPE_UUID))
                             .map(order -> (DrugOrder) order)
                              .collect(Collectors.toList());
@@ -43,7 +43,7 @@ public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
 
     public List<DrugOrder> getDrugOrdersForProgram(Patient patient, Date fromDate, Date toDate, OrderType orderType, String program, String programEnrollmentId) {
 
-        Integer [] encounterIds = encounterDao.GetEncounterIdsForProgramForPrescriptions(patient.getUuid(), program, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
+        Integer [] encounterIds = encounterDao.getEncounterIdsForProgramForPrescriptions(patient.getUuid(), program, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
         if(encounterIds.length == 0)
             return new ArrayList< DrugOrder > ();
         Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(Order.class);

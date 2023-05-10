@@ -131,15 +131,15 @@ public class EncounterDaoImpl implements EncounterDao {
             "  and :toDate ;\n";
 
     @Override
-    public List<Integer> GetEpisodeEncounterIds() {
+    public List<Integer> getEpisodeEncounterIds() {
 
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEpisodeEncounterIds);
         return query.list();
     }
 
     @Override
-    public List<Encounter> GetEncountersForVisit(Visit visit, String encounterType, Date fromDate, Date toDate) {
-        List<Integer> episodeEncounters = GetEpisodeEncounterIds();
+    public List<Encounter> getEncountersForVisit(Visit visit, String encounterType, Date fromDate, Date toDate) {
+        List<Integer> episodeEncounters = getEpisodeEncounterIds();
         List<Encounter> encounters = visit.getEncounters().stream()
                 .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
                 .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
@@ -150,9 +150,9 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Obs> GetAllObsForVisit(Visit visit, String encounterType, String conceptName, Date fromDate, Date toDate) {
+    public List<Obs> getAllObsForVisit(Visit visit, String encounterType, String conceptName, Date fromDate, Date toDate) {
         List<Obs> observations = new ArrayList<>();
-        List<Encounter> encounters = GetEncountersForVisit(visit,encounterType,fromDate,toDate);
+        List<Encounter> encounters = getEncountersForVisit(visit,encounterType,fromDate,toDate);
         for (Encounter encounter : encounters) {
             if(conceptName == null)
                 observations.addAll(encounter.getAllObs());
@@ -164,8 +164,8 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Order> GetOrdersForVisit(Visit visit,Date fromDate, Date toDate) {
-        List<Integer> episodeEncounters = GetEpisodeEncounterIds();
+    public List<Order> getOrdersForVisit(Visit visit, Date fromDate, Date toDate) {
+        List<Integer> episodeEncounters = getEpisodeEncounterIds();
         List<Encounter> encounters = visit.getEncounters().stream()
                 .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
                 .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
@@ -179,7 +179,7 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Integer> GetEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+    public List<Integer> getEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForPrescriptions);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);
@@ -191,7 +191,7 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Integer> GetEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+    public List<Integer> getEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForDiagnosticReports);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);

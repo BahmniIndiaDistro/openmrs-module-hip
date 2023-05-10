@@ -9,8 +9,6 @@ import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
-import org.openmrs.api.ObsService;
-import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.module.episodes.Episode;
 import org.openmrs.module.episodes.service.EpisodeService;
@@ -61,7 +59,7 @@ public class ConsultationDaoImpl implements ConsultationDao {
 
     @Override
     public List<Order> getOrders(Visit visit, Date fromDate, Date toDate) {
-        return  encounterDao.GetOrdersForVisit(visit,fromDate,toDate).stream()
+        return  encounterDao.getOrdersForVisit(visit,fromDate,toDate).stream()
                 .filter(order -> order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION))
                 .filter(order -> ORDER_TYPES.contains(order.getOrderType().getName()))
                 .collect(Collectors.toList());

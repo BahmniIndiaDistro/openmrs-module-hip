@@ -85,8 +85,8 @@ public class DiagnosticReportService {
     }
 
     public HashMap<Encounter, List<Obs>> getAllObservationsForVisits(Visit visit, Date fromDate, Date toDate) {
-        List<Obs> patientObs = encounterDao.GetAllObsForVisit(visit, Config.RADIOLOGY_TYPE.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate);
-        patientObs.addAll(encounterDao.GetAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate));
+        List<Obs> patientObs = encounterDao.getAllObsForVisit(visit, Config.RADIOLOGY_TYPE.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate);
+        patientObs.addAll(encounterDao.getAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate));
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
         for (Obs obs: patientObs) {
             Encounter encounter = obs.getEncounter();
@@ -117,7 +117,7 @@ public class DiagnosticReportService {
                                                                         String programName,
                                                                         String programEnrollmentId) {
         HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
-        List<Integer> encounterIds = encounterDao.GetEncounterIdsForProgramForDiagnosticReport(patient.getUuid(), programName,
+        List<Integer> encounterIds = encounterDao.getEncounterIdsForProgramForDiagnosticReport(patient.getUuid(), programName,
                 programEnrollmentId, fromDate, toDate);
         List<Encounter> finalList = new ArrayList<>();
         for(Integer encounterId : encounterIds){
@@ -219,7 +219,7 @@ public class DiagnosticReportService {
 
         public List<DiagnosticReportBundle> getLabResultsForPrograms(String patientUuid, DateRange dateRange, String programName, String programEnrollmentId)
     {
-        List<Integer> visitsForProgram =  hipVisitDao.GetVisitIdsForProgramForLabResults(patientUuid, programName, programEnrollmentId, dateRange.getFrom(), dateRange.getTo() );
+        List<Integer> visitsForProgram =  hipVisitDao.getVisitIdsForProgramForLabResults(patientUuid, programName, programEnrollmentId, dateRange.getFrom(), dateRange.getTo() );
         Patient patient = patientService.getPatientByUuid(patientUuid);
 
         List<Visit> visits, visitsWithOrdersForProgram ;
