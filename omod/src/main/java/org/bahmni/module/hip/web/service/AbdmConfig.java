@@ -181,7 +181,7 @@ public class AbdmConfig {
         CHIEF_COMPLAINT_CODED("abdm.conceptMap.historyExamination.codedChiefComplaint"),
         CHIEF_COMPLAINT_NON_CODED("abdm.conceptMap.historyExamination.nonCodedChiefComplaint"),
         SIGN_SYMPTOM_DURATION("abdm.conceptMap.historyExamination.signAndSymptomDuration"),
-        CHIEF_COMPLAINT_DURATION("abdm.conceptMap.physicalExamination.chiefComplainDuration");
+        CHIEF_COMPLAINT_DURATION("abdm.conceptMap.historyExamination.chiefComplainDuration");
 
         private final String mapping;
 
