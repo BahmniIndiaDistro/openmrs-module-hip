@@ -137,6 +137,13 @@
 			To enable demographics authMode
 		</description>
 	</globalProperty>
+	<globalProperty>
+		<property>bahmniHip.enableHealthIdVerification</property>
+		<defaultValue>false</defaultValue>
+		<description>
+			To enable abha verification through fetch-modes
+		</description>
+	</globalProperty>
 	<!-- /Internationalization -->
 	
 </module>
