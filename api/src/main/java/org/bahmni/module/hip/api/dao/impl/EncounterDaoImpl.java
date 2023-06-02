@@ -6,7 +6,6 @@ import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
-import org.openmrs.Order;
 import org.openmrs.Visit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -144,7 +143,7 @@ public class EncounterDaoImpl implements EncounterDao {
                 .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
                 .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
-                .filter(encounter -> Objects.equals(encounter.getEncounterType().getName(), encounterType))
+                .filter(encounter -> encounterType == null || Objects.equals(encounter.getEncounterType().getName(), encounterType))
                 .collect(Collectors.toList());
         return encounters;
     }
@@ -161,33 +160,6 @@ public class EncounterDaoImpl implements EncounterDao {
                                 .collect(Collectors.toList()));
         }
         return observations;
-    }
-
-    @Override
-    public List<Order> getOrdersForVisit(Visit visit, Date fromDate, Date toDate) {
-        List<Integer> episodeEncounters = getEpisodeEncounterIds();
-        List<Encounter> encounters = visit.getEncounters().stream()
-                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
-                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
-                .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
-                .collect(Collectors.toList());
-        List<Order> orderList = new ArrayList<>();
-        for (Encounter encounter: encounters) {
-            orderList.addAll(encounter.getOrders());
-        }
-        return orderList;
-    }
-
-    @Override
-    public List<Integer> getEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForPrescriptions);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("programName", program);
-        query.setParameter("programEnrollmentId", programEnrollmentID);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
-
-        return query.list();
     }
 
     @Override

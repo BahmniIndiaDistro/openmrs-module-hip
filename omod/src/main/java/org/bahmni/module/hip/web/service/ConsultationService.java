@@ -106,13 +106,11 @@ public class ConsultationService {
     }
 
     public Map<Encounter, List<Order>> getEncounterOrdersMap(Visit visit,Date fromDate, Date toDate) {
-        List<Order> orders = consultationDao.getOrders(visit,fromDate,toDate);
-        return getEncounterListMapForOrders(orders);
+        return consultationDao.getOrders(visit,fromDate,toDate);
     }
 
     public Map<Encounter, List<Order>> getEncounterOrdersMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Order> orders = consultationDao.getOrdersForProgram(programName,fromDate, toDate,patient);
-        return getEncounterListMapForOrders(orders);
+        return consultationDao.getOrdersForProgram(programName,fromDate, toDate,patient);
     }
 
     private ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterListConcurrentHashMapForChiefComplaint(List<Obs> chiefComplaints) {

@@ -52,8 +52,7 @@ public class DischargeSummaryService {
         Visit visit = visitService.getVisitByUuid(visitUuid);
 
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate));
-        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
+        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate);
         Map<Encounter, List<Obs>> encounterDischargeSummaryMap = getEncounterCarePlanMap(visit,fromDate,toDate);
         ConcurrentHashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit,fromDate,toDate);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit,fromDate,toDate);
@@ -71,8 +70,7 @@ public class DischargeSummaryService {
         Date fromDate = dateRange.getFrom();
         Date toDate = dateRange.getTo();
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndProgramFor(patientUuid, dateRange, programName,programEnrollmentId));
-        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = drugOrders.groupByEncounter();
+        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = openMRSDrugOrderClient.getDrugOrdersByDateAndProgramFor(patientUuid, dateRange, programName,programEnrollmentId);
         ConcurrentHashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMapForProgram(programName,fromDate, toDate,patient);
         Map<Encounter, List<Obs>> encounterDischargeSummaryMap = getEncounterCarePlanMapForProgram(programName,fromDate,toDate,patient);
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMapForProgram(programName,fromDate, toDate,patient);

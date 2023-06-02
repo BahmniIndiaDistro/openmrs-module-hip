@@ -2,7 +2,9 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.api.dao.PrescriptionOrderDao;
 import org.bahmni.module.hip.web.model.DateRange;
+import org.bahmni.module.hip.web.model.DrugOrders;
 import org.openmrs.DrugOrder;
+import org.openmrs.Encounter;
 import org.openmrs.Order;
 import org.openmrs.OrderType;
 import org.openmrs.Patient;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -50,15 +53,23 @@ class OpenMRSDrugOrderClient {
         return order.getEncounter().getVisit().getVisitType().getName().equals(visitType);
     }
 
-    List<DrugOrder> getDrugOrdersByDateAndVisitTypeFor(Visit visit, Date fromDate, Date toDate) {
+    Map<Encounter, DrugOrders> getDrugOrdersByDateAndVisitTypeFor(Visit visit, Date fromDate, Date toDate) {
         return prescriptionOrderDao
-                .getDrugOrders(visit,fromDate,toDate);
+                .getDrugOrders(visit,fromDate,toDate).entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> new DrugOrders(entry.getValue())));
     }
 
-    List<DrugOrder> getDrugOrdersByDateAndProgramFor(String forPatientUUID, DateRange dateRange, String programName, String programEnrolmentId) {
+    Map<Encounter, DrugOrders> getDrugOrdersByDateAndProgramFor(String forPatientUUID, DateRange dateRange, String programName, String programEnrolmentId) {
         Patient patient = patientService.getPatientByUuid(forPatientUUID);
         OrderType drugOrderType = orderService.getOrderTypeByUuid(OrderType.DRUG_ORDER_TYPE_UUID);
         return prescriptionOrderDao
-                .getDrugOrdersForProgram(patient, dateRange.getFrom(), dateRange.getTo(), drugOrderType, programName, programEnrolmentId);
+                .getDrugOrdersForProgram(patient, dateRange.getFrom(), dateRange.getTo(), drugOrderType, programName, programEnrolmentId).entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> new DrugOrders(entry.getValue())));
     }
 }

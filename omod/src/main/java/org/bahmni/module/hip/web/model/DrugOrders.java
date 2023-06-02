@@ -22,26 +22,8 @@ public class DrugOrders {
         return CollectionUtils.isEmpty(openMRSDrugOrders);
     }
 
-    public Map<Encounter, DrugOrders> groupByEncounter(){
-        return groupByEncounterUUID()
-                .values()
-                .stream()
-                .map(DrugOrders::new)
-                .collect(Collectors.toMap(DrugOrders::firstEncounter, drugOrders -> drugOrders));
-    }
-
     public int size() {
         return openMRSDrugOrders.size();
-    }
-
-    private Map<String, List<DrugOrder>> groupByEncounterUUID(){
-        return openMRSDrugOrders
-                .stream()
-                .collect(Collectors.groupingBy(order -> order.getEncounter().getUuid()));
-    }
-
-    private Encounter firstEncounter() {
-        return openMRSDrugOrders.get(0).getEncounter();
     }
 
     Stream<DrugOrder> stream(){

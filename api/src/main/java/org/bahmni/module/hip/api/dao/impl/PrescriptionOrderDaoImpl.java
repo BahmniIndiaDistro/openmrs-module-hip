@@ -2,59 +2,73 @@ package org.bahmni.module.hip.api.dao.impl;
 
 import org.bahmni.module.hip.api.dao.EncounterDao;
 import org.bahmni.module.hip.api.dao.PrescriptionOrderDao;
-import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Restrictions;
 import org.openmrs.DrugOrder;
-import org.openmrs.Order;
+import org.openmrs.Encounter;
 import org.openmrs.OrderType;
 import org.openmrs.Patient;
+import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
 import org.openmrs.api.OrderService;
+import org.openmrs.api.ProgramWorkflowService;
+import org.openmrs.module.episodes.Episode;
+import org.openmrs.module.episodes.service.EpisodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
 public class PrescriptionOrderDaoImpl implements PrescriptionOrderDao {
-    private SessionFactory sessionFactory;
-    private EncounterDao encounterDao;
-    private final OrderService orderService;
+    private final ProgramWorkflowService programWorkflowService;
+    private final EncounterDao encounterDao;
+    private final EpisodeService episodeService;
 
     @Autowired
-    public PrescriptionOrderDaoImpl(SessionFactory sessionFactory, EncounterDao encounterDao, OrderService orderService) {
-        this.sessionFactory = sessionFactory;
+    public PrescriptionOrderDaoImpl(ProgramWorkflowService programWorkflowService, SessionFactory sessionFactory, EncounterDao encounterDao, OrderService orderService, EpisodeService episodeService) {
+        this.programWorkflowService = programWorkflowService;
         this.encounterDao = encounterDao;
-        this.orderService = orderService;
+        this.episodeService = episodeService;
     }
 
-    public List<DrugOrder> getDrugOrders(Visit visit, Date fromDate, Date toDate) {
-        List<DrugOrder> orderLists = encounterDao.getOrdersForVisit(visit,fromDate,toDate).stream()
-                            .filter(order -> order.getOrderType().getUuid().equals(OrderType.DRUG_ORDER_TYPE_UUID))
-                            .map(order -> (DrugOrder) order)
-                             .collect(Collectors.toList());
-
-        return orderLists;
+    public Map<Encounter, List<DrugOrder>> getDrugOrders(Visit visit, Date fromDate, Date toDate) {
+        List<Encounter> encounterList = encounterDao.getEncountersForVisit(visit,null,fromDate,toDate);
+        Map<Encounter, List<DrugOrder>> encounterOrdersMap = new HashMap<>();
+        for (Encounter encounter: encounterList) {
+            List<DrugOrder> orderList = encounter.getOrders().stream()
+                    .filter(order -> order.getOrderType().getUuid().equals(OrderType.DRUG_ORDER_TYPE_UUID))
+                    .map(order -> (DrugOrder) order)
+                    .collect(Collectors.toList());
+            if(orderList.size() > 0)
+                encounterOrdersMap.put(encounter, orderList);
+        }
+        return encounterOrdersMap;
     }
 
-    public List<DrugOrder> getDrugOrdersForProgram(Patient patient, Date fromDate, Date toDate, OrderType orderType, String program, String programEnrollmentId) {
-
-        Integer [] encounterIds = encounterDao.getEncounterIdsForProgramForPrescriptions(patient.getUuid(), program, programEnrollmentId, fromDate, toDate).toArray(new Integer[0]);
-        if(encounterIds.length == 0)
-            return new ArrayList< DrugOrder > ();
-        Criteria criteria = this.sessionFactory.getCurrentSession().createCriteria(Order.class);
-        criteria.createCriteria("encounter", "e")
-                .createCriteria("visit", "v");
-        criteria.add(Restrictions.eq("patient", patient));
-        criteria.add(Restrictions.eq("orderType", orderType));
-        criteria.add(Restrictions.eq("voided", false));
-        criteria.add(Restrictions.in( "e.encounterId", encounterIds));
-        criteria.add(Restrictions.between("dateCreated", fromDate, toDate));
-        return criteria.list();
+    public Map<Encounter, List<DrugOrder>> getDrugOrdersForProgram(Patient patient, Date fromDate, Date toDate, OrderType orderType, String program, String programEnrollmentId) {
+        List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(patient, programWorkflowService.getProgramByName(program), fromDate, toDate, null, null, false);
+        Set<PatientProgram> patientProgramSet = new HashSet<>(patientPrograms);
+        Map<Encounter, List<DrugOrder>> encounterOrdersMap = new HashMap<>();
+        for (PatientProgram patientProgram : patientProgramSet) {
+            Episode episode = episodeService.getEpisodeForPatientProgram(patientProgram);
+            Set<Encounter> encounterSet = episode.getEncounters();
+            for (Encounter encounter : encounterSet) {
+                List<DrugOrder> orderList =  encounter.getOrders()
+                        .stream()
+                        .filter(order -> orderType.equals(order.getOrderType().getName()))
+                        .map(order -> (DrugOrder) order)
+                        .collect(Collectors.toList());
+                if(orderList.size() > 0)
+                    encounterOrdersMap.put(encounter, orderList);
+            }
+        }
+        return encounterOrdersMap;
     }
 
 }

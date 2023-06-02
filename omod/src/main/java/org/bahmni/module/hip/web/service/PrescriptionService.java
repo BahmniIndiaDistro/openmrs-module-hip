@@ -47,7 +47,7 @@ public class PrescriptionService {
 
     public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitUuid, Date fromDate, Date toDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate));
+        Map<Encounter, DrugOrders> drugOrders = openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate);
         Concept docType = abdmConfig.getDocumentConcept(AbdmConfig.DocumentKind.PRESCIPTION);
         Map<Encounter, List<Obs>> encounterDocObs = visit.getEncounters()
                 .stream()
@@ -61,7 +61,7 @@ public class PrescriptionService {
             return new ArrayList<>();
         }
         List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription
-                .from(drugOrders.groupByEncounter(), encounterDocObs);
+                .from(drugOrders, encounterDocObs);
         return openMrsPrescriptions
                 .stream()
                 .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
@@ -84,12 +84,12 @@ public class PrescriptionService {
     }
 
     public List<PrescriptionBundle> getPrescriptionsForProgram(String patientIdUuid, DateRange dateRange, String programName, String programEnrolmentId) {
-        DrugOrders drugOrders = new DrugOrders(openMRSDrugOrderClient.getDrugOrdersByDateAndProgramFor(patientIdUuid, dateRange, programName, programEnrolmentId));
+        Map<Encounter, DrugOrders> drugOrders = openMRSDrugOrderClient.getDrugOrdersByDateAndProgramFor(patientIdUuid, dateRange, programName, programEnrolmentId);
         if (drugOrders.isEmpty()) {
             //TODO: Need to identify if there are unstructured docs captured for prescription as part of program
             return new ArrayList<>();
         }
-        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.from(drugOrders.groupByEncounter(), new HashMap<>());
+        List<OpenMrsPrescription> openMrsPrescriptions = OpenMrsPrescription.from(drugOrders, new HashMap<>());
         return openMrsPrescriptions
                 .stream()
                 .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)

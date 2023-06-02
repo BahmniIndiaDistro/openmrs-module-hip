@@ -11,9 +11,7 @@ import java.util.List;
 public interface EncounterDao {
 
     List<Integer> getEpisodeEncounterIds();
-    List<Order> getOrdersForVisit(Visit visit, Date fromDate, Date toDate);
     List<Encounter> getEncountersForVisit(Visit visit, String encounterType, Date fromDate, Date toDate);
     List<Obs> getAllObsForVisit(Visit visit, String encounterType, String conceptName, Date fromDate, Date toDate);
-    List<Integer> getEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) ;
     List<Integer> getEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate);
 }
