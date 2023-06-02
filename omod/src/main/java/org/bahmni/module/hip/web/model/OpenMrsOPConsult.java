@@ -127,11 +127,11 @@ public class OpenMrsOPConsult {
         }
 
         for (Map.Entry<Encounter, List<Obs>> entry : encounterPatientDocumentsMap.entrySet()) {
-            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), null, encounterPatientDocumentsMap.get(entry.getKey()), new ArrayList<>()));
+            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), encounterPatientDocumentsMap.get(entry.getKey()), new ArrayList<>()));
         }
 
         for(Map.Entry<Encounter, List<Order>> entry : encounterOrdersMap.entrySet()){
-            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), null, new ArrayList<>(), encounterOrdersMap.get(entry.getKey())));
+            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), encounterOrdersMap.get(entry.getKey())));
         }
 
         return openMrsOPConsultList;
@@ -161,6 +161,6 @@ public class OpenMrsOPConsult {
             map.remove(encounter);
             return obs;
         }
-        return null;
+        return new ArrayList<>();
     }
 }
