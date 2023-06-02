@@ -68,7 +68,7 @@ public class WellnessRecordService {
 		Map<Encounter, List<Obs>> encounterObsList = visit.getEncounters().stream()
 				.filter(e -> fromEncounterDate == null || e.getEncounterDatetime().after(fromEncounterDate))
 				.filter(e-> toEncounterDate == null || e.getEncounterDatetime().before(toEncounterDate))
-				.map(encounter -> encounter.getObsAtTopLevel(false))
+				.map(Encounter::getAllObs)
 				.flatMap(Collection::stream)
 				.collect(Collectors.groupingBy(obs -> obs.getEncounter()));
 
