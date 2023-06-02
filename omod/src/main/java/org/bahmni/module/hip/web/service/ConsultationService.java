@@ -69,7 +69,7 @@ public class ConsultationService {
         Map<Encounter, List<Obs>> encounterObsMap = visit.getEncounters().stream()
                 .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
                 .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
-                .map(encounter -> encounter.getObsAtTopLevel(false))
+                .map(Encounter::getAllObs)
                 .flatMap(Collection::stream)
                 .filter(obs -> conceptList.contains(obs.getConcept()))
                 .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
