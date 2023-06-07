@@ -48,8 +48,10 @@ public class ConsultationService {
         this.abdmConfig = abdmConfig;
     }
 
-    public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Visit visit) {
+    public ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterChiefComplaintsMap(Visit visit, Date fromDate, Date toDate) {
         Stream<Obs> obsStream = visit.getEncounters().stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .map(Encounter::getAllObs)
                 .flatMap(Collection::stream);
         List<Obs> chiefComplaintObs = getObservationsForChiefComplaint(obsStream);
@@ -62,9 +64,11 @@ public class ConsultationService {
         return getEncounterListConcurrentHashMapForChiefComplaint(chiefComplaintObs);
     }
 
-    public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit) {
+    public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit, Date fromDate, Date toDate) {
         List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
         Map<Encounter, List<Obs>> encounterObsMap = visit.getEncounters().stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .map(Encounter::getAllObs)
                 .flatMap(Collection::stream)
                 .filter(obs -> conceptList.contains(obs.getConcept()))
@@ -79,9 +83,9 @@ public class ConsultationService {
         return getEncounterListMapForPhysicalExamination(physicalExaminations);
     }
 
-    public Map<Encounter, List<OpenMrsCondition>> getEncounterMedicalHistoryConditionsMap(Visit visit) {
-        Map<Encounter, List<Condition>> medicalHistoryConditionsMap =  opConsultDao.getMedicalHistoryConditions(visit);
-        List<Obs> medicalHistoryDiagnosisMap =  opConsultDao.getMedicalHistoryDiagnosis(visit);
+    public Map<Encounter, List<OpenMrsCondition>> getEncounterMedicalHistoryConditionsMap(Visit visit, Date fromDate, Date toDate) {
+        Map<Encounter, List<Condition>> medicalHistoryConditionsMap =  opConsultDao.getMedicalHistoryConditions(visit,fromDate,toDate);
+        List<Obs> medicalHistoryDiagnosisMap =  opConsultDao.getMedicalHistoryDiagnosis(visit,fromDate,toDate);
         return getEncounterListMapForMedicalHistory(medicalHistoryConditionsMap, medicalHistoryDiagnosisMap);
     }
 
@@ -91,8 +95,8 @@ public class ConsultationService {
         return getEncounterListMapForMedicalHistory(medicalHistoryConditionsMap, medicalHistoryDiagnosisMap);
     }
 
-    public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(Visit visit) {
-        return opConsultDao.getPatientDocumentsForVisit(visit);
+    public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(Visit visit, Date fromDate, Date toDate) {
+        return opConsultDao.getPatientDocumentsForVisit(visit,fromDate,toDate);
     }
 
     public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMapForProgram(String programName, Date fromDate, Date toDate, Patient patient,String programEnrollmentId) {
@@ -101,14 +105,12 @@ public class ConsultationService {
         return getEncounterListMapForPatientDocument(patientDocumentEncounterType, encounterDiagnosticReportsMap);
     }
 
-    public Map<Encounter, List<Order>> getEncounterOrdersMap(Visit visit) {
-        List<Order> orders = consultationDao.getOrders(visit);
-        return getEncounterListMapForOrders(orders);
+    public Map<Encounter, List<Order>> getEncounterOrdersMap(Visit visit,Date fromDate, Date toDate) {
+        return consultationDao.getOrders(visit,fromDate,toDate);
     }
 
     public Map<Encounter, List<Order>> getEncounterOrdersMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Order> orders = consultationDao.getOrdersForProgram(programName,fromDate, toDate,patient);
-        return getEncounterListMapForOrders(orders);
+        return consultationDao.getOrdersForProgram(programName,fromDate, toDate,patient);
     }
 
     private ConcurrentHashMap<Encounter, List<OpenMrsCondition>> getEncounterListConcurrentHashMapForChiefComplaint(List<Obs> chiefComplaints) {
@@ -228,5 +230,20 @@ public class ConsultationService {
                 chiefComplaintDuration = getObsValue(childObs);
         }
         return (chiefComplaintCoded + " " + "since" + " " + signOrSymptomDuration + " " + chiefComplaintDuration);
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterProcedureMap(Visit visit, Date startDate, Date ToDate) {
+        Map<Encounter, List<Obs>> encounterProcedureMap = new HashMap<>();
+        for(Encounter encounter: visit.getEncounters().stream().filter(e -> startDate == null || e.getEncounterDatetime().after(startDate)).collect(Collectors.toList())){
+            List<Obs> obsList = encounter.getAllObs().stream().filter(obs -> obs.getConcept().equals(abdmConfig.getProcedureObsRootConcept())).collect(Collectors.toList());
+            if(obsList.size() > 0)
+                encounterProcedureMap.put(encounter,obsList);
+        }
+        return encounterProcedureMap;
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterProcedureMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
+        List<Obs> obsProcedures = opConsultDao.getProceduresForProgram(programName,fromDate, toDate,patient);
+        return obsProcedures.stream().collect(Collectors.groupingBy(Obs::getEncounter));
     }
 }

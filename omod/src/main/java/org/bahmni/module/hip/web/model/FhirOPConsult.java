@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.web.model;
 
+import org.bahmni.module.hip.web.service.AbdmConfig;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Condition;
@@ -39,7 +40,7 @@ public class FhirOPConsult {
     private final List<Observation> observations;
     private final List<MedicationRequest> medicationRequests;
     private final List<Medication> medications;
-    private final Procedure procedure;
+    private final List<Procedure> procedure;
     private final List<DocumentReference> patientDocuments;
     private final List<ServiceRequest> serviceRequest;
 
@@ -53,7 +54,7 @@ public class FhirOPConsult {
                          List<Observation> observations,
                          List<MedicationRequest> medicationRequests,
                          List<Medication> medications,
-                         Procedure procedure,
+                         List<Procedure> procedure,
                          List<DocumentReference> patientDocuments,
                          List<ServiceRequest> serviceRequest) {
         this.chiefComplaints = chiefComplaints;
@@ -91,7 +92,7 @@ public class FhirOPConsult {
         return bundle;
     }
 
-    public static FhirOPConsult fromOpenMrsOPConsult(OpenMrsOPConsult openMrsOPConsult, FHIRResourceMapper fhirResourceMapper) {
+    public static FhirOPConsult fromOpenMrsOPConsult(OpenMrsOPConsult openMrsOPConsult, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig) {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsOPConsult.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
@@ -112,15 +113,17 @@ public class FhirOPConsult {
         }
         List<Observation> fhirObservationList = openMrsOPConsult.getObservations().stream().
                     map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
-        Procedure procedure = openMrsOPConsult.getProcedure() != null ?
-                fhirResourceMapper.mapToProcedure(openMrsOPConsult.getProcedure()) : null;
+        List<Procedure> fhirProcedureList = new ArrayList<>();
+        for(int i=0;i<openMrsOPConsult.getProcedure().size();i++){
+            fhirProcedureList.add(fhirResourceMapper.mapToProcedure(encounter,openMrsOPConsult.getProcedure().get(i),abdmConfig.getProcedureAttributeConcepts()));
+        }
         List<DocumentReference> patientDocuments = openMrsOPConsult.getPatientDocuments().stream().
                 map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
         List<ServiceRequest> serviceRequest = openMrsOPConsult.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList, visitDatetime, encounterId, encounter, practitioners,
-                patient, patientReference, fhirObservationList, medicationRequestsList, medications, procedure, patientDocuments, serviceRequest);
+                patient, patientReference, fhirObservationList, medicationRequestsList, medications, fhirProcedureList, patientDocuments, serviceRequest);
     }
 
     private Composition compositionFrom(OrganizationContext orgContext) {
@@ -141,13 +144,16 @@ public class FhirOPConsult {
                     .forEach(patientDocumentsCompositionSection::addEntry);
         }
 
-        if (procedure != null) {
+        if (procedure.size() > 0) {
             Composition.SectionComponent procedureCompositionSection = composition.addSection();
             procedureCompositionSection
                     .setTitle("Procedure")
                     .setCode(FHIRUtils.getProcedureType());
 
-            procedureCompositionSection.addEntry(FHIRUtils.getReferenceToResource(procedure));
+            procedure
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(procedureCompositionSection::addEntry);
         }
 
         if(medicationRequests.size() > 0){

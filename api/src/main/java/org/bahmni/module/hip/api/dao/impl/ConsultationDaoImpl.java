@@ -9,8 +9,6 @@ import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
-import org.openmrs.api.ObsService;
-import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.module.episodes.Episode;
 import org.openmrs.module.episodes.service.EpisodeService;
@@ -19,8 +17,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,30 +60,38 @@ public class ConsultationDaoImpl implements ConsultationDao {
     }
 
     @Override
-    public List<Order> getOrders(Visit visit) {
-        return  encounterDao.GetOrdersForVisit(visit).stream()
-                .filter(order -> order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION))
-                .filter(order -> ORDER_TYPES.contains(order.getOrderType().getName()))
-                .collect(Collectors.toList());
+    public Map<Encounter, List<Order>> getOrders(Visit visit, Date fromDate, Date toDate) {
+        List<Encounter> encounters = encounterDao.getEncountersForVisit(visit,null,fromDate,toDate);
+        Map<Encounter, List<Order>> encounterOrdersMap = new HashMap<>();
+        for (Encounter encounter: encounters) {
+            List<Order> orderList = encounter.getOrders()
+                    .stream().filter(order -> order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION))
+                    .filter(order -> ORDER_TYPES.contains(order.getOrderType().getName()))
+                    .collect(Collectors.toList());
+            if(orderList.size() > 0)
+                encounterOrdersMap.put(encounter, orderList);
+        }
+        return encounterOrdersMap;
     }
 
     @Override
-    public List<Order> getOrdersForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Order> orderSet = new ArrayList<>();
+    public Map<Encounter, List<Order>> getOrdersForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(patient, programWorkflowService.getProgramByName(programName), fromDate, toDate, null, null, false);
         Set<PatientProgram> patientProgramSet = new HashSet<>(patientPrograms);
+        Map<Encounter, List<Order>> encounterOrdersMap = new HashMap<>();
         for (PatientProgram patientProgram : patientProgramSet) {
             Episode episode = episodeService.getEpisodeForPatientProgram(patientProgram);
             Set<Encounter> encounterSet = episode.getEncounters();
             for (Encounter encounter : encounterSet) {
-                for (Order order : encounter.getOrders()) {
-                    if (order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION) && ORDER_TYPES.contains(order.getOrderType().getName())) {
-                        orderSet.add(order);
-                    }
-                }
+                List<Order> orderList = encounter.getOrders()
+                        .stream().filter(order -> order.getDateStopped() == null && !Objects.equals(order.getAction().toString(), ORDER_ACTION))
+                        .filter(order -> ORDER_TYPES.contains(order.getOrderType().getName()))
+                        .collect(Collectors.toList());
+                if(orderList.size() > 0)
+                    encounterOrdersMap.put(encounter, orderList);
             }
         }
-        return orderSet;
+        return encounterOrdersMap;
     }
 }
 

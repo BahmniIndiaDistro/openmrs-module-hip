@@ -8,7 +8,6 @@ import org.openmrs.Obs;
 import org.openmrs.Patient;
 import org.openmrs.PatientProgram;
 import org.openmrs.Visit;
-import org.openmrs.api.ObsService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.module.episodes.Episode;
 import org.openmrs.module.episodes.service.EpisodeService;
@@ -27,22 +26,20 @@ import java.util.stream.Collectors;
 @Repository
 public class DischargeSummaryDaoImpl implements DischargeSummaryDao {
 
-    private final ObsService obsService;
     private final ProgramWorkflowService programWorkflowService;
     private final EpisodeService episodeService;
     private final EncounterDao encounterDao;
 
     @Autowired
-    public DischargeSummaryDaoImpl(ObsService obsService, ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
-        this.obsService = obsService;
+    public DischargeSummaryDaoImpl(ProgramWorkflowService programWorkflowService, EpisodeService episodeService, EncounterDao encounterDao) {
         this.programWorkflowService = programWorkflowService;
         this.episodeService = episodeService;
         this.encounterDao = encounterDao;
     }
 
     @Override
-    public List<Obs> getCarePlan(Visit visit) {
-        List<Obs> carePlanObs = encounterDao.GetAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue()).stream()
+    public List<Obs> getCarePlan(Visit visit, Date fromDate, Date toDate) {
+        List<Obs> carePlanObs = encounterDao.getAllObsForVisit(visit, Config.CONSULTATION.getValue(), Config.DISCHARGE_SUMMARY.getValue(), fromDate, toDate).stream()
                 .filter(obs -> obs.getConcept().getName().getLocalePreferred())
                 .collect(Collectors.toList());
 
@@ -67,14 +64,6 @@ public class DischargeSummaryDaoImpl implements DischargeSummaryDao {
             }
         }
         return carePlanObs;
-    }
-
-    @Override
-    public List<Obs> getProcedures(Visit visit) {
-        List<Obs> proceduresObsMap = encounterDao.GetAllObsForVisit(visit,Config.CONSULTATION.getValue(), Config.PROCEDURE_NOTES.getValue()).stream()
-                .filter(obs -> obs.getObsGroup() == null)
-                .collect(Collectors.toList());
-        return proceduresObsMap;
     }
 
     @Override

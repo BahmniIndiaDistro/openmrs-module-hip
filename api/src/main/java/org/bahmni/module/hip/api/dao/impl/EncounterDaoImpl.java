@@ -6,7 +6,6 @@ import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
-import org.openmrs.Order;
 import org.openmrs.Visit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -131,26 +130,28 @@ public class EncounterDaoImpl implements EncounterDao {
             "  and :toDate ;\n";
 
     @Override
-    public List<Integer> GetEpisodeEncounterIds() {
+    public List<Integer> getEpisodeEncounterIds() {
 
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEpisodeEncounterIds);
         return query.list();
     }
 
     @Override
-    public List<Encounter> GetEncountersForVisit(Visit visit, String encounterType) {
-        List<Integer> episodeEncounters = GetEpisodeEncounterIds();
+    public List<Encounter> getEncountersForVisit(Visit visit, String encounterType, Date fromDate, Date toDate) {
+        List<Integer> episodeEncounters = getEpisodeEncounterIds();
         List<Encounter> encounters = visit.getEncounters().stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
                 .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
-                .filter(encounter -> Objects.equals(encounter.getEncounterType().getName(), encounterType))
+                .filter(encounter -> encounterType == null || Objects.equals(encounter.getEncounterType().getName(), encounterType))
                 .collect(Collectors.toList());
         return encounters;
     }
 
     @Override
-    public List<Obs> GetAllObsForVisit(Visit visit, String encounterType, String conceptName) {
+    public List<Obs> getAllObsForVisit(Visit visit, String encounterType, String conceptName, Date fromDate, Date toDate) {
         List<Obs> observations = new ArrayList<>();
-        List<Encounter> encounters = GetEncountersForVisit(visit,encounterType);
+        List<Encounter> encounters = getEncountersForVisit(visit,encounterType,fromDate,toDate);
         for (Encounter encounter : encounters) {
             if(conceptName == null)
                 observations.addAll(encounter.getAllObs());
@@ -162,32 +163,7 @@ public class EncounterDaoImpl implements EncounterDao {
     }
 
     @Override
-    public List<Order> GetOrdersForVisit(Visit visit) {
-        List<Integer> episodeEncounters = GetEpisodeEncounterIds();
-        List<Encounter> encounters = visit.getEncounters().stream()
-                .filter(encounter -> !episodeEncounters.contains(encounter.getId()))
-                .collect(Collectors.toList());
-        List<Order> orderList = new ArrayList<>();
-        for (Encounter encounter: encounters) {
-            orderList.addAll(encounter.getOrders());
-        }
-        return orderList;
-    }
-
-    @Override
-    public List<Integer> GetEncounterIdsForProgramForPrescriptions(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
-        Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForPrescriptions);
-        query.setParameter("patientUUID", patientUUID);
-        query.setParameter("programName", program);
-        query.setParameter("programEnrollmentId", programEnrollmentID);
-        query.setParameter("fromDate", fromDate);
-        query.setParameter("toDate", toDate);
-
-        return query.list();
-    }
-
-    @Override
-    public List<Integer> GetEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+    public List<Integer> getEncounterIdsForProgramForDiagnosticReport(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetEncounterIdsForProgramForDiagnosticReports);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);

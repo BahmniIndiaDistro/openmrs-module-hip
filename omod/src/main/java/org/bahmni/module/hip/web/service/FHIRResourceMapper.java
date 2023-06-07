@@ -24,6 +24,7 @@ import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Annotation;
 import org.hl7.fhir.r4.model.MarkdownType;
+import org.hl7.fhir.r4.model.DateTimeType;
 
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
@@ -33,6 +34,7 @@ import org.openmrs.Concept;
 import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
 import org.openmrs.module.fhir2.api.translators.MedicationTranslator;
 import org.openmrs.module.fhir2.api.translators.PatientTranslator;
+import org.openmrs.module.fhir2.api.translators.impl.ConceptTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.EncounterTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.ObservationTranslatorImpl;
 import org.openmrs.module.fhir2.api.translators.impl.PractitionerTranslatorProviderImpl;
@@ -44,10 +46,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class FHIRResourceMapper {
@@ -58,16 +63,18 @@ public class FHIRResourceMapper {
     private final MedicationTranslator medicationTranslator;
     private final EncounterTranslatorImpl encounterTranslator;
     private final ObservationTranslatorImpl observationTranslator;
+    private final ConceptTranslatorImpl conceptTranslator;
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Follow up Date", "Additional Advice on Discharge", "Discharge Summary, Plan for follow up"));
 
     @Autowired
-    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator) {
+    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator, ConceptTranslatorImpl conceptTranslator) {
         this.patientTranslator = patientTranslator;
         this.practitionerTranslatorProvider = practitionerTranslatorProvider;
         this.medicationRequestTranslator = medicationRequestTranslator;
         this.medicationTranslator = medicationTranslator;
         this.encounterTranslator = encounterTranslator;
         this.observationTranslator = observationTranslator;
+        this.conceptTranslator = conceptTranslator;
     }
 
     public Encounter mapToEncounter(org.openmrs.Encounter emrEncounter) {
@@ -86,44 +93,80 @@ public class FHIRResourceMapper {
         }
     }
 
-    public Procedure mapToProcedure(Obs obs) {
+    public Procedure mapToProcedure(Encounter encounter, Obs procedureObs, Map<AbdmConfig.ProcedureAttribute, Concept> procedureAttributeConceptMap) {
         Procedure procedure = new Procedure();
-        procedure.setId(obs.getUuid());
-        procedure = obs.getGroupMembers().size() > 0 ? mapGroupMembersToProcedure(obs.getGroupMembers(), procedure)
-                                                     : mapObsToProcedure(obs, procedure);
-        return procedure;
-    }
-
-    public Procedure mapGroupMembersToProcedure(Set<Obs> obsGroupMembers, Procedure procedure){
+        procedure.setId(procedureObs.getUuid());
         procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
-        StringBuilder title = new StringBuilder();
-        StringBuilder description = new StringBuilder("");
-        CodeableConcept concept = new CodeableConcept();
-        for(Obs o : obsGroupMembers){
-            if(Objects.equals(o.getConcept().getName().getName(), "Procedure Notes, Procedure")){
-                title.append(o.getValueCoded().getDisplayString());
-            } else {
-                description.append(description.toString().equals("") ? "" : ", ");
-                if(o.getValueCoded() != null){
-                    description.append(o.getValueCoded().getName().getName());
-                }else if(o.getValueText() != null){
-                    description.append(o.getValueText());
-                } else if(o.getValueNumeric() != null){
-                    description.append(o.getValueNumeric());
+        Patient patient = mapToPatient(procedureObs.getEncounter().getPatient());
+        procedure.setSubject(FHIRUtils.getReferenceToResource(patient));
+        procedure.setEncounter(FHIRUtils.getReferenceToResource(encounter));
+
+        if (procedureObs.isObsGrouping() && procedureObs.hasGroupMembers()) {
+            AtomicReference<Date> procedureStartDate = new AtomicReference<>();
+            AtomicReference<Date> procedureEndDate = new AtomicReference<>();
+            procedureObs.getGroupMembers().forEach(member -> {
+                Concept memberConcept = member.getConcept();
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NAME))) {
+                    procedure.setCode(conceptTranslator.toFhirResource(member.getValueCoded()));
+                }
+                else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NAME_NONCODED))) {
+                    CodeableConcept concept = new CodeableConcept();
+                    concept.setText(member.getValueCoded().getDisplayString());
+                    procedure.setCode(concept);
+                }
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_START_DATETIME))) {
+                    procedureStartDate.set(member.getValueDatetime());
+                    procedure.setPerformed(new DateTimeType(procedureStartDate.get()));
+                }
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_BODYSITE))) {
+                    procedure.setBodySite(Arrays.asList(conceptTranslator.toFhirResource(member.getValueCoded())));
+                }
+                else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NONCODED_BODYSITE))) {
+                    CodeableConcept concept = new CodeableConcept();
+                    concept.setText(member.getValueText());
+                    procedure.setBodySite(Arrays.asList(concept));
+                }
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_OUTCOME))) {
+                    procedure.setOutcome(conceptTranslator.toFhirResource(member.getValueCoded()));
+                }
+                else if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NONCODED_OUTCOME))) {
+                    CodeableConcept concept = new CodeableConcept();
+                    concept.setText(member.getValueCoded().getDisplayString());
+                    procedure.setOutcome(concept);
+                }
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_END_DATETIME))) {
+                    procedureEndDate.set(member.getValueDatetime());
+                }
+
+                if (conceptMatchesForAttribute(memberConcept, procedureAttributeConceptMap.get(AbdmConfig.ProcedureAttribute.PROCEDURE_NOTE))) {
+                   procedure.addNote(new Annotation(new MarkdownType(member.getValueText())));
+                }
+            });
+            Date currentDate = new Date();
+            if(procedureStartDate.get() != null) {
+                if(currentDate.compareTo(procedureStartDate.get()) >= 0) {
+                    if (procedureEndDate.get() == null || currentDate.compareTo(procedureEndDate.get()) <= 0)
+                        procedure.setStatus(Procedure.ProcedureStatus.INPROGRESS);
+                }
+                else
+                {
+                    procedure.setStatus(Procedure.ProcedureStatus.PREPARATION);
                 }
             }
+            else
+                procedure.setStatus(Procedure.ProcedureStatus.NOTDONE);
         }
-        concept.setText(title + ", " + description);
-        procedure.setCode(concept);
+
         return procedure;
     }
 
-    public Procedure mapObsToProcedure(Obs obs, Procedure procedure){
-        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
-        CodeableConcept concept = new CodeableConcept();
-        concept.setText(obs.getValueCoded().getDisplayString());
-        procedure.setCode(concept);
-        return procedure;
+    private boolean conceptMatchesForAttribute(Concept memberConcept, Concept mappedConcept) {
+        return mappedConcept != null && memberConcept.getUuid().equals(mappedConcept.getUuid());
     }
 
     public CarePlan mapToCarePlan(Obs obs){

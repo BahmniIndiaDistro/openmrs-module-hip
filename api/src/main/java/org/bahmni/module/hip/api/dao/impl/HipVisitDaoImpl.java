@@ -35,7 +35,7 @@ public class HipVisitDaoImpl implements HipVisitDao {
 
 
     @Override
-    public List<Integer> GetVisitIdsForProgramForLabResults(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
+    public List<Integer> getVisitIdsForProgramForLabResults(String patientUUID, String program, String programEnrollmentID, Date fromDate, Date toDate) {
         Query query = this.sessionFactory.getCurrentSession().createSQLQuery(sqlGetVisitIdsForProgramForLabResults);
         query.setParameter("patientUUID", patientUUID);
         query.setParameter("programName", program);

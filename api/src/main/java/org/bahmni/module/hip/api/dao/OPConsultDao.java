@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface OPConsultDao {
-    Map<Encounter, List<Condition>> getMedicalHistoryConditions(Visit visit);
-    List<Obs> getMedicalHistoryDiagnosis(Visit visit);
-    List<Obs> getProcedures(Visit visit);
+    Map<Encounter, List<Condition>> getMedicalHistoryConditions(Visit visit, Date fromDate, Date toDate);
+    List<Obs> getMedicalHistoryDiagnosis(Visit visit, Date fromDate, Date toDate );
     List<Obs> getProceduresForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     Map<Encounter, List<Condition>> getMedicalHistoryConditionsForProgram(String programName, Date fromDate, Date toDate, Patient patient);
     List<Obs> getMedicalHistoryDiagnosisForProgram(String programName, Date fromDate, Date toDate, Patient patient);
-    Map<Encounter, List<Obs>> getPatientDocumentsForVisit(Visit visit);
+    Map<Encounter, List<Obs>> getPatientDocumentsForVisit(Visit visit, Date fromDate, Date toDate);
 }

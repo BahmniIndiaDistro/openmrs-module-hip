@@ -6,6 +6,7 @@ import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.PrescriptionBundle;
 import org.bahmni.module.hip.web.service.PrescriptionService;
 import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.web.utils.DateUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -13,11 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 
 import static org.bahmni.module.hip.web.utils.DateUtils.parseDate;
@@ -50,7 +53,22 @@ public class PrescriptionController extends BaseRestController {
             return ResponseEntity.badRequest().body(ClientError.invalidVisitUuid());
         if (!validationService.isValidPatient(patientId))
             return ResponseEntity.badRequest().body(ClientError.invalidPatientId());
-        List<PrescriptionBundle> prescriptionBundle = prescriptionService.getPrescriptions(patientId, visitUuid, fromDate, toDate);
+        Date fromEncounterDate = null, toEncounterDate = null;
+        if (!StringUtils.isEmpty(fromDate)) {
+            fromEncounterDate = DateUtils.validDate(fromDate);
+            if (fromEncounterDate == null) {
+                return ResponseEntity.badRequest().body(ClientError.invalidStartDate());
+            }
+        }
+
+        if (!StringUtils.isEmpty(toDate)) {
+            toEncounterDate = DateUtils.validDate(toDate);
+            if (toEncounterDate == null) {
+                return ResponseEntity.badRequest().body(ClientError.invalidEndDate());
+            }
+        }
+
+        List<PrescriptionBundle> prescriptionBundle = prescriptionService.getPrescriptions(patientId, visitUuid, fromEncounterDate, toEncounterDate);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(mapper.writeValueAsString(new BundledPrescriptionResponse(prescriptionBundle)));

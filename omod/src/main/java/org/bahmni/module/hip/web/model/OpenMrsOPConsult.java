@@ -22,7 +22,7 @@ public class OpenMrsOPConsult {
     private final Patient patient;
     private final Set<EncounterProvider> encounterProviders;
     private final List<DrugOrder> drugOrders;
-    private final Obs procedure;
+    private final List<Obs> procedure;
     private final List<Obs> patientDocuments;
     private final List<Order> orders;
 
@@ -33,7 +33,7 @@ public class OpenMrsOPConsult {
                             Patient patient,
                             Set<EncounterProvider> encounterProviders,
                             List<DrugOrder> drugOrders,
-                            Obs procedure,
+                            List<Obs> procedure,
                             List<Obs> patientDocuments,
                             List<Order> orders) {
         this.encounter = encounter;
@@ -52,7 +52,7 @@ public class OpenMrsOPConsult {
                                                                  Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap,
                                                                  Map<Encounter, List<Obs>> encounterPhysicalExaminationMap,
                                                                  Map<Encounter, DrugOrders> encounteredDrugOrdersMap,
-                                                                 Map<Encounter, Obs> encounterProcedureMap,
+                                                                 Map<Encounter, List<Obs>> encounterProcedureMap,
                                                                  Map<Encounter, List<Obs>> encounterPatientDocumentsMap,
                                                                  Map<Encounter, List<Order>> encounterOrdersMap,
                                                                  Patient patient) {
@@ -73,7 +73,7 @@ public class OpenMrsOPConsult {
             List<OpenMrsCondition> chiefComplaintList = getEncounterConditions(encounterChiefComplaintsMap, entry.getKey());
             chiefComplaintList = chiefComplaintList == null ? new ArrayList<>() : chiefComplaintList;
 
-            Obs procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
+            List<Obs> procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
 
             openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), chiefComplaintList, medicalHistoryList, physicalExaminationList, patient, entry.getKey().getEncounterProviders(), drugOrdersList, procedure, patientDocumentsList, new ArrayList<>()));
         }
@@ -90,7 +90,7 @@ public class OpenMrsOPConsult {
             List<Obs> physicalExaminationList = getEncounterObs(encounterPhysicalExaminationMap, entry.getKey());
             physicalExaminationList = physicalExaminationList == null ? new ArrayList<>() : physicalExaminationList;
 
-            Obs procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
+            List<Obs> procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
 
             openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), chiefComplaintList, medicalHistoryList, physicalExaminationList, patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), procedure, patientDocumentsList, new ArrayList<>()));
         }
@@ -104,7 +104,7 @@ public class OpenMrsOPConsult {
             List<Obs> physicalExaminationList = getEncounterObs(encounterPhysicalExaminationMap, entry.getKey());
             physicalExaminationList = physicalExaminationList == null ? new ArrayList<>() : physicalExaminationList;
 
-            Obs procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
+            List<Obs> procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
             openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), medicalHistoryList, physicalExaminationList, patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), procedure, patientDocumentsList, new ArrayList<>()));
         }
 
@@ -114,12 +114,12 @@ public class OpenMrsOPConsult {
             List<Obs> patientDocumentsList = getEncounterObs(encounterPatientDocumentsMap, entry.getKey());
             patientDocumentsList = patientDocumentsList == null ? new ArrayList<>() : patientDocumentsList;
 
-            Obs procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
+            List<Obs> procedure = getEncounterObsProcedure(encounterProcedureMap, entry.getKey());
 
             openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), physicalExaminationList, patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), procedure, patientDocumentsList, new ArrayList<>()));
         }
 
-        for (Map.Entry<Encounter, Obs> entry : encounterProcedureMap.entrySet()) {
+        for (Map.Entry<Encounter, List<Obs>> entry : encounterProcedureMap.entrySet()) {
             List<Obs> patientDocumentsList = getEncounterObs(encounterPatientDocumentsMap, entry.getKey());
             patientDocumentsList = patientDocumentsList == null ? new ArrayList<>() : patientDocumentsList;
 
@@ -127,11 +127,11 @@ public class OpenMrsOPConsult {
         }
 
         for (Map.Entry<Encounter, List<Obs>> entry : encounterPatientDocumentsMap.entrySet()) {
-            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), null, encounterPatientDocumentsMap.get(entry.getKey()), new ArrayList<>()));
+            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), encounterPatientDocumentsMap.get(entry.getKey()), new ArrayList<>()));
         }
 
         for(Map.Entry<Encounter, List<Order>> entry : encounterOrdersMap.entrySet()){
-            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), null, new ArrayList<>(), encounterOrdersMap.get(entry.getKey())));
+            openMrsOPConsultList.add(new OpenMrsOPConsult(entry.getKey(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), patient, entry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), encounterOrdersMap.get(entry.getKey())));
         }
 
         return openMrsOPConsultList;
@@ -155,12 +155,12 @@ public class OpenMrsOPConsult {
         return null;
     }
 
-    public static Obs getEncounterObsProcedure(Map<Encounter, Obs> map, Encounter encounter) {
+    public static List<Obs> getEncounterObsProcedure(Map<Encounter, List<Obs>> map, Encounter encounter) {
         if (map.containsKey(encounter)) {
-            Obs obs = map.get(encounter);
+            List<Obs> obs = map.get(encounter);
             map.remove(encounter);
             return obs;
         }
-        return null;
+        return new ArrayList<>();
     }
 }
