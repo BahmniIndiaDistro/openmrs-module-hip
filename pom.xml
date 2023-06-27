@@ -23,7 +23,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<openmrs.platform.version>2.4.2</openmrs.platform.version>
 		<hapifhirVersion>5.0.0</hapifhirVersion>
-		<bahmniCommons.version>1.0.0-SNAPSHOT</bahmniCommons.version>
+		<bahmniCommons.version>1.1.0-SNAPSHOT</bahmniCommons.version>
 		<fhir2ModuleVersion>1.8.0</fhir2ModuleVersion>
 	</properties>
 
