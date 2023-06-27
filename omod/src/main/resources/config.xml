@@ -131,7 +131,7 @@
 		</description>
 	</globalProperty>
 	<globalProperty>
-		<property>bahmniHip.EnableDemographics</property>
+		<property>bahmniHip.enableDemographics</property>
 		<defaultValue>false</defaultValue>
 		<description>
 			To enable demographics authMode
@@ -142,6 +142,13 @@
 		<defaultValue>false</defaultValue>
 		<description>
 			To enable abha verification through fetch-modes
+		</description>
+	</globalProperty>
+	<globalProperty>
+		<property>bahmniHip.enableLinkABHAAddress</property>
+		<defaultValue>false</defaultValue>
+		<description>
+			To enable link abha address
 		</description>
 	</globalProperty>
 	<!-- /Internationalization -->
