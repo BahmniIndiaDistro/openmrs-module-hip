@@ -146,7 +146,7 @@
 	</globalProperty>
 	<globalProperty>
 		<property>bahmniHip.enableLinkABHAAddress</property>
-		<defaultValue>false</defaultValue>
+		<defaultValue>true</defaultValue>
 		<description>
 			To enable link abha address
 		</description>
