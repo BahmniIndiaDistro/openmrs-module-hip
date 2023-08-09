@@ -16,8 +16,10 @@ import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.ServiceRequest;
-
 import org.openmrs.EncounterProvider;
+import org.hl7.fhir.r4.model.CanonicalType;
+import org.hl7.fhir.r4.model.Meta;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -128,6 +130,11 @@ public class FhirOPConsult {
 
     private Composition compositionFrom(OrganizationContext orgContext) {
         Composition composition = initializeComposition(visitTimeStamp, orgContext.getWebUrl());
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/OPConsultRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        composition.setMeta(meta);
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference)

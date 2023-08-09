@@ -238,7 +238,7 @@ public class OpenMrsDischargeSummary {
         }
 
         for(Map.Entry<Encounter, List<Order>> orderMapEntry : encounterOrdersMap.entrySet()){
-            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(orderMapEntry.getKey(), new ArrayList<>(), new ArrayList<>(), patient, orderMapEntry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), null, encounterOrdersMap.get(orderMapEntry.getKey())));
+            openMrsDischargeSummaryList.add(new OpenMrsDischargeSummary(orderMapEntry.getKey(), new ArrayList<>(), new ArrayList<>(), patient, orderMapEntry.getKey().getEncounterProviders(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), encounterOrdersMap.get(orderMapEntry.getKey())));
         }
 
         return openMrsDischargeSummaryList;
