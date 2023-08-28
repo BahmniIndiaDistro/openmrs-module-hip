@@ -151,6 +151,13 @@
 			To enable link abha address
 		</description>
 	</globalProperty>
+	<globalProperty>
+		<property>bahmniHip.enableHealthIdVerificationThroughMobileNumber</property>
+		<defaultValue>true</defaultValue>
+		<description>
+			To enable verification of abha number / address through mobile number
+		</description>
+	</globalProperty>
 	<!-- /Internationalization -->
 	
 </module>
