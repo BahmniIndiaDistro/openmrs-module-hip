@@ -98,6 +98,7 @@ public class FhirOPConsult {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsOPConsult.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
+        encounter.getClass_().setDisplay("op-consult");
         Date visitDatetime = openMrsOPConsult.getEncounter().getVisit().getStartDatetime();
         Integer encounterId = openMrsOPConsult.getEncounter().getId();
         List<MedicationRequest> medicationRequestsList = openMrsOPConsult.getDrugOrders().stream().

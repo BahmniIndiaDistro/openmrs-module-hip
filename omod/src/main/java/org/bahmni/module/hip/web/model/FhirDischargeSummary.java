@@ -81,6 +81,8 @@ public class FhirDischargeSummary {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDischargeSummary.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsDischargeSummary.getEncounter());
+        encounter.getClass_().setDisplay("discharge summary");
+
         Date visitDatetime = openMrsDischargeSummary.getEncounter().getVisit().getStartDatetime();
         Integer encounterId = openMrsDischargeSummary.getEncounter().getId();
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDischargeSummary.getEncounter().getEncounterProviders());
