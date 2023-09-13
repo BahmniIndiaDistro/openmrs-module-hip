@@ -35,6 +35,7 @@ public class FhirHealthDocumentRecordBuilder {
         DocumentReference documentReference = documentTransformer.transForm(docObs, DocumentReference.class);
         if (documentReference == null) return null;
         org.hl7.fhir.r4.model.Encounter docEncounter = fhirResourceMapper.mapToEncounter(docObs.getEncounter());
+        docEncounter.getClass_().setDisplay("Health Document");
         Patient patient = fhirResourceMapper.mapToPatient(docObs.getEncounter().getPatient());
         List<Practitioner> practitioners = docObs.getEncounter().getEncounterProviders()
                 .stream()

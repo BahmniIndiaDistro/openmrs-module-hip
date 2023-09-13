@@ -99,6 +99,7 @@ public class FhirImmunizationRecordBundleBuilder {
     private ImmunizationRecordBundle buildImmunizationBundle(Obs obs, Encounter encounter) {
         Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
         org.hl7.fhir.r4.model.Encounter immunizationEncounter = encounterTranslator.toFhirResource(encounter);
+        immunizationEncounter.getClass_().setDisplay("Immunization Record");
         List<Practitioner> practitioners = practitionersFrom(encounter.getEncounterProviders());
         Reference patientRef = FHIRUtils.getReferenceToResource(patient);
 
