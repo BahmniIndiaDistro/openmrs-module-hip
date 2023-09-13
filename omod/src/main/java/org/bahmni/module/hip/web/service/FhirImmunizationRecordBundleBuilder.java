@@ -4,6 +4,7 @@ import org.bahmni.module.hip.web.model.CareContext;
 import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Composition;
@@ -11,6 +12,7 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Immunization;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.PositiveIntType;
@@ -225,6 +227,11 @@ public class FhirImmunizationRecordBundleBuilder {
         document.setStatus(Composition.CompositionStatus.FINAL);
         document.setType(FHIRUtils.getImmunizationRecordType());
         document.setTitle("Immunization Incident Record");
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/ImmunizationRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        document.setMeta(meta);
         return document;
     }
 

@@ -83,6 +83,12 @@ public class FhirPrescription {
         Composition composition = initializeComposition(visitTimeStamp, orgContext.getWebUrl());
         Composition.SectionComponent compositionSection = composition.addSection();
 
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/PrescriptionRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        composition.setMeta(meta);
+
         practitioners
                 .forEach(practitioner -> composition
                         .addAuthor().setResource(practitioner).setDisplay(FHIRUtils.getDisplay(practitioner)));

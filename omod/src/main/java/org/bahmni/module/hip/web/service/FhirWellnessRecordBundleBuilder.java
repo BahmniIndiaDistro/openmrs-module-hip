@@ -48,6 +48,11 @@ public class FhirWellnessRecordBundleBuilder {
 				String.format("WR-%d", encounter.getId()),
 				orgContext.getWebUrl());
 		Composition document = compositionFrom(encounter.getEncounterDatetime(), UUID.randomUUID().toString(), orgContext);
+		Meta meta = new Meta();
+		CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/WellnessRecord");
+		List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+		meta.setProfile(profileList);
+		document.setMeta(meta);
 		document
 				.setEncounter(FHIRUtils.getReferenceToResource(wellnessEncounter))
 				.setSubject(patientRef)
