@@ -38,6 +38,7 @@ public class FhirWellnessRecordBundleBuilder {
 	private WellnessRecordBundle buildWellnessBundle(Encounter encounter, Map<AbdmConfig.WellnessAttribute, List<Obs>> wellnessAttributeObsMap, OrganizationContext orgContext) {
 		Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
 		org.hl7.fhir.r4.model.Encounter wellnessEncounter = encounterTranslator.toFhirResource(encounter);
+		wellnessEncounter.getClass_().setDisplay("Wellness Record");
 		List<Practitioner> practitioners = practitionersFrom(encounter.getEncounterProviders());
 		Reference patientRef = FHIRUtils.getReferenceToResource(patient);
 		List<Observation> observations = new ArrayList<>();
@@ -48,6 +49,11 @@ public class FhirWellnessRecordBundleBuilder {
 				String.format("WR-%d", encounter.getId()),
 				orgContext.getWebUrl());
 		Composition document = compositionFrom(encounter.getEncounterDatetime(), UUID.randomUUID().toString(), orgContext);
+		Meta meta = new Meta();
+		CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/WellnessRecord");
+		List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+		meta.setProfile(profileList);
+		document.setMeta(meta);
 		document
 				.setEncounter(FHIRUtils.getReferenceToResource(wellnessEncounter))
 				.setSubject(patientRef)

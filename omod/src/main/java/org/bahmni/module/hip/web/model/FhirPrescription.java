@@ -50,6 +50,7 @@ public class FhirPrescription {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsPrescription.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsPrescription.getEncounter());
+        encounter.getClass_().setDisplay("Prescription");
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsPrescription.getEncounterProviders());
         List<MedicationRequest> medicationRequests = medicationRequestsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
         List<Medication> medications = medicationsFor(fhirResourceMapper, openMrsPrescription.getDrugOrders());
@@ -82,6 +83,12 @@ public class FhirPrescription {
     private Composition compositionFrom(OrganizationContext orgContext) {
         Composition composition = initializeComposition(visitTimeStamp, orgContext.getWebUrl());
         Composition.SectionComponent compositionSection = composition.addSection();
+
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/PrescriptionRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        composition.setMeta(meta);
 
         practitioners
                 .forEach(practitioner -> composition

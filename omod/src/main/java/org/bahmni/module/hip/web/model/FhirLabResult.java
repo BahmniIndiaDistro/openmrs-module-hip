@@ -5,11 +5,13 @@ import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Attachment;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.DiagnosticReport;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
@@ -137,6 +139,11 @@ public class FhirLabResult {
         Composition.SectionComponent compositionSection = composition.addSection();
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
 
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/DiagnosticReportRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        composition.setMeta(meta);
         composition
                 .setEncounter(FHIRUtils.getReferenceToResource(encounter))
                 .setSubject(patientReference)

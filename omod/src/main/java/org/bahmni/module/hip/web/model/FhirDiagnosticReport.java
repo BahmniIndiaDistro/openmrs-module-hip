@@ -4,9 +4,11 @@ import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.Composition;
 import org.hl7.fhir.r4.model.DiagnosticReport;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
@@ -14,6 +16,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.openmrs.EncounterProvider;
 import org.openmrs.Obs;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -70,6 +73,7 @@ public class FhirDiagnosticReport {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDiagnosticReport.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsDiagnosticReport.getEncounter());
+        encounter.getClass_().setDisplay("Diagnostic Report");
         Date visitDateTime = openMrsDiagnosticReport.getEncounter().getVisit().getStartDatetime();
         Integer encounterId = openMrsDiagnosticReport.getEncounter().getId();
         List<Practitioner> practitioners = getPractitionersFrom(fhirResourceMapper, openMrsDiagnosticReport.getEncounterProviders());
@@ -93,6 +97,11 @@ public class FhirDiagnosticReport {
 
     private Composition compositionFrom(OrganizationContext orgContext) {
         Composition composition = initializeComposition(visitTimestamp, orgContext.getWebUrl());
+        Meta meta = new Meta();
+        CanonicalType profileCanonical = new CanonicalType("https://nrces.in/ndhm/fhir/r4/StructureDefinition/DiagnosticReportRecord");
+        List<CanonicalType> profileList = Collections.singletonList(profileCanonical);
+        meta.setProfile(profileList);
+        composition.setMeta(meta);
         Composition.SectionComponent compositionSection = composition.addSection();
 
         practitioners
