@@ -38,7 +38,7 @@ public class FhirWellnessRecordBundleBuilder {
 	private WellnessRecordBundle buildWellnessBundle(Encounter encounter, Map<AbdmConfig.WellnessAttribute, List<Obs>> wellnessAttributeObsMap, OrganizationContext orgContext) {
 		Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
 		org.hl7.fhir.r4.model.Encounter wellnessEncounter = encounterTranslator.toFhirResource(encounter);
-		wellnessEncounter.getClass_().setDisplay("Wellness Record");
+//		wellnessEncounter.getClass_().setDisplay("Wellness Record");
 		List<Practitioner> practitioners = practitionersFrom(encounter.getEncounterProviders());
 		Reference patientRef = FHIRUtils.getReferenceToResource(patient);
 		List<Observation> observations = new ArrayList<>();
