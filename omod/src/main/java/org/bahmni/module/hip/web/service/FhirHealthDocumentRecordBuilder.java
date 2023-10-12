@@ -87,6 +87,7 @@ public class FhirHealthDocumentRecordBuilder {
         if (documentRefs.isEmpty()) return null;
 
         org.hl7.fhir.r4.model.Encounter docEncounter = fhirResourceMapper.mapToEncounter(encounter);
+        docEncounter.getClass_().setDisplay("Health Document");
         Patient patient = fhirResourceMapper.mapToPatient(encounter.getPatient());
         List<Practitioner> practitioners = encounter.getEncounterProviders()
                 .stream()

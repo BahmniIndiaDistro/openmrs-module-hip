@@ -96,10 +96,11 @@ public class FhirLabResult {
             }
 
         }
+        Encounter encounter = fhirResourceMapper.mapToEncounter(labresult.getEncounter());
+        encounter.getClass_().setDisplay("Diagnostic Report");
 
         return new FhirLabResult(fhirResourceMapper.mapToPatient(labresult.getPatient()),
-                    fhirResourceMapper.mapToEncounter(labresult.getEncounter()),
-                    labresult.getEncounter().getEncounterDatetime(), reportList, results, practitioners);
+                   encounter, labresult.getEncounter().getEncounterDatetime(), reportList, results, practitioners);
     }
 
     private static DiagnosticReport map(String orderUuid, Obs obs, String testName, Patient patient,List<Practitioner> practitioners ){
