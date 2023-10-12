@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -156,7 +157,8 @@ public class FhirImmunizationRecordBundleBuilder {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
-                    Date valueDatetime = member.getValueDatetime();
+                    Date valueDatetime = convertToUTC(member.getValueDate());
+                    System.out.println("valueDateTime" + valueDatetime);
                     if (valueDatetime != null) {
                         immunization.setOccurrence(new DateTimeType(valueDatetime));
                     }
@@ -212,6 +214,15 @@ public class FhirImmunizationRecordBundleBuilder {
         immunization.getMeta().setLastUpdated(FhirTranslatorUtils.getLastUpdated(openmrsImmunization));
 
         return immunization;
+    }
+
+    private Date convertToUTC(Date date) {
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+
+        // Set the time zone of the input date to UTC
+        date.setTime(date.getTime() - utcTimeZone.getOffset(date.getTime()));
+
+        return date;
     }
 
     private boolean conceptMatchesForAttribute(Concept memberConcept, AbdmConfig.ImmunizationAttribute immunizationAttribute) {
