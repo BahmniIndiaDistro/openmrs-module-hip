@@ -1,5 +1,4 @@
 package org.bahmni.module.hip.web.service;
-import org.bahmni.module.hip.api.dao.OPConsultDao;
 import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
@@ -19,6 +18,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,7 +52,7 @@ public class OPConsultService {
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterProcedureMap = consultationService.getEncounterProcedureMap(visit, fromDate, toDate);
-        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit, fromDate, toDate, AbdmConfig.HiTypeDocumentKind.OP_CONSULT);
         Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit, fromDate, toDate);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,

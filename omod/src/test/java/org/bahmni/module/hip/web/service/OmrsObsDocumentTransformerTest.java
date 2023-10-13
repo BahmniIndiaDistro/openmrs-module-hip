@@ -42,8 +42,8 @@ public class OmrsObsDocumentTransformerTest {
         AdministrationService administrationService = mock(AdministrationService.class);
         ConceptTranslator conceptTranslator = mock(ConceptTranslator.class);
         Properties abdmProperties = new Properties();
-        abdmProperties.put(AbdmConfig.DocumentKind.PRESCIPTION.getMapping(), PRESCRIPTION_DOC_TYPE_CONCEPT);
-        abdmProperties.put(AbdmConfig.DocumentKind.TEMPLATE.getMapping(), "4daeef16-696b-4689-98a4-8b3f3401db80");
+        abdmProperties.put(AbdmConfig.HiTypeDocumentKind.PRESCRIPTION.getMapping(), PRESCRIPTION_DOC_TYPE_CONCEPT);
+        abdmProperties.put(AbdmConfig.DocTemplateAttribute.TEMPLATE.getMapping(), "4daeef16-696b-4689-98a4-8b3f3401db80");
         AbdmConfig abdmConfig = AbdmConfig.instanceFrom(abdmProperties, administrationService, conceptService);
         OmrsObsDocumentTransformer transformer = new OmrsObsDocumentTransformer(abdmConfig, conceptTranslator);
         Obs obs = new Obs();
@@ -52,6 +52,6 @@ public class OmrsObsDocumentTransformerTest {
         concept.setUuid(PRESCRIPTION_DOC_TYPE_CONCEPT);
         obs.setConcept(concept);
         when(conceptService.getConceptByUuid(PRESCRIPTION_DOC_TYPE_CONCEPT)).thenReturn(concept);
-        Assert.assertTrue(transformer.isSupportedDocument(obs, AbdmConfig.DocumentKind.PRESCIPTION));
+        Assert.assertTrue(transformer.isSupportedHiTypeDocument(obs.getConcept(), AbdmConfig.HiTypeDocumentKind.PRESCRIPTION));
     }
 }

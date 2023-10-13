@@ -46,6 +46,7 @@ public class DiagnosticReportService {
     private final HipVisitDao hipVisitDao;
     private final OrderDao orderDao;
     private final DiagnosticReportDao diagnosticReportDao;
+    private final ConsultationService consultationService;
 
 
     private LabOrderResultsService labOrderResultsService;
@@ -59,7 +60,7 @@ public class DiagnosticReportService {
                                    EncounterDao encounterDao,
                                    VisitService visitService, HipVisitDao hipVisitDao,
                                    OrderDao orderDao,
-                                   DiagnosticReportDao diagnosticReportDao) {
+                                   DiagnosticReportDao diagnosticReportDao, ConsultationService consultationService) {
         this.fhirBundledDiagnosticReportBuilder = fhirBundledDiagnosticReportBuilder;
         this.patientService = patientService;
         this.encounterService = encounterService;
@@ -69,32 +70,19 @@ public class DiagnosticReportService {
         this.labOrderResultsService = labOrderResultsService;
         this.orderDao = orderDao;
         this.diagnosticReportDao = diagnosticReportDao;
+        this.consultationService = consultationService;
     }
 
     public List<DiagnosticReportBundle> getDiagnosticReportsForVisit(String patientUuid, String visitUuid, Date fromDate, Date toDate) throws ParseException {
         Visit visit = visitService.getVisitByUuid(visitUuid);
 
-        HashMap<Encounter, List<Obs>> encounterListMap = getAllObservationsForVisits(visit,fromDate,toDate);
+        Map<Encounter, List<Obs>> encounterListMap = consultationService.getEncounterPatientDocumentsMap(visit,fromDate,toDate, AbdmConfig.HiTypeDocumentKind.DIAGNOSTIC_REPORT);
         List<OpenMrsDiagnosticReport> openMrsDiagnosticReports = OpenMrsDiagnosticReport.fromDiagnosticReport(encounterListMap);
 
         return openMrsDiagnosticReports
                 .stream()
                 .map(fhirBundledDiagnosticReportBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
-
-    }
-
-    public HashMap<Encounter, List<Obs>> getAllObservationsForVisits(Visit visit, Date fromDate, Date toDate) {
-        List<Obs> patientObs = encounterDao.getAllObsForVisit(visit, Config.RADIOLOGY_TYPE.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate);
-        patientObs.addAll(encounterDao.getAllObsForVisit(visit, Config.PATIENT_DOCUMENT.getValue(), Config.DOCUMENT_TYPE.getValue(),fromDate,toDate));
-        HashMap<Encounter, List<Obs>> encounterListMap = new HashMap<>();
-        for (Obs obs: patientObs) {
-            Encounter encounter = obs.getEncounter();
-            if(!encounterListMap.containsKey(encounter))
-               encounterListMap.put(encounter, new ArrayList<Obs>(){{ add(obs); }});
-            encounterListMap.get(encounter).add(obs);
-        }
-        return encounterListMap;
 
     }
 

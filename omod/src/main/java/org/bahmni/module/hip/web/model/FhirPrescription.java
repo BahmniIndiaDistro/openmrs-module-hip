@@ -2,6 +2,7 @@ package org.bahmni.module.hip.web.model;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.bahmni.module.hip.web.service.AbdmConfig;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
 import org.bahmni.module.hip.web.service.OmrsObsDocumentTransformer;
@@ -57,7 +58,7 @@ public class FhirPrescription {
         List<Binary> prescriptionDocs = (openMrsPrescription.getDocObs() != null &&  !openMrsPrescription.getDocObs().isEmpty())
                 ? openMrsPrescription.getDocObs()
                     .stream()
-                    .map(o -> documentTransformer.transForm(o, Binary.class))
+                    .map(o -> documentTransformer.transForm(o, Binary.class, AbdmConfig.HiTypeDocumentKind.PRESCRIPTION))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList())
                 : Collections.emptyList();

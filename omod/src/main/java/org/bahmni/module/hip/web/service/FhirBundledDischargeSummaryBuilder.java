@@ -13,20 +13,22 @@ public class FhirBundledDischargeSummaryBuilder {
     private final OrganizationContextService organizationContextService;
     private final FHIRResourceMapper fhirResourceMapper;
     private final AbdmConfig abdmConfig;
+    private final OmrsObsDocumentTransformer omrsObsDocumentTransformer;
 
     @Autowired
-    public FhirBundledDischargeSummaryBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig) {
+    public FhirBundledDischargeSummaryBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
         this.careContextService = careContextService;
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.abdmConfig = abdmConfig;
+        this.omrsObsDocumentTransformer = omrsObsDocumentTransformer;
     }
 
     public DischargeSummaryBundle fhirBundleResponseFor (OpenMrsDischargeSummary openMrsDischargeSummary) {
         OrganizationContext organizationContext = organizationContextService.buildContext(
                 Optional.ofNullable(openMrsDischargeSummary.getEncounter().getVisit().getLocation()));
 
-        Bundle dischargeSummaryBundle = FhirDischargeSummary.fromOpenMrsDischargeSummary(openMrsDischargeSummary, fhirResourceMapper, abdmConfig).
+        Bundle dischargeSummaryBundle = FhirDischargeSummary.fromOpenMrsDischargeSummary(openMrsDischargeSummary, fhirResourceMapper, abdmConfig, omrsObsDocumentTransformer).
                 bundleDischargeSummary(organizationContext);
 
         CareContext careContext = careContextService.careContextFor(

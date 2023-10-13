@@ -15,11 +15,12 @@ import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
 
 @Service
 public class PrescriptionService {
@@ -28,35 +29,24 @@ public class PrescriptionService {
     private final OpenMRSDrugOrderClient openMRSDrugOrderClient;
     private final FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder;
     private final VisitService visitService;
-    private final OmrsObsDocumentTransformer documentTransformer;
-    private final AbdmConfig abdmConfig;
+    private final ConsultationService consultationService;
 
     @Autowired
     public PrescriptionService(OpenMRSDrugOrderClient openMRSDrugOrderClient,
                                FhirBundledPrescriptionBuilder fhirBundledPrescriptionBuilder,
                                VisitService visitService,
-                               OmrsObsDocumentTransformer documentTransformer,
-                               AbdmConfig abdmConfig) {
+                               ConsultationService consultationService) {
         this.openMRSDrugOrderClient = openMRSDrugOrderClient;
         this.fhirBundledPrescriptionBuilder = fhirBundledPrescriptionBuilder;
         this.visitService = visitService;
-        this.documentTransformer = documentTransformer;
-        this.abdmConfig = abdmConfig;
+        this.consultationService = consultationService;
     }
 
 
     public List<PrescriptionBundle> getPrescriptions(String patientUuid,String visitUuid, Date fromDate, Date toDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
         Map<Encounter, DrugOrders> drugOrders = openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate);
-        Concept docType = abdmConfig.getDocumentConcept(AbdmConfig.DocumentKind.PRESCIPTION);
-        Map<Encounter, List<Obs>> encounterDocObs = visit.getEncounters()
-                .stream()
-                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
-                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
-                .map(e -> e.getObsAtTopLevel(false))
-                .flatMap(Collection::stream)
-                .filter(obs -> isPrescriptionDoc(obs, docType))
-                .collect(Collectors.groupingBy(Obs::getEncounter));
+        Map<Encounter, List<Obs>> encounterDocObs = consultationService.getEncounterPatientDocumentsMap(visit, fromDate, toDate, AbdmConfig.HiTypeDocumentKind.PRESCRIPTION);
         if (drugOrders.isEmpty() && encounterDocObs.isEmpty()) {
             return new ArrayList<>();
         }
@@ -66,21 +56,6 @@ public class PrescriptionService {
                 .stream()
                 .map(fhirBundledPrescriptionBuilder::fhirBundleResponseFor)
                 .collect(Collectors.toList());
-    }
-
-    private boolean isPrescriptionDoc(Obs obs, Concept docType) {
-        if (documentTransformer.isSupportedDocument(obs, AbdmConfig.DocumentKind.PRESCIPTION)) {
-            return true;
-        }
-        if (documentTransformer.isSupportedDocument(obs, AbdmConfig.DocumentKind.TEMPLATE)) {
-            Concept docTypeField = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.DOC_TYPE);
-            if (docTypeField == null) return false;
-            Optional<Concept> identifiedMember = obs.getGroupMembers().stream()
-                    .filter(member -> member.getConcept().getUuid().equals(docTypeField.getUuid()))
-                    .map(Obs::getValueCoded).findFirst();
-            return identifiedMember.map(concept -> concept.getUuid().equals(docType.getUuid())).orElse(false);
-        }
-        return false;
     }
 
     public List<PrescriptionBundle> getPrescriptionsForProgram(String patientIdUuid, DateRange dateRange, String programName, String programEnrolmentId) {

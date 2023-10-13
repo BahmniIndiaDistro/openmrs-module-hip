@@ -13,6 +13,7 @@ import org.openmrs.Visit;
 import org.openmrs.module.emrapi.conditionslist.Condition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -32,7 +34,7 @@ public class ConsultationService {
 
     private final ConsultationDao consultationDao;
     private final OPConsultDao opConsultDao;
-    private final DiagnosticReportService diagnosticReportService;
+    private final OmrsObsDocumentTransformer documentTransformer;
     private final AbdmConfig abdmConfig;
 
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Image","Tuberculosis, Treatment Plan","Tuberculosis, Next Followup Visit","Tuberculosis, Plan for next visit","Tuberculosis, Patient Category","Current Followup Visit After",
@@ -41,10 +43,10 @@ public class ConsultationService {
             "HIVTC, Transferred out", "HIVTC, Regimen when transferred out", "HIVTC, Date of transferred out", "HIVTC, Transferred out to", "HIVTC, Chief Complaint"));
 
     @Autowired
-    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao, DiagnosticReportService diagnosticReportService, AbdmConfig abdmConfig) {
+    public ConsultationService(ConsultationDao consultationDao, OPConsultDao opConsultDao, OmrsObsDocumentTransformer documentTransformer, AbdmConfig abdmConfig) {
         this.consultationDao = consultationDao;
         this.opConsultDao = opConsultDao;
-        this.diagnosticReportService = diagnosticReportService;
+        this.documentTransformer = documentTransformer;
         this.abdmConfig = abdmConfig;
     }
 
@@ -95,14 +97,57 @@ public class ConsultationService {
         return getEncounterListMapForMedicalHistory(medicalHistoryConditionsMap, medicalHistoryDiagnosisMap);
     }
 
-    public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(Visit visit, Date fromDate, Date toDate) {
-        return opConsultDao.getPatientDocumentsForVisit(visit,fromDate,toDate);
+    public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMap(Visit visit, Date fromDate, Date toDate, AbdmConfig.HiTypeDocumentKind type) {
+        return visit.getEncounters()
+                .stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
+                .map(e -> e.getObsAtTopLevel(false))
+                .flatMap(Collection::stream)
+                .filter(obs -> isHiTypeSupportedObs(obs,type))
+                .collect(Collectors.groupingBy(Obs::getEncounter));
+    }
+
+    private boolean isHiTypeSupportedObs(Obs obs, AbdmConfig.HiTypeDocumentKind type) {
+        if (documentTransformer.isSupportedHiTypeDocument(obs.getConcept(), type)) {
+            System.out.println("Concept is supported");
+            return true;
+        }
+        if (documentTransformer.isSupportedDocument(obs, AbdmConfig.DocTemplateAttribute.TEMPLATE)) {
+            if(!isExternalOriginDoc(obs)) {
+                Concept docTypeField = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.DOC_TYPE);
+                if (docTypeField == null) return false;
+                Optional<Concept> identifiedMember = obs.getGroupMembers().stream()
+                        .filter(member -> member.getConcept().getUuid().equals(docTypeField.getUuid()))
+                        .map(Obs::getValueCoded)
+                        .findFirst();
+                if (identifiedMember.isPresent()) {
+                    return documentTransformer.isSupportedHiTypeDocument(identifiedMember.get(), type);
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isExternalOriginDoc(Obs obs) {
+        if (obs.isObsGrouping()) {
+            Concept externalOriginDocConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.EXTERNAL_ORIGIN);
+            if (externalOriginDocConcept == null) {
+                return false;
+            }
+            Optional<Obs> externalOriginObs = obs.getGroupMembers().stream().filter(o -> o.getConcept().getUuid().equals(externalOriginDocConcept.getUuid())).findFirst();
+            if (externalOriginObs.isPresent()) {
+                return !StringUtils.isEmpty(externalOriginObs.get().getValueText());
+            }
+        }
+        return false;
     }
 
     public Map<Encounter, List<Obs>> getEncounterPatientDocumentsMapForProgram(String programName, Date fromDate, Date toDate, Patient patient,String programEnrollmentId) {
         final int patientDocumentEncounterType = 9;
-        Map<Encounter, List<Obs>> encounterDiagnosticReportsMap = diagnosticReportService.getAllObservationsForPrograms(fromDate,toDate,patient, programName, programEnrollmentId) ;
-        return getEncounterListMapForPatientDocument(patientDocumentEncounterType, encounterDiagnosticReportsMap);
+//        Map<Encounter, List<Obs>> encounterDiagnosticReportsMap = diagnosticReportService.getAllObservationsForPrograms(fromDate,toDate,patient, programName, programEnrollmentId) ;
+//        return getEncounterListMapForPatientDocument(patientDocumentEncounterType, encounterDiagnosticReportsMap);
+        return null;
     }
 
     public Map<Encounter, List<Order>> getEncounterOrdersMap(Visit visit,Date fromDate, Date toDate) {

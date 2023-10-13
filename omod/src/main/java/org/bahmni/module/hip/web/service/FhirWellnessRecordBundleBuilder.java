@@ -122,7 +122,7 @@ public class FhirWellnessRecordBundleBuilder {
 						.setCode(FHIRUtils.getDocumentReferenceType());
 				addEntry(wellnessAttributeObsMap, documentReferenceCompositionSection, AbdmConfig.WellnessAttribute.DOCUMENT_REFERENCE);
 				documentReference.addAll(wellnessAttributeObsMap.get(AbdmConfig.WellnessAttribute.DOCUMENT_REFERENCE).stream().
-						map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList()));
+						map(obs -> fhirResourceMapper.mapToDocumentDocumentReference(obs, AbdmConfig.HiTypeDocumentKind.WELLNESS_RECORD)).collect(Collectors.toList()));
 			}
 		}
 		FHIRUtils.addToBundleEntry(bundle, document, false);
