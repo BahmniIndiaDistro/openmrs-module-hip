@@ -123,8 +123,6 @@ public class FhirOPConsult {
         List<ServiceRequest> serviceRequest = openMrsOPConsult.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
-        if(patientDocuments.size() == 0) return null;
-
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList, visitDatetime, encounterId, encounter, practitioners,
                 patient, patientReference, fhirObservationList, medicationRequestsList, medications, fhirProcedureList, patientDocuments, serviceRequest);
     }
