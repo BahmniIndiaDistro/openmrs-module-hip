@@ -30,6 +30,7 @@ import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.openmrs.module.fhir2.api.translators.impl.FhirTranslatorUtils;
 import org.springframework.util.StringUtils;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -38,7 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -157,7 +157,12 @@ public class FhirImmunizationRecordBundleBuilder {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
-                    Date valueDatetime = convertToUTC(member.getValueDate());
+                    Date valueDatetime = null;
+                    try {
+                        valueDatetime = convertToUTC(member.getValueDate());
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
                     System.out.println("valueDateTime" + valueDatetime);
                     if (valueDatetime != null) {
                         immunization.setOccurrence(new DateTimeType(valueDatetime));
@@ -216,13 +221,12 @@ public class FhirImmunizationRecordBundleBuilder {
         return immunization;
     }
 
-    private Date convertToUTC(Date date) {
-        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+    private Date convertToUTC(Date date) throws ParseException {
+        long millisecondsToSubtract = -(5 * 3600000 + 30 * 60000);
 
-        // Set the time zone of the input date to UTC
-        date.setTime(date.getTime() - utcTimeZone.getOffset(date.getTime()));
+        Date resultDate = new Date(date.getTime() + millisecondsToSubtract);
 
-        return date;
+        return resultDate;
     }
 
     private boolean conceptMatchesForAttribute(Concept memberConcept, AbdmConfig.ImmunizationAttribute immunizationAttribute) {
