@@ -3,6 +3,7 @@ package org.bahmni.module.hip.web.model;
 import org.bahmni.module.hip.web.service.AbdmConfig;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
+import org.bahmni.module.hip.web.service.OmrsObsDocumentTransformer;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CarePlan;
@@ -20,6 +21,7 @@ import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.ServiceRequest;
 import org.openmrs.EncounterProvider;
+import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +81,8 @@ public class FhirDischargeSummary {
         this.procedures = procedures;
         this.serviceRequest = serviceRequest;
     }
-    public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig){
+    public static FhirDischargeSummary fromOpenMrsDischargeSummary(OpenMrsDischargeSummary openMrsDischargeSummary, FHIRResourceMapper fhirResourceMapper,
+                                                                   AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsDischargeSummary.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsDischargeSummary.getEncounter());
@@ -104,7 +107,8 @@ public class FhirDischargeSummary {
         List<Observation> physicalExaminations = openMrsDischargeSummary.getPhysicalExaminationObs().stream().
                 map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
         List<DocumentReference> patientDocuments = openMrsDischargeSummary.getPatientDocuments().stream().
-                map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
+                map(obs -> omrsObsDocumentTransformer.transForm(obs, DocumentReference.class, AbdmConfig.HiTypeDocumentKind.DISCHARGE_SUMMARY))
+                .filter(Objects::nonNull).collect(Collectors.toList());
         List<Procedure> fhirProcedureList = new ArrayList<>();
         for(int i=0;i<openMrsDischargeSummary.getProcedure().size();i++){
             fhirProcedureList.add(fhirResourceMapper.mapToProcedure(encounter,openMrsDischargeSummary.getProcedure().get(i),abdmConfig.getProcedureAttributeConcepts()));

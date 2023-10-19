@@ -64,8 +64,8 @@ public class AbdmConfig {
             allConfigurationKeys.add(immunizationAttribute.getMapping());
         });
 
-        Arrays.stream(DocumentKind.values()).forEach(documentKind -> {
-            allConfigurationKeys.add(documentKind.getMapping());
+        Arrays.stream(HiTypeDocumentKind.values()).forEach(document -> {
+            allConfigurationKeys.add(document.getMapping());
         });
 
         Arrays.stream(DocTemplateAttribute.values()).forEach(templateAttribute -> {
@@ -79,18 +79,29 @@ public class AbdmConfig {
         Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
+
+        Arrays.stream(WellnessAttribute.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+
+        Arrays.stream(ProcedureAttribute.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
     }
 
-    public enum DocumentKind {
-        PRESCIPTION("abdm.conceptMap.docType.prescription"),
-        DISCHARGE_SUMMARY("abdm.conceptMap.docType.dischargeSummary"),
-        PATIENT_FILE("abdm.conceptMap.docType.patientFile"),
-        REFERRAL("abdm.conceptMap.docType.referral"),
-        TEMPLATE("abdm.conceptMap.docType.template");
+
+    public enum HiTypeDocumentKind {
+        OP_CONSULT("abdm.conceptMap.document.opConsult"),
+        DISCHARGE_SUMMARY("abdm.conceptMap.document.dischargeSummary"),
+        DIAGNOSTIC_REPORT("abdm.conceptMap.document.diagnosticReport"),
+        WELLNESS_RECORD("abdm.conceptMap.document.wellnessRecord"),
+        PRESCRIPTION("abdm.conceptMap.document.prescription"),
+        HEALTH_DOCUMENT_RECORD("abdm.conceptMap.document.healthDocumentRecord");
+
         private final String mapping;
 
-        DocumentKind(String mapping) {
+        HiTypeDocumentKind(String mapping) {
             this.mapping = mapping;
         }
 
@@ -100,10 +111,12 @@ public class AbdmConfig {
 
     }
     public enum DocTemplateAttribute {
+        TEMPLATE("abdm.conceptMap.docTemplate.template"),
         DOC_TYPE("abdm.conceptMap.docTemplate.docType"),
         ATTACHMENT("abdm.conceptMap.docTemplate.attachment"),
         UPLOAD_REF("abdm.conceptMap.docTemplate.uploadRef"),
-        EXTERNAL_ORIGIN("abdm.conceptMap.docTemplate.externalOrigin");
+        EXTERNAL_ORIGIN("abdm.conceptMap.docTemplate.externalOrigin"),
+        DATE_OF_DOCUMENT("abdm.conceptMap.docTemplate.documentDate");;
         private final String mapping;
 
         DocTemplateAttribute(String mapping) {
@@ -259,10 +272,6 @@ public class AbdmConfig {
         return getImmunizationAttributeConcept(ImmunizationAttribute.TEMPLATE);
     }
 
-    public Concept getPrescriptionDocumentConcept() {
-        return lookupConcept(DocumentKind.PRESCIPTION.getMapping());
-    }
-
     private Concept lookupConcept(String lookupKey) {
         String lookupValue = (String) properties.get(lookupKey);
         if (StringUtils.isEmpty(lookupValue)) {
@@ -305,9 +314,6 @@ public class AbdmConfig {
                     return concept;
                 })).collect(Collectors.toList());
     }
-    public Concept getDocumentConcept(DocumentKind type) {
-        return lookupConcept(type.getMapping());
-    }
 
     public Concept getDocTemplateAtributeConcept(DocTemplateAttribute docAttribute) {
         return lookupConcept(docAttribute.getMapping());
@@ -319,7 +325,9 @@ public class AbdmConfig {
     public List<Concept> getWellnessAttributeConcept(WellnessAttribute type) {
         return lookupConcepts(type.getMapping());
     }
-
+    public List<Concept> getHiTypeDocumentTypes(HiTypeDocumentKind type) {
+        return lookupConcepts(type.getMapping());
+    }
 
     public List<String> getAllConfigurationKeys() {
         return allConfigurationKeys;

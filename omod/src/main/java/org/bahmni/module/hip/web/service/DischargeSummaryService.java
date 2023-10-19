@@ -2,10 +2,10 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.api.dao.DischargeSummaryDao;
 import org.bahmni.module.hip.api.dao.HipVisitDao;
-import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.bahmni.module.hip.web.model.DateRange;
 import org.bahmni.module.hip.web.model.DischargeSummaryBundle;
 import org.bahmni.module.hip.web.model.DrugOrders;
+import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.bahmni.module.hip.web.model.OpenMrsDischargeSummary;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
@@ -16,6 +16,7 @@ import org.openmrs.api.PatientService;
 import org.openmrs.api.VisitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -26,9 +27,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static org.bahmni.module.hip.web.utils.DateUtils.isDateBetweenDateRange;
-
 @Service
+@Slf4j
 public class DischargeSummaryService {
 
     private final PatientService patientService;
@@ -52,16 +52,13 @@ public class DischargeSummaryService {
         Visit visit = visitService.getVisitByUuid(visitUuid);
 
         Patient patient = patientService.getPatientByUuid(patientUuid);
-        Map<Encounter, DrugOrders> encounteredDrugOrdersMap = openMRSDrugOrderClient.getDrugOrdersByDateAndVisitTypeFor(visit,fromDate,toDate);
-        Map<Encounter, List<Obs>> encounterDischargeSummaryMap = getEncounterCarePlanMap(visit,fromDate,toDate);
-        ConcurrentHashMap<Encounter, List<OpenMrsCondition>> encounterChiefComplaintsMap = consultationService.getEncounterChiefComplaintsMap(visit,fromDate,toDate);
-        Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = consultationService.getEncounterMedicalHistoryConditionsMap(visit,fromDate,toDate);
-        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = consultationService.getEncounterPhysicalExaminationMap(visit,fromDate,toDate);
-        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit,fromDate,toDate);
-        Map<Encounter, List<Obs>> encounterProcedureMap = consultationService.getEncounterProcedureMap(visit,fromDate,toDate);
-        Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit,fromDate,toDate);
 
-        List<OpenMrsDischargeSummary> openMrsDischargeSummaryList = OpenMrsDischargeSummary.getOpenMrsDischargeSummaryList(encounterDischargeSummaryMap, encounteredDrugOrdersMap, encounterChiefComplaintsMap, encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounterPatientDocumentsMap, encounterProcedureMap, encounterOrdersMap, patient);
+        Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit,fromDate,toDate, AbdmConfig.HiTypeDocumentKind.DISCHARGE_SUMMARY);
+
+        List<OpenMrsDischargeSummary> openMrsDischargeSummaryList = OpenMrsDischargeSummary.getOpenMrsDischargeSummaryList(
+                new HashMap<>(), new HashMap<>(),new ConcurrentHashMap<>(), new HashMap<>(),
+                new HashMap<>(), encounterPatientDocumentsMap, new HashMap<>(), new HashMap<>(), patient);
+
         return openMrsDischargeSummaryList.stream().map(fhirBundledDischargeSummaryBuilder::fhirBundleResponseFor).collect(Collectors.toList());
 
     }

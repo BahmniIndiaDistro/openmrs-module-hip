@@ -1,7 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.bahmni.module.hip.web.model.DrugOrders;
 import org.bahmni.module.hip.web.model.HealthDocumentRecordBundle;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.openmrs.Concept;
@@ -15,7 +14,6 @@ import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +30,7 @@ public class HealthDocumentRecordService {
     private EncounterTranslator<Encounter> encounterTranslator;
     private AbdmConfig abdmConfig;
     private FhirHealthDocumentRecordBuilder documentRecordBuilder;
+    private ConsultationService consultationService;
 
     @Autowired
     public HealthDocumentRecordService(VisitService visitService, ConceptService conceptService,
@@ -40,7 +39,7 @@ public class HealthDocumentRecordService {
                                        ConceptTranslator conceptTranslator,
                                        EncounterTranslator<Encounter> encounterTranslator,
                                        AbdmConfig abdmConfig,
-                                       FhirHealthDocumentRecordBuilder documentRecordBuilder) {
+                                       FhirHealthDocumentRecordBuilder documentRecordBuilder, ConsultationService consultationService) {
 
         this.visitService = visitService;
         this.conceptService = conceptService;
@@ -50,6 +49,7 @@ public class HealthDocumentRecordService {
         this.encounterTranslator = encounterTranslator;
         this.abdmConfig = abdmConfig;
         this.documentRecordBuilder = documentRecordBuilder;
+        this.consultationService = consultationService;
     }
 
     public List<HealthDocumentRecordBundle> getDocumentsForVisit(
@@ -68,7 +68,7 @@ public class HealthDocumentRecordService {
             return Collections.emptyList();
         }
 
-        Concept documentConcept = abdmConfig.getDocumentConcept(AbdmConfig.DocumentKind.TEMPLATE);
+        Concept documentConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.TEMPLATE);
         if (documentConcept == null) {
             //no document template configured
             log.info("Concept Document Template not found. Property [abdm.conceptMap.docType.template] is probably not defined");
@@ -76,29 +76,13 @@ public class HealthDocumentRecordService {
         }
         Optional<Location> location = OrganizationContextService.findOrganization(visit.getLocation());
         OrganizationContext organizationContext = organizationContextService.buildContext(location);
-        Map<Encounter, List<Obs>> encounterObsDocList = visit.getEncounters().stream()
-                .filter(e -> fromEncounterDate == null || e.getEncounterDatetime().after(fromEncounterDate))
-                .map(encounter -> encounter.getObsAtTopLevel(false))
-                .flatMap(Collection::stream)
-                .filter(obs -> obs.getConcept().getUuid().equals(documentConcept.getUuid()) && !isExternalOriginDoc(obs))
-                .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
+        Map<Encounter, List<Obs>> encounterObsDocList = consultationService.getEncounterPatientDocumentsMap(visit, fromEncounterDate, toEncounterDate, AbdmConfig.HiTypeDocumentKind.HEALTH_DOCUMENT_RECORD);
+
         return encounterObsDocList.entrySet()
                 .stream().map(entry -> documentRecordBuilder.build(entry.getKey(), entry.getValue(), organizationContext))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private boolean isExternalOriginDoc(Obs obs) {
-        if (obs.isObsGrouping()) {
-            Concept externalOriginDocConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.EXTERNAL_ORIGIN);
-            if (externalOriginDocConcept == null) {
-                return false;
-            }
-            Optional<Obs> externalOriginObs = obs.getGroupMembers().stream().filter(o -> o.getConcept().getUuid().equals(externalOriginDocConcept.getUuid())).findFirst();
-            if (externalOriginObs.isPresent()) {
-                return !StringUtils.isEmpty(externalOriginObs.get().getValueText());
-            }
-        }
-        return false;
-    }
+
 }

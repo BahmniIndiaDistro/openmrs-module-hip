@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.web.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.web.model.OpenMrsCondition;
 import org.hibernate.Hibernate;
@@ -55,6 +56,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
+@Slf4j
 public class FHIRResourceMapper {
 
     private final PatientTranslator patientTranslator;
@@ -64,10 +66,12 @@ public class FHIRResourceMapper {
     private final EncounterTranslatorImpl encounterTranslator;
     private final ObservationTranslatorImpl observationTranslator;
     private final ConceptTranslatorImpl conceptTranslator;
+    private final AbdmConfig abdmConfig;
+    private final OmrsObsDocumentTransformer omrsObsDocumentTransformer;
     public static Set<String> conceptNames = new HashSet<>(Arrays.asList("Follow up Date", "Additional Advice on Discharge", "Discharge Summary, Plan for follow up"));
 
     @Autowired
-    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator, ConceptTranslatorImpl conceptTranslator) {
+    public FHIRResourceMapper(PatientTranslator patientTranslator, PractitionerTranslatorProviderImpl practitionerTranslatorProvider, MedicationRequestTranslator medicationRequestTranslator, MedicationTranslator medicationTranslator, EncounterTranslatorImpl encounterTranslator, ObservationTranslatorImpl observationTranslator, ConceptTranslatorImpl conceptTranslator, AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
         this.patientTranslator = patientTranslator;
         this.practitionerTranslatorProvider = practitionerTranslatorProvider;
         this.medicationRequestTranslator = medicationRequestTranslator;
@@ -75,6 +79,8 @@ public class FHIRResourceMapper {
         this.encounterTranslator = encounterTranslator;
         this.observationTranslator = observationTranslator;
         this.conceptTranslator = conceptTranslator;
+        this.abdmConfig = abdmConfig;
+        this.omrsObsDocumentTransformer = omrsObsDocumentTransformer;
     }
 
     public Encounter mapToEncounter(org.openmrs.Encounter emrEncounter) {
@@ -83,15 +89,34 @@ public class FHIRResourceMapper {
 
     public DiagnosticReport mapToDiagnosticReport(Obs obs) {
         DiagnosticReport diagnosticReport = new DiagnosticReport();
-        try {
-            diagnosticReport.setId(obs.getUuid());
-            diagnosticReport.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
-            diagnosticReport.setPresentedForm(getAttachments(obs));
-            return diagnosticReport;
-        } catch (IOException exception) {
+        diagnosticReport.setId(obs.getUuid());
+        diagnosticReport.setStatus(DiagnosticReport.DiagnosticReportStatus.FINAL);
+        Attachment attachment = null;
+
+        if(obs.isObsGrouping()){
+
+            Concept docTypeField = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.DOC_TYPE);
+            Concept attachmentConcept = abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.ATTACHMENT);
+            Concept capturedDocType = omrsObsDocumentTransformer.getDocumentConcept(obs, AbdmConfig.HiTypeDocumentKind.DIAGNOSTIC_REPORT,docTypeField);
+
+            attachment = obs.getGroupMembers().stream()
+                    .filter(member -> member.getConcept().getUuid().equals(attachmentConcept.getUuid()) || member.getConcept().getName().getName().equals(Config.DOCUMENT_TYPE.getValue()))
+                    .findFirst()
+                    .map(o -> omrsObsDocumentTransformer.getAttachment(o, capturedDocType, AbdmConfig.HiTypeDocumentKind.DIAGNOSTIC_REPORT))
+                    .get();
+        }
+        else
+        {
+            attachment = omrsObsDocumentTransformer.getAttachment(obs, null, AbdmConfig.HiTypeDocumentKind.DIAGNOSTIC_REPORT);
+        }
+        if(attachment != null){
+            diagnosticReport.addPresentedForm(attachment);
             return diagnosticReport;
         }
+        return new DiagnosticReport();
     }
+
+
 
     public Procedure mapToProcedure(Encounter encounter, Obs procedureObs, Map<AbdmConfig.ProcedureAttribute, Concept> procedureAttributeConceptMap) {
         Procedure procedure = new Procedure();
@@ -204,14 +229,14 @@ public class FHIRResourceMapper {
         }
     }
 
-    public DocumentReference mapToDocumentDocumentReference(Obs obs) {
+    public DocumentReference mapToDocumentDocumentReference(Obs obs, AbdmConfig.HiTypeDocumentKind typeDocuments) {
         DocumentReference documentReference = new DocumentReference();
         documentReference.setId(obs.getUuid());
         documentReference.setStatus(Enumerations.DocumentReferenceStatus.CURRENT);
         documentReference.setDescription(obs.getComment());
         List<DocumentReference.DocumentReferenceContentComponent> contents = new ArrayList<>();
         try {
-            List<Attachment> attachments = getAttachments(obs);
+            List<Attachment> attachments = getAttachments(obs, typeDocuments);
             for (Attachment attachment : attachments) {
                 DocumentReference.DocumentReferenceContentComponent documentReferenceContentComponent
                         = new DocumentReference.DocumentReferenceContentComponent();
@@ -225,15 +250,20 @@ public class FHIRResourceMapper {
         }
     }
 
-    private List<Attachment> getAttachments(Obs obs) throws IOException {
+    private List<Attachment> getAttachments(Obs obs, AbdmConfig.HiTypeDocumentKind typeDocuments) throws IOException {
         List<Attachment> attachments = new ArrayList<>();
         Attachment attachment = new Attachment();
         StringBuilder valueText = new StringBuilder();
         Set<Obs> obsList = obs.getGroupMembers();
         StringBuilder contentType = new StringBuilder();
+        Concept obsConcept = null;
         for(Obs obs1 : obsList) {
-            if (obs1.getConcept().getName().getName().equals(Config.DOCUMENT_TYPE.getValue())) {
-                valueText.append(obs1.getValueText());
+            if(obs.getConcept().equals(abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.TEMPLATE)))
+            {
+                obsConcept = obs1.getValueCoded();
+            }
+            if (obs1.getConcept().getName().getName().equals(Config.DOCUMENT_TYPE.getValue()) || obs1.getConcept().equals(abdmConfig.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.ATTACHMENT))) {
+                valueText.append(obs1.getValueText() != null ? obs1.getValueText() : obs1.getValueComplex());
                 contentType.append(FHIRUtils.getTypeOfTheObsDocument(obs1.getValueText()));
             }
         }
@@ -245,14 +275,20 @@ public class FHIRResourceMapper {
         byte[] fileContent = Files.readAllBytes(new File(Config.PATIENT_DOCUMENTS_PATH.getValue() + valueText).toPath());
         attachment.setData(fileContent);
         StringBuilder title = new StringBuilder();
-        String encounterId = obs.getEncounter().getEncounterType().getName();
-        if(encounterId.equals(Config.PATIENT_DOCUMENT.getValue()))
-            title.append(Config.PATIENT_DOCUMENT.getValue());
-        else if(encounterId.equals(Config.RADIOLOGY_TYPE.getValue()))
-            title.append(Config.RADIOLOGY_REPORT.getValue());
-        else if(encounterId.equals(Config.CONSULTATION.getValue()))
-            title.append("Consultation");
-        title.append(": ").append(obs.getConcept().getName().getName());
+        if(typeDocuments == AbdmConfig.HiTypeDocumentKind.OP_CONSULT)
+            title.append("OP Consultation - ");
+        else if(typeDocuments == AbdmConfig.HiTypeDocumentKind.DISCHARGE_SUMMARY)
+            title.append("Discharge Summary - ");
+        else if(typeDocuments == AbdmConfig.HiTypeDocumentKind.DIAGNOSTIC_REPORT)
+            title.append("Diagnostic Report - ");
+        else if(typeDocuments == AbdmConfig.HiTypeDocumentKind.WELLNESS_RECORD)
+            title.append("Wellness Record - ");
+        else
+            title.append("Document - ");
+        if(obsConcept == null)
+            title.append(obs.getConcept().getName().getName());
+        else
+            title.append(obsConcept.getDisplayString());
         attachment.setTitle(title.toString());
         attachments.add(attachment);
         return attachments;

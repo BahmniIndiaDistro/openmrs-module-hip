@@ -17,18 +17,20 @@ public class FhirBundledOPConsultBuilder {
     private final OrganizationContextService organizationContextService;
     private final FHIRResourceMapper fhirResourceMapper;
     private final AbdmConfig abdmConfig;
+    private final OmrsObsDocumentTransformer omrsObsDocumentTransformer;
 
     @Autowired
-    public FhirBundledOPConsultBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig) {
+    public FhirBundledOPConsultBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
         this.careContextService = careContextService;
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.abdmConfig = abdmConfig;
+        this.omrsObsDocumentTransformer = omrsObsDocumentTransformer;
     }
 
     public OPConsultBundle fhirBundleResponseFor (OpenMrsOPConsult openMrsOPConsult) {
         OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsOPConsult.getEncounter().getVisit().getLocation()));
-        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper, abdmConfig).
+        Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper, abdmConfig, omrsObsDocumentTransformer).
                 bundleOPConsult(organizationContext);
         CareContext careContext = careContextService.careContextFor(
                 openMrsOPConsult.getEncounter(),

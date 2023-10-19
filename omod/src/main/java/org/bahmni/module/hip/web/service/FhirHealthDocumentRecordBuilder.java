@@ -32,7 +32,7 @@ public class FhirHealthDocumentRecordBuilder {
     }
 
     public HealthDocumentRecordBundle build(Obs docObs, OrganizationContext organizationContext) {
-        DocumentReference documentReference = documentTransformer.transForm(docObs, DocumentReference.class);
+        DocumentReference documentReference = documentTransformer.transForm(docObs, DocumentReference.class, AbdmConfig.HiTypeDocumentKind.HEALTH_DOCUMENT_RECORD);
         if (documentReference == null) return null;
         org.hl7.fhir.r4.model.Encounter docEncounter = fhirResourceMapper.mapToEncounter(docObs.getEncounter());
         docEncounter.getClass_().setDisplay("Health Document");
@@ -81,7 +81,7 @@ public class FhirHealthDocumentRecordBuilder {
     public HealthDocumentRecordBundle build(Encounter encounter, List<Obs> obsDocList, OrganizationContext orgContext) {
         if (obsDocList.isEmpty()) return null;
         List<DocumentReference> documentRefs = obsDocList.stream()
-                .map(docObs -> documentTransformer.transForm(docObs, DocumentReference.class))
+                .map(docObs -> documentTransformer.transForm(docObs, DocumentReference.class, AbdmConfig.HiTypeDocumentKind.HEALTH_DOCUMENT_RECORD))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (documentRefs.isEmpty()) return null;

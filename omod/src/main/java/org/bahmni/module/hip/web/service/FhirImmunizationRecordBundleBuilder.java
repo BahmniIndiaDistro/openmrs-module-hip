@@ -30,6 +30,7 @@ import org.openmrs.module.fhir2.api.translators.EncounterTranslator;
 import org.openmrs.module.fhir2.api.translators.impl.FhirTranslatorUtils;
 import org.springframework.util.StringUtils;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -156,7 +157,13 @@ public class FhirImmunizationRecordBundleBuilder {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
-                    Date valueDatetime = member.getValueDatetime();
+                    Date valueDatetime = null;
+                    try {
+                        valueDatetime = convertToUTC(member.getValueDate());
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("valueDateTime" + valueDatetime);
                     if (valueDatetime != null) {
                         immunization.setOccurrence(new DateTimeType(valueDatetime));
                     }
@@ -212,6 +219,14 @@ public class FhirImmunizationRecordBundleBuilder {
         immunization.getMeta().setLastUpdated(FhirTranslatorUtils.getLastUpdated(openmrsImmunization));
 
         return immunization;
+    }
+
+    private Date convertToUTC(Date date) throws ParseException {
+        long millisecondsToSubtract = -(5 * 3600000 + 30 * 60000);
+
+        Date resultDate = new Date(date.getTime() + millisecondsToSubtract);
+
+        return resultDate;
     }
 
     private boolean conceptMatchesForAttribute(Concept memberConcept, AbdmConfig.ImmunizationAttribute immunizationAttribute) {

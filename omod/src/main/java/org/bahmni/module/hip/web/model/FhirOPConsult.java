@@ -3,6 +3,7 @@ package org.bahmni.module.hip.web.model;
 import org.bahmni.module.hip.web.service.AbdmConfig;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
+import org.bahmni.module.hip.web.service.OmrsObsDocumentTransformer;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Practitioner;
@@ -19,15 +20,10 @@ import org.hl7.fhir.r4.model.ServiceRequest;
 import org.openmrs.EncounterProvider;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.Meta;
+import org.openmrs.Obs;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FhirOPConsult {
@@ -90,11 +86,12 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, serviceRequest, false);
         if (procedure != null) FHIRUtils.addToBundleEntry(bundle, procedure, false);
-        FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
+        if(patientDocuments != null) FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
+
         return bundle;
     }
 
-    public static FhirOPConsult fromOpenMrsOPConsult(OpenMrsOPConsult openMrsOPConsult, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig) {
+    public static FhirOPConsult fromOpenMrsOPConsult(OpenMrsOPConsult openMrsOPConsult, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig, OmrsObsDocumentTransformer patientDocumentTransformer) {
         Patient patient = fhirResourceMapper.mapToPatient(openMrsOPConsult.getPatient());
         Reference patientReference = FHIRUtils.getReferenceToResource(patient);
         Encounter encounter = fhirResourceMapper.mapToEncounter(openMrsOPConsult.getEncounter());
@@ -121,7 +118,8 @@ public class FhirOPConsult {
             fhirProcedureList.add(fhirResourceMapper.mapToProcedure(encounter,openMrsOPConsult.getProcedure().get(i),abdmConfig.getProcedureAttributeConcepts()));
         }
         List<DocumentReference> patientDocuments = openMrsOPConsult.getPatientDocuments().stream().
-                map(fhirResourceMapper::mapToDocumentDocumentReference).collect(Collectors.toList());
+                map(obs -> patientDocumentTransformer.transForm(obs, DocumentReference.class,AbdmConfig.HiTypeDocumentKind.OP_CONSULT))
+                .filter(Objects::nonNull).collect(Collectors.toList());
         List<ServiceRequest> serviceRequest = openMrsOPConsult.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
 
