@@ -89,16 +89,16 @@ public class OmrsObsDocumentTransformer {
                     .findFirst()
                     .map(o -> getAttachment(o, capturedDocType, hiTypeDocumentKind));
 
+            if (!attachment.isPresent()) {
+                log.warn("Can not find Document attachment in the captured document template.");
+                return null;
+            }
+
             Concept dateConcept = config.getDocTemplateAtributeConcept(AbdmConfig.DocTemplateAttribute.DATE_OF_DOCUMENT);
 
             Optional<Obs> dateObs = obs.getGroupMembers().stream()
                     .filter(member -> member.getConcept().equals(dateConcept))
                     .findFirst();
-
-            if (!attachment.isPresent()) {
-                log.warn("Can not find Document attachment in the captured document template.");
-                return null;
-            }
 
             CodeableConcept docRefType = capturedDocType.getConceptMappings().isEmpty()
                     ? FHIRUtils.getPatientRecordType()
