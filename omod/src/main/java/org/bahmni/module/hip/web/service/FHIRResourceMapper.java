@@ -359,7 +359,9 @@ public class FHIRResourceMapper {
         if (order.getDrug() == null) {
             return null;
         }
-        return medicationTranslator.toFhirResource(order.getDrug());
+        Medication medication = medicationTranslator.toFhirResource(order.getDrug());
+        medication.getCode().setText(order.getDrug().getName());
+        return medication;
     }
 
     public static <T> T initializeEntityAndUnproxy(T entity) {
