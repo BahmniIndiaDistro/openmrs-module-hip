@@ -157,13 +157,7 @@ public class FhirImmunizationRecordBundleBuilder {
                 }
 
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.OCCURRENCE_DATE)) {
-                    Date valueDatetime = null;
-                    try {
-                        valueDatetime = convertToUTC(member.getValueDate());
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("valueDateTime" + valueDatetime);
+                    Date valueDatetime = member.getValueDate();
                     if (valueDatetime != null) {
                         immunization.setOccurrence(new DateTimeType(valueDatetime));
                     }
@@ -219,14 +213,6 @@ public class FhirImmunizationRecordBundleBuilder {
         immunization.getMeta().setLastUpdated(FhirTranslatorUtils.getLastUpdated(openmrsImmunization));
 
         return immunization;
-    }
-
-    private Date convertToUTC(Date date) throws ParseException {
-        long millisecondsToSubtract = -(5 * 3600000 + 30 * 60000);
-
-        Date resultDate = new Date(date.getTime() + millisecondsToSubtract);
-
-        return resultDate;
     }
 
     private boolean conceptMatchesForAttribute(Concept memberConcept, AbdmConfig.ImmunizationAttribute immunizationAttribute) {
