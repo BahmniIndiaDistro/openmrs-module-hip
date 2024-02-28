@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.web.model;
 
+import org.bahmni.module.bahmnicore.service.OrderService;
 import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.web.service.FHIRResourceMapper;
 import org.bahmni.module.hip.web.service.FHIRUtils;
@@ -88,16 +89,25 @@ public class FhirLabResult {
             }
         }
         if(labresult.getLabResults() != null) {
-            for(Map.Entry<LabOrderResult, Obs> labOrderResultObsMap: labresult.getLabResults().entrySet()){
-                    LabOrderResult labResult = labOrderResultObsMap.getKey();
-                    DiagnosticReport reports = map(labResult.getOrderUuid(),labOrderResultObsMap.getValue(),labResult.getTestName(),patient,practitioners);
-                    FhirLabResult.mapToObsFromLabResult(labResult, patient, reports, results);
+            Map<String, List<Map.Entry<LabOrderResult, Obs>>> labOrderResultObsOrdersMap =
+                    labresult.getLabResults().entrySet().stream()
+                            .collect(Collectors.groupingBy(entry -> entry.getKey().getOrderUuid()));
+
+            for(Map.Entry<String, List<Map.Entry<LabOrderResult, Obs>>> labOrder: labOrderResultObsOrdersMap.entrySet()){
+                    String testName = labOrder.getValue().get(0).getKey().getPanelName();
+                    if (testName == null) {
+                        testName = labOrder.getValue().get(0).getKey().getTestName();
+                    }
+                    DiagnosticReport reports = map(labOrder.getKey(),null,testName,patient,practitioners);
+                    labOrder.getValue().forEach(entry -> {
+                        FhirLabResult.mapToObsFromLabResult(entry.getKey(), patient, reports, results);
+                    });
                     reportList.add(reports);
             }
 
         }
         Encounter encounter = fhirResourceMapper.mapToEncounter(labresult.getEncounter());
-        encounter.getClass_().setDisplay("Diagnostic Report");
+        encounter.getClass_().setDisplay("ambulatory");
 
         return new FhirLabResult(fhirResourceMapper.mapToPatient(labresult.getPatient()),
                    encounter, labresult.getEncounter().getEncounterDatetime(), reportList, results, practitioners);
