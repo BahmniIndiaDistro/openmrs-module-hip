@@ -67,7 +67,7 @@ public class ConsultationService {
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMap(Visit visit, Date fromDate, Date toDate) {
-        List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
+        List<Concept> conceptList = abdmConfig.getOPConsultAttributeConcept(AbdmConfig.OpConsultAttribute.PHYSICAl_EXAMINATION);
         Map<Encounter, List<Obs>> encounterObsMap = visit.getEncounters().stream()
                 .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
                 .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
@@ -79,7 +79,7 @@ public class ConsultationService {
     }
 
     public Map<Encounter, List<Obs>> getEncounterPhysicalExaminationMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
-        List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
+        List<Concept> conceptList = abdmConfig.getOPConsultAttributeConcept(AbdmConfig.OpConsultAttribute.PHYSICAl_EXAMINATION);
         List<Obs> physicalExaminations = consultationDao.getAllObsForProgram(programName, fromDate, toDate, patient)
                 .stream().filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
         return groupObsByEncounter(physicalExaminations);

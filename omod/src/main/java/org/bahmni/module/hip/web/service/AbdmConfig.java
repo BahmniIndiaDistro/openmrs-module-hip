@@ -72,10 +72,6 @@ public class AbdmConfig {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
 
-        Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
-            allConfigurationKeys.add(templateAttribute.getMapping());
-        });
-
         Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
@@ -176,24 +172,6 @@ public class AbdmConfig {
             return mapping;
         }
     }
-    public enum PhysicalExamination {
-        HEIGHT("abdm.conceptMap.physicalExamination.height"),
-        WEIGHT("abdm.conceptMap.physicalExamination.weight"),
-        TEMPERATURE("abdm.conceptMap.physicalExamination.temperature"),
-        SYSTOLICBP("abdm.conceptMap.physicalExamination.systolicBP"),
-        DIASTOLICBP("abdm.conceptMap.physicalExamination.diastolicBP"),
-        PULSE("abdm.conceptMap.physicalExamination.pulse");
-
-        private final String mapping;
-
-        PhysicalExamination(String mapping) {
-            this.mapping = mapping;
-        }
-
-        public String getMapping() {
-            return mapping;
-        }
-    }
 
     public enum HistoryAndExamination {
         CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
@@ -237,6 +215,7 @@ public class AbdmConfig {
     }
 
     public enum OpConsultAttribute {
+        PHYSICAl_EXAMINATION("abdm.conceptMap.opConsult.physicalExamination"),
         OTHER_OBSERVATIONS("abdm.conceptMap.opConsult.otherObservations");
 
         private final String mapping;
@@ -268,13 +247,6 @@ public class AbdmConfig {
     public List<Concept> getHistoryExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
-                conceptList.add(lookupConcept(attribute.getMapping())));
-        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    public List<Concept> getPhysicalExaminationConcepts(){
-        List<Concept> conceptList = new ArrayList<>();
-        Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
         return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
