@@ -18,7 +18,6 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,10 +53,11 @@ public class OPConsultService {
         Map<Encounter, List<Obs>> encounterProcedureMap = consultationService.getEncounterProcedureMap(visit, fromDate, toDate);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMap(visit, fromDate, toDate, AbdmConfig.HiTypeDocumentKind.OP_CONSULT);
         Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMap(visit, fromDate, toDate);
+        Map<Encounter, List<Obs>> encounterOtherObsMap = consultationService.getEncounterOtherObsMap(visit, fromDate, toDate, AbdmConfig.OpConsultAttribute.OTHER_OBSERVATIONS);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
                 encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
-                encounterPatientDocumentsMap, encounterOrdersMap, patient);
+                encounterPatientDocumentsMap, encounterOrdersMap, encounterOtherObsMap, patient);
 
         return openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());
@@ -77,10 +77,11 @@ public class OPConsultService {
         Map<Encounter, List<Obs>> encounterProcedureMap = consultationService.getEncounterProcedureMapForProgram(programName,fromDate,toDate,patient);
         Map<Encounter, List<Obs>> encounterPatientDocumentsMap = consultationService.getEncounterPatientDocumentsMapForProgram(programName,fromDate,toDate,patient,programEnrollmentId);
         Map<Encounter, List<Order>> encounterOrdersMap = consultationService.getEncounterOrdersMapForProgram(programName,fromDate,toDate,patient);
+        Map<Encounter, List<Obs>> encounterOtherObsMap = consultationService.getEncounterOtherObsMapForProgram(programName, fromDate, toDate, patient, AbdmConfig.OpConsultAttribute.OTHER_OBSERVATIONS);
 
         List<OpenMrsOPConsult> openMrsOPConsultList = OpenMrsOPConsult.getOpenMrsOPConsultList(encounterChiefComplaintsMap,
                 encounterMedicalHistoryMap, encounterPhysicalExaminationMap, encounteredDrugOrdersMap, encounterProcedureMap,
-                encounterPatientDocumentsMap, encounterOrdersMap, patient);
+                encounterPatientDocumentsMap, encounterOrdersMap, encounterOtherObsMap, patient);
 
         return openMrsOPConsultList.stream().
                 map(fhirBundledOPConsultBuilder::fhirBundleResponseFor).collect(Collectors.toList());

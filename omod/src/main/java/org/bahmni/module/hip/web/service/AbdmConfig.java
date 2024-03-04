@@ -87,6 +87,11 @@ public class AbdmConfig {
         Arrays.stream(ProcedureAttribute.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
+
+        Arrays.stream(OpConsultAttribute.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
     }
 
@@ -231,6 +236,19 @@ public class AbdmConfig {
         }
     }
 
+    public enum OpConsultAttribute {
+        OTHER_OBSERVATIONS("abdm.conceptMap.opConsult.otherObservations");
+
+        private final String mapping;
+
+        OpConsultAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
     public Concept getProcedureObsRootConcept() {
         return lookupConcept(ProcedureAttribute.PROCEDURE_TEMPLATE.getMapping());
     }
@@ -326,6 +344,10 @@ public class AbdmConfig {
         return lookupConcepts(type.getMapping());
     }
     public List<Concept> getHiTypeDocumentTypes(HiTypeDocumentKind type) {
+        return lookupConcepts(type.getMapping());
+    }
+
+    public List<Concept> getOPConsultAttributeConcept(OpConsultAttribute type) {
         return lookupConcepts(type.getMapping());
     }
 

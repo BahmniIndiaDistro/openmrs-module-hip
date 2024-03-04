@@ -82,7 +82,7 @@ public class ConsultationService {
         List<Concept> conceptList = abdmConfig.getPhysicalExaminationConcepts();
         List<Obs> physicalExaminations = consultationDao.getAllObsForProgram(programName, fromDate, toDate, patient)
                 .stream().filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
-        return getEncounterListMapForPhysicalExamination(physicalExaminations);
+        return groupObsByEncounter(physicalExaminations);
     }
 
     public Map<Encounter, List<OpenMrsCondition>> getEncounterMedicalHistoryConditionsMap(Visit visit, Date fromDate, Date toDate) {
@@ -106,6 +106,18 @@ public class ConsultationService {
                 .flatMap(Collection::stream)
                 .filter(obs -> isHiTypeSupportedObs(obs,type))
                 .collect(Collectors.groupingBy(Obs::getEncounter));
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterOtherObsMap(Visit visit, Date fromDate, Date toDate, AbdmConfig.OpConsultAttribute type) {
+        List<Concept> supportedConcepts = abdmConfig.getOPConsultAttributeConcept(type);
+        return visit.getEncounters()
+                .stream()
+                .filter(e -> fromDate == null || e.getEncounterDatetime().after(fromDate))
+                .filter(e-> toDate == null || e.getEncounterDatetime().before(toDate))
+                .map(Encounter::getAllObs)
+                .flatMap(Collection::stream)
+                .filter(obs -> supportedConcepts.contains(obs.getConcept()))
+                .collect(Collectors.groupingBy(obs -> obs.getEncounter()));
     }
 
     private boolean isHiTypeSupportedObs(Obs obs, AbdmConfig.HiTypeDocumentKind type) {
@@ -194,20 +206,6 @@ public class ConsultationService {
         return obsStream.filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
     }
 
-    private Map<Encounter, List<Obs>> getEncounterListMapForPhysicalExamination(List<Obs> physicalExaminations) {
-        Map<Encounter, List<Obs>> encounterPhysicalExaminationMap = new HashMap<>();
-        for (Obs physicalExamination : physicalExaminations) {
-            Encounter encounter = physicalExamination.getEncounter();
-            List<Obs> groupMembers = new ArrayList<>();
-            getGroupMembersOfObs(physicalExamination, groupMembers);
-            if (!encounterPhysicalExaminationMap.containsKey(encounter)) {
-                encounterPhysicalExaminationMap.put(encounter, new ArrayList<>());
-            }
-            encounterPhysicalExaminationMap.get(encounter).addAll(groupMembers);
-        }
-        return encounterPhysicalExaminationMap;
-    }
-
     private Map<Encounter, List<OpenMrsCondition>> getEncounterListMapForMedicalHistory(Map<Encounter, List<Condition>> medicalHistoryConditionsMap, List<Obs> medicalHistoryDiagnosisMap) {
         Map<Encounter, List<OpenMrsCondition>> encounterMedicalHistoryMap = new HashMap<>();
 
@@ -252,14 +250,14 @@ public class ConsultationService {
         return encounterOrdersMap;
     }
 
-    private void getGroupMembersOfObs(Obs physicalExamination, List<Obs> groupMembers) {
-        if (physicalExamination.getGroupMembers().size() > 0 && !Config.CONCEPT_DETAILS_CONCEPT_CLASS.getValue().equals(physicalExamination.getConcept().getConceptClass().getName())) {
-            for (Obs groupMember : physicalExamination.getGroupMembers()) {
+    private void getGroupMembersOfObs(Obs obs, List<Obs> groupMembers) {
+        if (obs.getGroupMembers().size() > 0 && !Config.CONCEPT_DETAILS_CONCEPT_CLASS.getValue().equals(obs.getConcept().getConceptClass().getName())) {
+            for (Obs groupMember : obs.getGroupMembers()) {
                 if (conceptNames.contains(groupMember.getConcept().getDisplayString())) continue;
                 getGroupMembersOfObs(groupMember, groupMembers);
             }
         } else {
-            groupMembers.add(physicalExamination);
+            groupMembers.add(obs);
         }
     }
 
@@ -290,5 +288,26 @@ public class ConsultationService {
     public Map<Encounter, List<Obs>> getEncounterProcedureMapForProgram(String programName, Date fromDate, Date toDate, Patient patient) {
         List<Obs> obsProcedures = opConsultDao.getProceduresForProgram(programName,fromDate, toDate,patient);
         return obsProcedures.stream().collect(Collectors.groupingBy(Obs::getEncounter));
+    }
+
+    public Map<Encounter, List<Obs>> getEncounterOtherObsMapForProgram(String programName, Date fromDate, Date toDate, Patient patient, AbdmConfig.OpConsultAttribute type) {
+        List<Concept> conceptList = abdmConfig.getOPConsultAttributeConcept(type);
+        List<Obs> otherObs = consultationDao.getAllObsForProgram(programName, fromDate, toDate, patient)
+                .stream().filter(obs -> conceptList.contains(obs.getConcept())).collect(Collectors.toList());
+        return groupObsByEncounter(otherObs);
+    }
+
+    private Map<Encounter, List<Obs>> groupObsByEncounter(List<Obs> obsList) {
+        Map<Encounter, List<Obs>> encounteObsMap = new HashMap<>();
+        for (Obs obs : obsList) {
+            Encounter encounter = obs.getEncounter();
+            List<Obs> groupMembers = new ArrayList<>();
+            getGroupMembersOfObs(obs, groupMembers);
+            if (!encounteObsMap.containsKey(encounter)) {
+                encounteObsMap.put(encounter, new ArrayList<>());
+            }
+            encounteObsMap.get(encounter).addAll(groupMembers);
+        }
+        return encounteObsMap;
     }
 }
