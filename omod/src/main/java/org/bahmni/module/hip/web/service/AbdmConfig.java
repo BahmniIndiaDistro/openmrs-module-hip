@@ -72,10 +72,6 @@ public class AbdmConfig {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
 
-        Arrays.stream(PhysicalExamination.values()).forEach(templateAttribute -> {
-            allConfigurationKeys.add(templateAttribute.getMapping());
-        });
-
         Arrays.stream(HistoryAndExamination.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
@@ -87,6 +83,11 @@ public class AbdmConfig {
         Arrays.stream(ProcedureAttribute.values()).forEach(templateAttribute -> {
             allConfigurationKeys.add(templateAttribute.getMapping());
         });
+
+        Arrays.stream(OpConsultAttribute.values()).forEach(templateAttribute -> {
+            allConfigurationKeys.add(templateAttribute.getMapping());
+        });
+
         allConfigurationKeys.add(CONCEPT_MAP_RESOLUTION_KEY);
     }
 
@@ -171,24 +172,6 @@ public class AbdmConfig {
             return mapping;
         }
     }
-    public enum PhysicalExamination {
-        HEIGHT("abdm.conceptMap.physicalExamination.height"),
-        WEIGHT("abdm.conceptMap.physicalExamination.weight"),
-        TEMPERATURE("abdm.conceptMap.physicalExamination.temperature"),
-        SYSTOLICBP("abdm.conceptMap.physicalExamination.systolicBP"),
-        DIASTOLICBP("abdm.conceptMap.physicalExamination.diastolicBP"),
-        PULSE("abdm.conceptMap.physicalExamination.pulse");
-
-        private final String mapping;
-
-        PhysicalExamination(String mapping) {
-            this.mapping = mapping;
-        }
-
-        public String getMapping() {
-            return mapping;
-        }
-    }
 
     public enum HistoryAndExamination {
         CHIFF_COMPLAINT_TEMPLATE("abdm.conceptMap.historyExamination.chiefComplaintTemplate"),
@@ -231,6 +214,20 @@ public class AbdmConfig {
         }
     }
 
+    public enum OpConsultAttribute {
+        PHYSICAl_EXAMINATION("abdm.conceptMap.opConsult.physicalExamination"),
+        OTHER_OBSERVATIONS("abdm.conceptMap.opConsult.otherObservations");
+
+        private final String mapping;
+
+        OpConsultAttribute(String mapping) {
+            this.mapping = mapping;
+        }
+        public String getMapping() {
+            return mapping;
+        }
+    }
+
     public Concept getProcedureObsRootConcept() {
         return lookupConcept(ProcedureAttribute.PROCEDURE_TEMPLATE.getMapping());
     }
@@ -250,13 +247,6 @@ public class AbdmConfig {
     public List<Concept> getHistoryExaminationConcepts(){
         List<Concept> conceptList = new ArrayList<>();
         Arrays.stream(HistoryAndExamination.values()).forEach(attribute ->
-                conceptList.add(lookupConcept(attribute.getMapping())));
-        return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    public List<Concept> getPhysicalExaminationConcepts(){
-        List<Concept> conceptList = new ArrayList<>();
-        Arrays.stream(PhysicalExamination.values()).forEach(attribute ->
                 conceptList.add(lookupConcept(attribute.getMapping())));
         return conceptList.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
@@ -326,6 +316,10 @@ public class AbdmConfig {
         return lookupConcepts(type.getMapping());
     }
     public List<Concept> getHiTypeDocumentTypes(HiTypeDocumentKind type) {
+        return lookupConcepts(type.getMapping());
+    }
+
+    public List<Concept> getOPConsultAttributeConcept(OpConsultAttribute type) {
         return lookupConcepts(type.getMapping());
     }
 

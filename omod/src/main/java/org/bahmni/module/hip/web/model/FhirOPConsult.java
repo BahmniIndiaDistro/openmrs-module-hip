@@ -20,8 +20,6 @@ import org.hl7.fhir.r4.model.ServiceRequest;
 import org.openmrs.EncounterProvider;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.Meta;
-import org.openmrs.Obs;
-
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +39,7 @@ public class FhirOPConsult {
     private final List<Procedure> procedure;
     private final List<DocumentReference> patientDocuments;
     private final List<ServiceRequest> serviceRequest;
+    private final List<Observation> otherObsverations;
 
     public FhirOPConsult(List<Condition> chiefComplaints,
                          List<Condition> medicalHistory, Date visitTimeStamp,
@@ -54,7 +53,8 @@ public class FhirOPConsult {
                          List<Medication> medications,
                          List<Procedure> procedure,
                          List<DocumentReference> patientDocuments,
-                         List<ServiceRequest> serviceRequest) {
+                         List<ServiceRequest> serviceRequest,
+                         List<Observation> otherObservations) {
         this.chiefComplaints = chiefComplaints;
         this.medicalHistory = medicalHistory;
         this.visitTimeStamp = visitTimeStamp;
@@ -69,6 +69,7 @@ public class FhirOPConsult {
         this.procedure = procedure;
         this.patientDocuments = patientDocuments;
         this.serviceRequest = serviceRequest;
+        this.otherObsverations = otherObservations;
     }
 
     public Bundle bundleOPConsult(OrganizationContext orgContext) {
@@ -85,6 +86,7 @@ public class FhirOPConsult {
         FHIRUtils.addToBundleEntry(bundle, medicationRequests, false);
         FHIRUtils.addToBundleEntry(bundle, medications, false);
         FHIRUtils.addToBundleEntry(bundle, serviceRequest, false);
+        FHIRUtils.addToBundleEntry(bundle, otherObsverations, false);
         if (procedure != null) FHIRUtils.addToBundleEntry(bundle, procedure, false);
         if(patientDocuments != null) FHIRUtils.addToBundleEntry(bundle, patientDocuments, false);
 
@@ -122,9 +124,11 @@ public class FhirOPConsult {
                 .filter(Objects::nonNull).collect(Collectors.toList());
         List<ServiceRequest> serviceRequest = openMrsOPConsult.getOrders().stream().
                 map(fhirResourceMapper::mapToOrder).collect(Collectors.toList());
+        List<Observation> otherObs = openMrsOPConsult.getOtherObs().stream().
+                map(fhirResourceMapper::mapToObs).collect(Collectors.toList());
 
         return new FhirOPConsult(fhirChiefComplaintConditionList, fhirMedicalHistoryList, visitDatetime, encounterId, encounter, practitioners,
-                patient, patientReference, fhirObservationList, medicationRequestsList, medications, fhirProcedureList, patientDocuments, serviceRequest);
+                patient, patientReference, fhirObservationList, medicationRequestsList, medications, fhirProcedureList, patientDocuments, serviceRequest, otherObs);
     }
 
     private Composition compositionFrom(OrganizationContext orgContext) {
@@ -214,6 +218,17 @@ public class FhirOPConsult {
                     .stream()
                     .map(FHIRUtils::getReferenceToResource)
                     .forEach(physicalExaminationsCompositionSection::addEntry);
+        }
+
+        if(otherObsverations.size() > 0) {
+            Composition.SectionComponent otherObservationCompositionSection = composition.addSection();
+            otherObservationCompositionSection
+                    .setTitle("Other Observations")
+                    .setCode(FHIRUtils.getOtherObservationType());
+            otherObsverations
+                    .stream()
+                    .map(FHIRUtils::getReferenceToResource)
+                    .forEach(otherObservationCompositionSection::addEntry);
         }
 
         return composition;
