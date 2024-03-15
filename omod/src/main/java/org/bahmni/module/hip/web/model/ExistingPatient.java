@@ -10,6 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class ExistingPatient {
+    String patientId;
     String name;
     String dateOfBirth;
     String address;
