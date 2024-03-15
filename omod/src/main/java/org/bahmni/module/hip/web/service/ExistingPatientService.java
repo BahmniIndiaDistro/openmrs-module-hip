@@ -186,6 +186,7 @@ public class ExistingPatientService {
             if (!isHealthIdVoided(patient.getUuid())) {
                 existingPatients.add(
                         new ExistingPatient(
+                                patient.getPatientIdentifier().getIdentifier(),
                                 patient.getGivenName() + " " + patient.getMiddleName() + " " + patient.getFamilyName(),
                                 patient.getBirthdate().toString(),
                                 getAddress(patient),
@@ -243,6 +244,7 @@ public class ExistingPatientService {
         Patient patient = patientService.getPatientByUuid(patientUuid);
         if (patient != null && !isHealthIdVoided(patientUuid)) {
             return new ExistingPatient(
+                    patient.getPatientIdentifier().getIdentifier(),
                     patient.getGivenName() + " " + patient.getMiddleName() + " " + patient.getFamilyName(),
                     patient.getBirthdate().toString(),
                     getAddress(patient),
