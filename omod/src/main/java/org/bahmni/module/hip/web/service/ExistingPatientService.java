@@ -143,11 +143,16 @@ public class ExistingPatientService {
     }
 
     private List<PatientResponse> filterPatientsByName(String locationUuid,String patientName) {
-        PatientSearchParameters searchParameters = getPatientSearchParameters(locationUuid,patientName);
+        List<PatientResponse> patientResponseList = new ArrayList<>();
         Supplier<Location> visitLocation = () -> getVisitLocation(locationUuid);
         Supplier<List<String>> configuredAddressFields = () -> patientDao.getConfiguredPatientAddressFields();
 
-        return patientDao.getPatients(searchParameters, visitLocation, configuredAddressFields);
+        String[] nameParts = patientName.split(" ");
+
+        for (String part : nameParts) {
+           patientResponseList.addAll(patientDao.getPatients(getPatientSearchParameters(locationUuid, part), visitLocation, configuredAddressFields));
+        }
+        return patientResponseList;
     }
 
 
