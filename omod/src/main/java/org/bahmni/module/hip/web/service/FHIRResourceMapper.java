@@ -26,6 +26,7 @@ import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Annotation;
 import org.hl7.fhir.r4.model.MarkdownType;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.HumanName;
 
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterProvider;
@@ -331,7 +332,11 @@ public class FHIRResourceMapper {
     }
 
     public Practitioner mapToPractitioner(EncounterProvider encounterProvider) {
-        return practitionerTranslatorProvider.toFhirResource(encounterProvider.getProvider());
+        Practitioner practitioner = practitionerTranslatorProvider.toFhirResource(encounterProvider.getProvider());
+        HumanName name = new HumanName();
+        name.setText(encounterProvider.getProvider().getName());
+        practitioner.setName(Arrays.asList(name));
+        return practitioner;
     }
 
     private String displayName(Object object) {
