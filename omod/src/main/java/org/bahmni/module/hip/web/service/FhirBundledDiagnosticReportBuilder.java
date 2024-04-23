@@ -8,6 +8,7 @@ import org.bahmni.module.hip.web.model.OpenMrsDiagnosticReport;
 import org.bahmni.module.hip.web.model.OpenMrsLabResults;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.hl7.fhir.r4.model.Bundle;
+import org.openmrs.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,8 @@ public class FhirBundledDiagnosticReportBuilder {
     }
 
     public DiagnosticReportBundle fhirBundleResponseFor(OpenMrsDiagnosticReport openMrsDiagnosticReport) {
-        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsDiagnosticReport.getEncounter().getVisit().getLocation()));
+        Optional<Location> location = OrganizationContextService.findOrganization(openMrsDiagnosticReport.getEncounter().getVisit().getLocation());
+        OrganizationContext organizationContext = organizationContextService.buildContext(location);
 
         Bundle diagnosticReportBundle = FhirDiagnosticReport
                 .fromOpenMrsDiagnosticReport(openMrsDiagnosticReport, fhirResourceMapper)
@@ -45,7 +47,8 @@ public class FhirBundledDiagnosticReportBuilder {
     }
 
     public DiagnosticReportBundle fhirBundleResponseFor(OpenMrsLabResults results) {
-        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(results.getEncounter().getVisit().getLocation()));
+        Optional<Location> location = OrganizationContextService.findOrganization(results.getEncounter().getVisit().getLocation());
+        OrganizationContext organizationContext = organizationContextService.buildContext(location);
 
         Bundle diagnosticReportBundle = FhirLabResult.fromOpenMrsLabResults(results, fhirResourceMapper)
                 .bundleLabResults(organizationContext, fhirResourceMapper);

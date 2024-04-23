@@ -6,6 +6,7 @@ import org.bahmni.module.hip.web.model.OpenMrsPrescription;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.bahmni.module.hip.web.model.PrescriptionBundle;
 import org.hl7.fhir.r4.model.Bundle;
+import org.openmrs.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,8 @@ public class FhirBundledPrescriptionBuilder {
 
     PrescriptionBundle fhirBundleResponseFor(OpenMrsPrescription openMrsPrescription) {
 
-        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsPrescription.getEncounter().getVisit().getLocation()));
+        Optional<Location> location = OrganizationContextService.findOrganization(openMrsPrescription.getEncounter().getVisit().getLocation());
+        OrganizationContext organizationContext = organizationContextService.buildContext(location);
 
         Bundle prescriptionBundle = FhirPrescription
                 .from(openMrsPrescription, fhirResourceMapper, documentTransformer)
