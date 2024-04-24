@@ -2,6 +2,7 @@ package org.bahmni.module.hip.web.service;
 
 import org.bahmni.module.hip.web.model.*;
 import org.hl7.fhir.r4.model.Bundle;
+import org.openmrs.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +26,8 @@ public class FhirBundledDischargeSummaryBuilder {
     }
 
     public DischargeSummaryBundle fhirBundleResponseFor (OpenMrsDischargeSummary openMrsDischargeSummary) {
-        OrganizationContext organizationContext = organizationContextService.buildContext(
-                Optional.ofNullable(openMrsDischargeSummary.getEncounter().getVisit().getLocation()));
+        Optional<Location> location = OrganizationContextService.findOrganization(openMrsDischargeSummary.getEncounter().getVisit().getLocation());
+        OrganizationContext organizationContext = organizationContextService.buildContext(location);
 
         Bundle dischargeSummaryBundle = FhirDischargeSummary.fromOpenMrsDischargeSummary(openMrsDischargeSummary, fhirResourceMapper, abdmConfig, omrsObsDocumentTransformer).
                 bundleDischargeSummary(organizationContext);

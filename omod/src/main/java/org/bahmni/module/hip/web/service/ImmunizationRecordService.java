@@ -51,10 +51,7 @@ public class ImmunizationRecordService {
             log.warn(String.format("Could not identify visit by uuid [%s]", visitUuid));
             return Collections.emptyList();
         }
-        Optional<Location> location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.ORGANIZATION_LOCATION_TAG);
-        if (!location.isPresent()) {
-            location = identifyLocationByTag(visit.getLocation(), OrganizationContextService.VISIT_LOCATION_TAG);
-        }
+
         if (!visit.getPatient().getUuid().equals(patientUuid.trim())) {
             log.warn("Identified visit is not for the requested patient. " +
                     "This should never happen. This may mean a invalid linkage in the care context");
@@ -78,6 +75,7 @@ public class ImmunizationRecordService {
                     return cielImmunizationReceivedConcept;
                 });
 
+        Optional<Location> location = OrganizationContextService.findOrganization(visit.getLocation());
         FhirImmunizationRecordBundleBuilder immunizationTransformer =
                 new FhirImmunizationRecordBundleBuilder(fhirResourceMapper,
                         conceptTranslator, encounterTranslator,
@@ -90,16 +88,6 @@ public class ImmunizationRecordService {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
-
-    private Optional<Location> identifyLocationByTag(Location location, String tagName) {
-        if (location == null) {
-            return Optional.empty();
-        }
-        boolean isMatched = location.getTags().size() > 0 && location.getTags().stream().anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
-        return isMatched ? Optional.of(location) : identifyLocationByTag(location.getParentLocation(), tagName);
-    }
-
-
     private Map<AbdmConfig.ImmunizationAttribute, Concept> getImmunizationAttributeConcepts() {
         return abdmConfig.getImmunizationAttributeConfigs().entrySet()
                 .stream()

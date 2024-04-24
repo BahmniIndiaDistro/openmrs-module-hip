@@ -6,6 +6,7 @@ import org.bahmni.module.hip.web.model.OPConsultBundle;
 import org.bahmni.module.hip.web.model.OpenMrsOPConsult;
 import org.bahmni.module.hip.web.model.OrganizationContext;
 import org.hl7.fhir.r4.model.Bundle;
+import org.openmrs.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,8 @@ public class FhirBundledOPConsultBuilder {
     }
 
     public OPConsultBundle fhirBundleResponseFor (OpenMrsOPConsult openMrsOPConsult) {
-        OrganizationContext organizationContext = organizationContextService.buildContext(Optional.ofNullable(openMrsOPConsult.getEncounter().getVisit().getLocation()));
+        Optional<Location> location = OrganizationContextService.findOrganization(openMrsOPConsult.getEncounter().getVisit().getLocation());
+        OrganizationContext organizationContext = organizationContextService.buildContext(location);
         Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper, abdmConfig, omrsObsDocumentTransformer).
                 bundleOPConsult(organizationContext);
         CareContext careContext = careContextService.careContextFor(
