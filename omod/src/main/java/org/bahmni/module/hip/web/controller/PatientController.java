@@ -4,6 +4,7 @@ import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.client.model.ValidPatient;
 import org.bahmni.module.hip.web.model.ExistingPatient;
 import org.bahmni.module.hip.web.model.Location;
+import org.bahmni.module.hip.web.model.PatientAbhaInfo;
 import org.bahmni.module.hip.web.service.ExistingPatientService;
 import org.bahmni.module.hip.web.service.ValidationService;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -104,4 +106,11 @@ public class PatientController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(isHealthNumberPresent);
     }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/existingPatients/update/{patientUuid}")
+    public ResponseEntity<?> updatePatient(@PathVariable String patientUuid, @RequestBody PatientAbhaInfo patientAbhaInfo) {
+        existingPatientService.checkAndAddPatientIdentifier(patientUuid,patientAbhaInfo);
+        return ResponseEntity.ok().build();
+    }
+
 }

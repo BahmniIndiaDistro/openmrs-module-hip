@@ -9,6 +9,7 @@ import org.bahmni.module.hip.Config;
 import org.bahmni.module.hip.api.dao.ExistingPatientDao;
 import org.bahmni.module.hip.web.client.model.Status;
 import org.bahmni.module.hip.web.model.ExistingPatient;
+import org.bahmni.module.hip.web.model.PatientAbhaInfo;
 import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
@@ -61,6 +62,27 @@ public class ExistingPatientService {
         }
         return healthId;
     }
+
+    public void checkAndAddPatientIdentifier(String patientUuid, PatientAbhaInfo abhaInfo) {
+        Patient patient = patientService.getPatientByUuid(patientUuid);
+        try {
+            if(patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()) == null && patient.getPatientIdentifier(Config.ABHA_NUMBER.getValue()) == null)
+                setIdentifier(patient, abhaInfo.getAbhaAddress(),Config.ABHA_ADDRESS.getValue());
+                setIdentifier(patient, abhaInfo.getAbhaNumber(),Config.ABHA_NUMBER.getValue());
+        } catch (NullPointerException ignored) {
+        }
+    }
+
+    private void setIdentifier(Patient patient, String identifierValue, String identifierType) {
+        PatientIdentifier identifier = new PatientIdentifier();
+
+        identifier.setPatient(patient);
+        identifier.setIdentifier(identifierValue);
+        identifier.setIdentifierType(patientService.getPatientIdentifierTypeByName(identifierType));
+
+        patientService.savePatientIdentifier(identifier);
+    }
+
 
     public void perform(String healthId, String action) {
         Patient patient = patientService.getPatientByUuid(getPatientWithHealthId(healthId));
