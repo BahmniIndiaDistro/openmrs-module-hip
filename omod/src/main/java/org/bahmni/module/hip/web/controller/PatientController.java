@@ -109,8 +109,10 @@ public class PatientController {
 
     @RequestMapping(method = RequestMethod.POST, value = "/existingPatients/update/{patientUuid}")
     public ResponseEntity<?> updatePatient(@PathVariable String patientUuid, @RequestBody PatientAbhaInfo patientAbhaInfo) {
-        existingPatientService.checkAndAddPatientIdentifier(patientUuid,patientAbhaInfo);
-        return ResponseEntity.ok().build();
+        boolean isLinked = existingPatientService.checkAndAddPatientIdentifier(patientUuid,patientAbhaInfo);
+        return  ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(isLinked);
     }
 
 }

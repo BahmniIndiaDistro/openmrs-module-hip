@@ -63,14 +63,17 @@ public class ExistingPatientService {
         return healthId;
     }
 
-    public void checkAndAddPatientIdentifier(String patientUuid, PatientAbhaInfo abhaInfo) {
+    public boolean checkAndAddPatientIdentifier(String patientUuid, PatientAbhaInfo abhaInfo) {
         Patient patient = patientService.getPatientByUuid(patientUuid);
         try {
-            if(patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()) == null && patient.getPatientIdentifier(Config.ABHA_NUMBER.getValue()) == null)
-                setIdentifier(patient, abhaInfo.getAbhaAddress(),Config.ABHA_ADDRESS.getValue());
-                setIdentifier(patient, abhaInfo.getAbhaNumber(),Config.ABHA_NUMBER.getValue());
+            if(patient.getPatientIdentifier(Config.ABHA_ADDRESS.getValue()) == null && patient.getPatientIdentifier(Config.ABHA_NUMBER.getValue()) == null) {
+                setIdentifier(patient, abhaInfo.getAbhaAddress(), Config.ABHA_ADDRESS.getValue());
+                setIdentifier(patient, abhaInfo.getAbhaNumber(), Config.ABHA_NUMBER.getValue());
+                return true;
+            }
         } catch (NullPointerException ignored) {
         }
+        return false;
     }
 
     private void setIdentifier(Patient patient, String identifierValue, String identifierType) {
