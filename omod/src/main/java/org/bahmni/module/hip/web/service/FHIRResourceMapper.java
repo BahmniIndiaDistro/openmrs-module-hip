@@ -327,11 +327,15 @@ public class FHIRResourceMapper {
     }
 
     public Patient mapToPatient(org.openmrs.Patient emrPatient) {
-        return patientTranslator.toFhirResource(emrPatient);
+        Patient patient = patientTranslator.toFhirResource(emrPatient);
+        patient.getName().get(0).setText(emrPatient.getPerson().getPersonName().getFullName());
+        return patient;
     }
 
     public Practitioner mapToPractitioner(EncounterProvider encounterProvider) {
-        return practitionerTranslatorProvider.toFhirResource(encounterProvider.getProvider());
+        Practitioner practitioner = practitionerTranslatorProvider.toFhirResource(encounterProvider.getProvider());
+        practitioner.getName().get(0).setText(encounterProvider.getProvider().getName());
+        return practitioner;
     }
 
     private String displayName(Object object) {
