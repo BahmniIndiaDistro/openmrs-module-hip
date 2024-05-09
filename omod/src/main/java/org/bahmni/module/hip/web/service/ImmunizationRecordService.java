@@ -84,6 +84,7 @@ public class ImmunizationRecordService {
 
         return visit.getEncounters().stream()
                 .filter(e -> startDate == null || e.getEncounterDatetime().after(startDate))
+                .filter(e-> endDate == null || e.getEncounterDatetime().before(endDate))
                 .map(immunizationTransformer::build)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
