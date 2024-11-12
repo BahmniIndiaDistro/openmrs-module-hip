@@ -140,7 +140,8 @@ public class AbdmConfig {
         EXPIRATION_DATE("abdm.conceptMap.immunization.expirationDate"),
         TEMPLATE("abdm.conceptMap.immunization.template"),
         STATUS("abdm.conceptMap.immunization.status"),
-        VACCINE_NON_CODED("abdm.conceptMap.immunization.vaccineNonCoded");
+        VACCINE_NON_CODED("abdm.conceptMap.immunization.vaccineNonCoded"),
+        ROUTE("abdm.conceptMap.immunization.route");
 
         private final String mapping;
 

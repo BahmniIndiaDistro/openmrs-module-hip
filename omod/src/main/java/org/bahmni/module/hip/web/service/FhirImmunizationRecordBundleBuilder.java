@@ -198,6 +198,10 @@ public class FhirImmunizationRecordBundleBuilder {
                     }
                 }
 
+                if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.ROUTE)) {
+                    immunization.setRoute(conceptTranslator.toFhirResource(member.getValueCoded()));
+                }
+
                 if (conceptMatchesForAttribute(memberConcept, AbdmConfig.ImmunizationAttribute.BRAND_NAME)) {
                     String brandName = member.getValueText();
                     if (!StringUtils.isEmpty(brandName)) {

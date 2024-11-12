@@ -19,6 +19,7 @@ import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.DateTimeType;
 import org.openmrs.Obs;
 import org.openmrs.module.bahmniemrapi.laborder.contract.LabOrderResult;
 
@@ -140,6 +141,7 @@ public class FhirLabResult {
                 obs.setValue(new StringType().setValue(result.getResult()));
             }
             obs.setStatus(Observation.ObservationStatus.FINAL);
+            obs.setEffective(new DateTimeType(result.getResultDateTime()));
             report.addResult(FHIRUtils.getReferenceToResource(obs));
             observations.add(obs);
         }
