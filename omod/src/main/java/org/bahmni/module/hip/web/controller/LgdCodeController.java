@@ -1,7 +1,7 @@
 package org.bahmni.module.hip.web.controller;
 
-import org.bahmni.module.hip.web.exception.LGDCodeNotFoundException;
-import org.bahmni.module.hip.web.service.LgdCodeService;
+import org.bahmni.module.hip.exception.LGDCodeNotFoundException;
+import org.bahmni.module.hip.service.LgdCodeService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

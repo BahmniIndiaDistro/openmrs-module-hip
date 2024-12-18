@@ -2,7 +2,6 @@ package org.bahmni.module.hip.api.dao;
 
 import org.bahmni.module.hip.model.PatientCareContext;
 import org.openmrs.Patient;
-import org.openmrs.Visit;
 
 import java.util.List;
 

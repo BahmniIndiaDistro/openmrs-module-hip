@@ -1,8 +1,8 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.TestConfiguration;
-import org.bahmni.module.hip.web.service.OPConsultService;
-import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.service.OPConsultService;
+import org.bahmni.module.hip.service.ValidationService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
