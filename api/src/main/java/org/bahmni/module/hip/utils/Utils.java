@@ -1,4 +1,4 @@
-package org.bahmni.module.hip.service;
+package org.bahmni.module.hip.utils;
 
 public class Utils {
     public static String ensureTrailingSlash(String url) {

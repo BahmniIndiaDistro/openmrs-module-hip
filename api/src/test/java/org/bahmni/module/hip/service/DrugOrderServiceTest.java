@@ -1,6 +1,7 @@
 package org.bahmni.module.hip.service;
 
 
+import org.bahmni.module.hip.service.impl.DrugOrderServiceImpl;
 import org.junit.Test;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
@@ -15,7 +16,7 @@ public class DrugOrderServiceTest {
 
     private OrderService orderService = mock(OrderService.class);
 
-    private DrugOrderService drugOrderService = new DrugOrderService(orderService);
+    private DrugOrderService drugOrderService = new DrugOrderServiceImpl(orderService);
 
     @Test
     public void shouldFetchAllOrdersForPatient() {

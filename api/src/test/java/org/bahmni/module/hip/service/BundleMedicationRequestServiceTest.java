@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.service;
 
+import org.bahmni.module.hip.service.impl.BundleMedicationRequestServiceImpl;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ public class BundleMedicationRequestServiceTest {
     private final MedicationRequestService medicationRequestService = mock(MedicationRequestService.class);
     private final BundleService bundleService = mock(BundleService.class);
     private final BundleMedicationRequestService bundledMedicationRequestService =
-            new BundleMedicationRequestService(medicationRequestService, bundleService);
+            new BundleMedicationRequestServiceImpl(medicationRequestService, bundleService);
 
     @Test
     public void shouldFetchMedicationRequestForPatientBasedOnTheVisitType() {

@@ -2,10 +2,10 @@ package org.bahmni.module.hip.model;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.bahmni.module.hip.service.AbdmConfig;
-import org.bahmni.module.hip.service.FHIRResourceMapper;
-import org.bahmni.module.hip.service.FHIRUtils;
-import org.bahmni.module.hip.service.OmrsObsDocumentTransformer;
+import org.bahmni.module.hip.config.AbdmConfig;
+import org.bahmni.module.hip.mapper.FHIRResourceMapper;
+import org.bahmni.module.hip.utils.FHIRUtils;
+import org.bahmni.module.hip.builder.OmrsObsDocumentTransformer;
 import org.hl7.fhir.r4.model.*;
 import org.openmrs.EncounterProvider;
 

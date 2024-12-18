@@ -2,6 +2,7 @@ package org.bahmni.module.hip.service;
 
 
 import org.bahmni.module.hip.api.dao.PrescriptionOrderDao;
+import org.bahmni.module.hip.service.impl.OpenMRSDrugOrderClientImpl;
 import org.junit.Test;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
@@ -20,7 +21,7 @@ public class OpenMRSDrugOrderClientTest {
     private PrescriptionOrderDao prescriptionOrderDao = mock(PrescriptionOrderDao.class);
 
     private OpenMRSDrugOrderClient openMRSDrugOrderClient =
-            new OpenMRSDrugOrderClient(patientService, orderService, prescriptionOrderDao);
+            new OpenMRSDrugOrderClientImpl(patientService, orderService, prescriptionOrderDao);
 
     @Test
     public void shouldFetchPatientByItsUUID() {

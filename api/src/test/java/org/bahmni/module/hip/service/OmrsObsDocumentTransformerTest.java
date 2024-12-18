@@ -1,5 +1,7 @@
 package org.bahmni.module.hip.service;
 
+import org.bahmni.module.hip.builder.OmrsObsDocumentTransformer;
+import org.bahmni.module.hip.config.AbdmConfig;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -3,6 +3,7 @@ package org.bahmni.module.hip.service;
 import org.bahmni.module.hip.api.dao.CareContextRepository;
 import org.bahmni.module.hip.api.dao.ExistingPatientDao;
 import org.bahmni.module.hip.model.PatientCareContext;
+import org.bahmni.module.hip.service.impl.CareContextServiceImpl;
 import org.junit.Test;
 import org.openmrs.api.PatientService;
 
@@ -20,7 +21,7 @@ public class CareContextServiceTest {
     private final ValidationService validationService = mock(ValidationService.class);
     private final ExistingPatientDao existingPatientDao = mock(ExistingPatientDao.class);
 
-    private final CareContextService careContextServiceObject = new CareContextService(careContextRepository, patientService, validationService, existingPatientDao);
+    private final CareContextService careContextServiceObject = new CareContextServiceImpl(careContextRepository, patientService, validationService, existingPatientDao);
 
     @Test
     public void shouldFetchAllCareContextForPatient() {

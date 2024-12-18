@@ -1,8 +1,8 @@
 package org.bahmni.module.hip.model;
 
 import org.bahmni.module.hip.Config;
-import org.bahmni.module.hip.service.FHIRResourceMapper;
-import org.bahmni.module.hip.service.FHIRUtils;
+import org.bahmni.module.hip.mapper.FHIRResourceMapper;
+import org.bahmni.module.hip.utils.FHIRUtils;
 import org.hl7.fhir.r4.model.Attachment;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CanonicalType;

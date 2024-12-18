@@ -1,58 +1,11 @@
 package org.bahmni.module.hip.service;
 
-import org.openmrs.Patient;
-import org.openmrs.Program;
-import org.openmrs.Visit;
-import org.openmrs.api.PatientService;
-import org.openmrs.api.ProgramWorkflowService;
-import org.openmrs.api.VisitService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
+public interface ValidationService {
+    boolean isValidVisit(String visitUuid);
 
-@Service
-@Qualifier("validationService")
-public class ValidationService {
-    private final VisitService visitService;
-    private final PatientService patientService;
-    private final ProgramWorkflowService programWorkflowService;
-    private final ExistingPatientService existingPatientService;
+    boolean isValidPatient(String pid);
 
-    @Autowired
-    public ValidationService(VisitService visitService, PatientService patientService, ProgramWorkflowService programWorkflowService, ExistingPatientService existingPatientService) {
-        this.patientService = patientService;
-        this.visitService = visitService;
-        this.programWorkflowService = programWorkflowService;
-        this.existingPatientService = existingPatientService;
-    }
+    boolean isValidProgram(String programName);
 
-    public boolean isValidVisit(String visitUuid) {
-        Visit visit = visitService.getVisitByUuid(visitUuid);
-        if(visit != null)
-           return true;
-        return false;
-    }
-
-    public boolean isValidPatient(String pid) {
-        Patient patient = patientService.getPatientByUuid(pid);
-        return patient != null;
-    }
-
-    public boolean isValidProgram(String programName) {
-        Program program = programWorkflowService.getProgramByName(programName);
-        if(program != null)
-            return true;
-        return false;
-    }
-
-    public boolean isValidHealthId(String healthId){
-        Patient patient = null;
-        try {
-            patient = patientService.getPatientByUuid(existingPatientService.getPatientWithHealthId(healthId));
-        }
-        catch (NullPointerException ignored){
-
-        }
-        return patient != null;
-    }
+    boolean isValidHealthId(String healthId);
 }

@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.service;
 
+import org.bahmni.module.hip.service.impl.ValidationServiceImpl;
 import org.junit.Test;
 import org.openmrs.Patient;
 import org.openmrs.Visit;
@@ -16,7 +17,7 @@ public class ValidationServiceTest {
     private final PatientService patientService = mock(PatientService.class);
     private final ProgramWorkflowService programWorkflowService = mock(ProgramWorkflowService.class);
     private final ExistingPatientService existingPatientService = mock(ExistingPatientService.class);
-    private final ValidationService validationService = new ValidationService(visitService,patientService, programWorkflowService, existingPatientService);
+    private final ValidationService validationService = new ValidationServiceImpl(visitService,patientService, programWorkflowService, existingPatientService);
     @Test
     public void shouldReturnTrueForValidVisitType() {
         String visitUuid = "0a1b2c3d";

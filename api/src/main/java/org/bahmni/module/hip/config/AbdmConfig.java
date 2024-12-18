@@ -1,4 +1,4 @@
-package org.bahmni.module.hip.service;
+package org.bahmni.module.hip.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.openmrs.Concept;

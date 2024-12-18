@@ -1,5 +1,6 @@
 package org.bahmni.module.hip.service;
 
+import org.bahmni.module.hip.service.impl.MedicationRequestServiceImpl;
 import org.junit.Test;
 import org.openmrs.module.fhir2.api.translators.MedicationRequestTranslator;
 
@@ -12,7 +13,7 @@ public class MedicationRequestServiceTest {
     private MedicationRequestTranslator medicationTranslator =
             mock(MedicationRequestTranslator.class);
 
-    private MedicationRequestService medicationRequestService = new MedicationRequestService(
+    private MedicationRequestService medicationRequestService = new MedicationRequestServiceImpl(
             openMRSDrugOrderClient,
             medicationTranslator
     );

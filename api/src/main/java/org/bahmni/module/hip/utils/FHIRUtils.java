@@ -1,5 +1,6 @@
-package org.bahmni.module.hip.service;
+package org.bahmni.module.hip.utils;
 
+import org.bahmni.module.hip.constants.Constants;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -18,18 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.bahmni.module.hip.service.Constants.GIF;
-import static org.bahmni.module.hip.service.Constants.IMAGE;
-import static org.bahmni.module.hip.service.Constants.JPEG;
-import static org.bahmni.module.hip.service.Constants.JPG;
-import static org.bahmni.module.hip.service.Constants.MIMETYPE_IMAGE_JPEG;
-import static org.bahmni.module.hip.service.Constants.MIMETYPE_PDF;
-import static org.bahmni.module.hip.service.Constants.MIMETYPE_VIDEO_MP4;
-import static org.bahmni.module.hip.service.Constants.MIMETYPE_VIDEO_MPEG;
-import static org.bahmni.module.hip.service.Constants.MP4;
-import static org.bahmni.module.hip.service.Constants.MPEG;
-import static org.bahmni.module.hip.service.Constants.PDF;
-import static org.bahmni.module.hip.service.Constants.PNG;
+import static org.bahmni.module.hip.constants.Constants.*;
 
 public class FHIRUtils {
     public static final String VALUESET_URL_ORG_TYPE_HL7 = "http://hl7.org/fhir/ValueSet/organization-type";
