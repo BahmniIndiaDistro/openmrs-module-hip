@@ -60,7 +60,7 @@ public class HealthDocumentRecordController extends BaseRestController {
         }
 
         List<HealthDocumentRecordBundle> documentBundlesForVisit =
-                this.healthDocumentRecordService.getDocumentsForVisit(visitUuid, patientId, fromEncounterDate, toEncounterDate);
+                this.healthDocumentRecordService.getDocumentsForVisit(patientId, visitUuid,fromEncounterDate, toEncounterDate);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(mapper.writeValueAsString(new BundledHealthDocumentRecordResponse(documentBundlesForVisit)));

@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface HealthDocumentRecordService {
     List<HealthDocumentRecordBundle> getDocumentsForVisit(
-            String visitUuid,
             String patientUuid,
+            String visitUuid,
             Date fromEncounterDate,
             Date toEncounterDate);
 }

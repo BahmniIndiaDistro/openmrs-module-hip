@@ -60,8 +60,8 @@ public class HealthDocumentRecordServiceImpl implements HealthDocumentRecordServ
 
     @Override
     public List<HealthDocumentRecordBundle> getDocumentsForVisit(
-            String visitUuid,
             String patientUuid,
+            String visitUuid,
             Date fromEncounterDate,
             Date toEncounterDate) {
         Visit visit = visitService.getVisitByUuid(visitUuid);
