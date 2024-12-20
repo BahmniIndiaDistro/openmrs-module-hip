@@ -7,7 +7,6 @@ import org.bahmni.module.hip.model.FhirLabResult;
 import org.bahmni.module.hip.model.OpenMrsDiagnosticReport;
 import org.bahmni.module.hip.model.OpenMrsLabResults;
 import org.bahmni.module.hip.model.OrganizationContext;
-import org.bahmni.module.hip.service.CareContextService;
 import org.bahmni.module.hip.mapper.FHIRResourceMapper;
 import org.bahmni.module.hip.service.OrganizationContextService;
 import org.hl7.fhir.r4.model.Bundle;
@@ -19,13 +18,11 @@ import java.util.Optional;
 
 @Service
 public class FhirBundledDiagnosticReportBuilder {
-    private final CareContextService careContextService;
     private final OrganizationContextService organizationContextService;
     private final FHIRResourceMapper fhirResourceMapper;
 
     @Autowired
-    public FhirBundledDiagnosticReportBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper) {
-        this.careContextService = careContextService;
+    public FhirBundledDiagnosticReportBuilder(OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper) {
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
     }
@@ -38,9 +35,7 @@ public class FhirBundledDiagnosticReportBuilder {
                 .fromOpenMrsDiagnosticReport(openMrsDiagnosticReport, fhirResourceMapper)
                 .bundleDiagnosticReport(organizationContext);
 
-        CareContext careContext = careContextService.careContextFor(
-                openMrsDiagnosticReport.getEncounter(),
-                organizationContext.careContextType());
+        CareContext careContext = CareContext.builder().careContextReference(openMrsDiagnosticReport.getEncounter().getVisit().getUuid()).careContextType("Visit").build();
 
         return DiagnosticReportBundle.builder()
                 .bundle(diagnosticReportBundle)
@@ -55,9 +50,7 @@ public class FhirBundledDiagnosticReportBuilder {
         Bundle diagnosticReportBundle = FhirLabResult.fromOpenMrsLabResults(results, fhirResourceMapper)
                 .bundleLabResults(organizationContext, fhirResourceMapper);
 
-        CareContext careContext = careContextService.careContextFor(
-                results.getEncounter(),
-                organizationContext.careContextType());
+        CareContext careContext = CareContext.builder().careContextReference(results.getEncounter().getVisit().getUuid()).careContextType("Visit").build();
 
         return DiagnosticReportBundle.builder()
                 .bundle(diagnosticReportBundle)

@@ -3,11 +3,9 @@ package org.bahmni.module.hip.service.impl;
 import org.bahmni.module.hip.api.dao.CareContextRepository;
 import org.bahmni.module.hip.api.dao.ExistingPatientDao;
 import org.bahmni.module.hip.model.PatientCareContext;
-import org.bahmni.module.hip.model.CareContext;
 import org.bahmni.module.hip.serializers.NewCareContext;
 import org.bahmni.module.hip.service.CareContextService;
 import org.bahmni.module.hip.service.ValidationService;
-import org.openmrs.Encounter;
 import org.openmrs.Patient;
 import org.openmrs.api.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,19 +30,6 @@ public class CareContextServiceImpl implements CareContextService {
         this.patientService = patientService;
         this.validationService = validationService;
         this.existingPatientDao = existingPatientDao;
-    }
-
-    @Override
-    public CareContext careContextFor(Encounter emrEncounter, Class careContextType) {
-        if (careContextType.getName().equals("Visit")) {
-            return CareContext.builder()
-                    .careContextReference(emrEncounter.getVisit().getUuid())
-                    .careContextType("Visit").build();
-        } else {
-            return CareContext.builder()
-                    .careContextReference(emrEncounter.getVisit().getVisitType().getName())
-                    .careContextType("VisitType").build();
-        }
     }
 
     @Override

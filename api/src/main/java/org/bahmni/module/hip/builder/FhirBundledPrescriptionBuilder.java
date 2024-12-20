@@ -5,7 +5,6 @@ import org.bahmni.module.hip.model.FhirPrescription;
 import org.bahmni.module.hip.model.OpenMrsPrescription;
 import org.bahmni.module.hip.model.OrganizationContext;
 import org.bahmni.module.hip.model.PrescriptionBundle;
-import org.bahmni.module.hip.service.CareContextService;
 import org.bahmni.module.hip.mapper.FHIRResourceMapper;
 import org.bahmni.module.hip.service.OrganizationContextService;
 import org.hl7.fhir.r4.model.Bundle;
@@ -17,14 +16,12 @@ import java.util.Optional;
 
 @Service
 public class FhirBundledPrescriptionBuilder {
-    private final CareContextService careContextService;
     private final OrganizationContextService organizationContextService;
     private final FHIRResourceMapper fhirResourceMapper;
     private final OmrsObsDocumentTransformer documentTransformer;
 
     @Autowired
-    public FhirBundledPrescriptionBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, OmrsObsDocumentTransformer documentTransformer) {
-        this.careContextService = careContextService;
+    public FhirBundledPrescriptionBuilder(OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, OmrsObsDocumentTransformer documentTransformer) {
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.documentTransformer = documentTransformer;
@@ -39,9 +36,7 @@ public class FhirBundledPrescriptionBuilder {
                 .from(openMrsPrescription, fhirResourceMapper, documentTransformer)
                 .bundle(organizationContext);
 
-        CareContext careContext = careContextService.careContextFor(
-                openMrsPrescription.getEncounter(),
-                organizationContext.careContextType());
+        CareContext careContext = CareContext.builder().careContextReference(openMrsPrescription.getEncounter().getVisit().getUuid()).careContextType("Visit").build();
 
         return PrescriptionBundle.builder()
                 .bundle(prescriptionBundle)

@@ -6,7 +6,6 @@ import org.bahmni.module.hip.model.OPConsultBundle;
 import org.bahmni.module.hip.model.OpenMrsOPConsult;
 import org.bahmni.module.hip.model.OrganizationContext;
 import org.bahmni.module.hip.config.AbdmConfig;
-import org.bahmni.module.hip.service.CareContextService;
 import org.bahmni.module.hip.mapper.FHIRResourceMapper;
 import org.bahmni.module.hip.service.OrganizationContextService;
 import org.hl7.fhir.r4.model.Bundle;
@@ -18,15 +17,13 @@ import java.util.Optional;
 
 @Service
 public class FhirBundledOPConsultBuilder {
-    private final CareContextService careContextService;
     private final OrganizationContextService organizationContextService;
     private final FHIRResourceMapper fhirResourceMapper;
     private final AbdmConfig abdmConfig;
     private final OmrsObsDocumentTransformer omrsObsDocumentTransformer;
 
     @Autowired
-    public FhirBundledOPConsultBuilder(CareContextService careContextService, OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
-        this.careContextService = careContextService;
+    public FhirBundledOPConsultBuilder(OrganizationContextService organizationContextService, FHIRResourceMapper fhirResourceMapper, AbdmConfig abdmConfig, OmrsObsDocumentTransformer omrsObsDocumentTransformer) {
         this.organizationContextService = organizationContextService;
         this.fhirResourceMapper = fhirResourceMapper;
         this.abdmConfig = abdmConfig;
@@ -38,9 +35,7 @@ public class FhirBundledOPConsultBuilder {
         OrganizationContext organizationContext = organizationContextService.buildContext(location);
         Bundle opConsultBundle = FhirOPConsult.fromOpenMrsOPConsult(openMrsOPConsult, fhirResourceMapper, abdmConfig, omrsObsDocumentTransformer).
                 bundleOPConsult(organizationContext);
-        CareContext careContext = careContextService.careContextFor(
-                openMrsOPConsult.getEncounter(),
-                organizationContext.careContextType());
+        CareContext careContext = CareContext.builder().careContextReference(openMrsOPConsult.getEncounter().getVisit().getUuid()).careContextType("Visit").build();
         return OPConsultBundle.builder()
                 .bundle(opConsultBundle)
                 .careContext(careContext)
