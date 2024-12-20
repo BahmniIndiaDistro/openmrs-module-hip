@@ -18,7 +18,9 @@ public class DateUtils {
     }
 
     public static boolean isDateBetweenDateRange(Date date, String fromDate, String toDate) throws ParseException {
-        return date.compareTo(parseDate(fromDate)) >= 0 && date.compareTo(parseDate(toDate)) < 0;
+        String dateString = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        Date inputDate = parseDate(dateString);
+        return inputDate.compareTo(parseDate(fromDate)) >= 0 && inputDate.compareTo(parseDate(toDate)) <= 0;
     }
 
     public static Date validDate(String value) {
