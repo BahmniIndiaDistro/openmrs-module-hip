@@ -2,11 +2,11 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.BundledDischargeSummaryResponse;
-import org.bahmni.module.hip.web.model.DateRange;
-import org.bahmni.module.hip.web.model.DischargeSummaryBundle;
-import org.bahmni.module.hip.web.service.DischargeSummaryService;
-import org.bahmni.module.hip.web.service.ValidationService;
-import org.bahmni.module.hip.web.utils.DateUtils;
+import org.bahmni.module.hip.model.DateRange;
+import org.bahmni.module.hip.model.DischargeSummaryBundle;
+import org.bahmni.module.hip.service.DischargeSummaryService;
+import org.bahmni.module.hip.service.ValidationService;
+import org.bahmni.module.hip.utils.DateUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -27,7 +27,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
-import static org.bahmni.module.hip.web.utils.DateUtils.parseDate;
+import static org.bahmni.module.hip.utils.DateUtils.parseDate;
 
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/dischargeSummary")
 @RestController

@@ -1,8 +1,8 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.TestConfiguration;
-import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
-import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.service.ValidationService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;

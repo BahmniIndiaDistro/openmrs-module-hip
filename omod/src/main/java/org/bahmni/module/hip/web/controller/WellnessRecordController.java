@@ -2,9 +2,9 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.BundledWellnessResponse;
-import org.bahmni.module.hip.web.model.WellnessRecordBundle;
-import org.bahmni.module.hip.web.service.WellnessRecordService;
-import org.bahmni.module.hip.web.utils.DateUtils;
+import org.bahmni.module.hip.model.WellnessRecordBundle;
+import org.bahmni.module.hip.service.WellnessRecordService;
+import org.bahmni.module.hip.utils.DateUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.springframework.beans.factory.annotation.Autowired;

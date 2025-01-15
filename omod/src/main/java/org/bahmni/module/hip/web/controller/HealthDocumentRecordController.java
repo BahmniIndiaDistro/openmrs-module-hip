@@ -2,8 +2,8 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.BundledHealthDocumentRecordResponse;
-import org.bahmni.module.hip.web.model.HealthDocumentRecordBundle;
-import org.bahmni.module.hip.web.service.HealthDocumentRecordService;
+import org.bahmni.module.hip.model.HealthDocumentRecordBundle;
+import org.bahmni.module.hip.service.HealthDocumentRecordService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import static org.bahmni.module.hip.web.utils.DateUtils.validDate;
+import static org.bahmni.module.hip.utils.DateUtils.validDate;
 
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/hip/healthDocumentRecord")
 @RestController
@@ -60,7 +60,7 @@ public class HealthDocumentRecordController extends BaseRestController {
         }
 
         List<HealthDocumentRecordBundle> documentBundlesForVisit =
-                this.healthDocumentRecordService.getDocumentsForVisit(visitUuid, patientId, fromEncounterDate, toEncounterDate);
+                this.healthDocumentRecordService.getDocumentsForVisit(patientId, visitUuid,fromEncounterDate, toEncounterDate);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(mapper.writeValueAsString(new BundledHealthDocumentRecordResponse(documentBundlesForVisit)));

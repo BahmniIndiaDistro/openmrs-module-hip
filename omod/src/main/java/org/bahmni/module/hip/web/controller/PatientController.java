@@ -2,11 +2,11 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.client.model.ValidPatient;
-import org.bahmni.module.hip.web.model.ExistingPatient;
-import org.bahmni.module.hip.web.model.Location;
-import org.bahmni.module.hip.web.model.PatientAbhaInfo;
-import org.bahmni.module.hip.web.service.ExistingPatientService;
-import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.model.ExistingPatient;
+import org.bahmni.module.hip.model.Location;
+import org.bahmni.module.hip.model.PatientAbhaInfo;
+import org.bahmni.module.hip.service.ExistingPatientService;
+import org.bahmni.module.hip.service.ValidationService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.Patient;
 import org.openmrs.module.webservices.rest.web.RestConstants;

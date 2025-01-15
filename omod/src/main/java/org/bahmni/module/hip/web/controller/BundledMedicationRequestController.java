@@ -1,8 +1,8 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.service.BundleMedicationRequestService;
-import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.service.BundleMedicationRequestService;
+import org.bahmni.module.hip.service.ValidationService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.bahmni.module.hip.web.model.serializers.BundleSerializer.serializeBundle;
+import static org.bahmni.module.hip.serializers.BundleSerializer.serializeBundle;
 
 @Validated
 @RestController

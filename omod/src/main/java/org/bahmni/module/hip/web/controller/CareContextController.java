@@ -1,8 +1,8 @@
 package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
-import org.bahmni.module.hip.web.service.CareContextService;
-import org.bahmni.module.hip.web.service.ValidationService;
+import org.bahmni.module.hip.service.CareContextService;
+import org.bahmni.module.hip.service.ValidationService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.beans.factory.annotation.Autowired;

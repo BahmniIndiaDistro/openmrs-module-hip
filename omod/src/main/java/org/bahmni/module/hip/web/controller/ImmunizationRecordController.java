@@ -2,9 +2,9 @@ package org.bahmni.module.hip.web.controller;
 
 import org.bahmni.module.hip.web.client.ClientError;
 import org.bahmni.module.hip.web.model.BundledImmunizationResponse;
-import org.bahmni.module.hip.web.model.ImmunizationRecordBundle;
-import org.bahmni.module.hip.web.service.ImmunizationRecordService;
-import org.bahmni.module.hip.web.utils.DateUtils;
+import org.bahmni.module.hip.model.ImmunizationRecordBundle;
+import org.bahmni.module.hip.service.ImmunizationRecordService;
+import org.bahmni.module.hip.utils.DateUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;

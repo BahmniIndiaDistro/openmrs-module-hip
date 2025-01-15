@@ -2,7 +2,7 @@ package org.bahmni.module.hip.web.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bahmni.module.hip.web.exception.RequestParameterMissingException;
+import org.bahmni.module.hip.exception.RequestParameterMissingException;
 import org.bahmni.module.hip.web.model.ErrorResponse;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.http.HttpStatus;
