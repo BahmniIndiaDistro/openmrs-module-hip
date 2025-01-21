@@ -79,13 +79,15 @@ public class ExistingPatientServiceImpl implements ExistingPatientService {
     }
 
     private void setIdentifier(Patient patient, String identifierValue, String identifierType) {
-        PatientIdentifier identifier = new PatientIdentifier();
+        if(identifierValue != null && !identifierValue.isEmpty()) {
+            PatientIdentifier identifier = new PatientIdentifier();
 
-        identifier.setPatient(patient);
-        identifier.setIdentifier(identifierValue);
-        identifier.setIdentifierType(patientService.getPatientIdentifierTypeByName(identifierType));
+            identifier.setPatient(patient);
+            identifier.setIdentifier(identifierValue);
+            identifier.setIdentifierType(patientService.getPatientIdentifierTypeByName(identifierType));
 
-        patientService.savePatientIdentifier(identifier);
+            patientService.savePatientIdentifier(identifier);
+        }
     }
 
 
